@@ -1,0 +1,589 @@
+<!-- index.html (FULL DROP-IN) — Launcher page with Equipment Image upload (GitHub/localStorage)
+     ADD: Phenolic fields (color code dropdown + FED FROM + FEEDS + Phenolic Equip ID)
+     Stored under meta.phenolic in nexus_meta_${eq}
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>NEXUS</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.18);
+    --ink:#fff;
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .topbar{
+    max-width:1200px;
+    margin:16px auto 0;
+    padding:0 18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{ font-weight:900; font-size:44px; letter-spacing:.02em; text-shadow:0 6px 22px rgba(0,0,0,.35); }
+  .tagline{ margin-top:6px; font-weight:800; opacity:.95; text-shadow:0 6px 22px rgba(0,0,0,.35); }
+  .ready-pill{
+    margin-top:4px;
+    padding:6px 14px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.20);
+    font-weight:900;
+    font-size:14px;
+    align-self:flex-start;
+  }
+
+  .wrap{
+    max-width:1200px;
+    margin:12px auto 40px;
+    padding:0 18px;
+  }
+  .shell{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+    padding:18px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap:16px;
+    margin-top:12px;
+  }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr; }
+    .brand{ font-size:36px; }
+  }
+
+  .card{
+    background:rgba(0,0,0,0.20);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    padding:16px;
+  }
+  .card h3{
+    margin:0 0 12px;
+    font-size:14px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-weight:900;
+    opacity:.95;
+  }
+
+  .field{ margin:12px 0; }
+  label{ display:block; font-weight:900; font-size:13px; margin:0 0 6px; opacity:.95; }
+  input, select{
+    width:100%;
+    padding:14px 14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(255,255,255,0.92);
+    color:#111;
+    font-weight:800;
+    font-size:16px;
+    outline:none;
+  }
+
+  .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .btn{
+    padding:12px 16px;
+    font-size:15px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+    min-width: 170px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.18);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.30);
+  }
+
+  .hint{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:800;
+    font-size:12px;
+    opacity:.95;
+    line-height:1.35;
+  }
+  code{
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.18);
+    padding:2px 6px;
+    border-radius:8px;
+    color:#fff;
+  }
+
+  /* ===== Equipment Image block ===== */
+  .img-block{ margin-top:12px; }
+  .img-status{ margin-top:8px; font-size:12px; font-weight:900; opacity:.9; line-height:1.35; }
+  #nexusEquipImagePreview{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+  }
+  .img-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .mini-btn{
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.35);
+    background: rgba(0,0,0,0.20);
+    color:#fff;
+  }
+
+  /* ===== Phenolic section ===== */
+  .section-divider{
+    margin:18px 0 10px;
+    padding-top:14px;
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+  .section-title{
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-size:13px;
+    opacity:.95;
+    margin:0 0 10px;
+  }
+
+  .footer{
+    max-width:1200px;
+    margin:22px auto 0;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:900;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+    border-radius:0 0 18px 18px;
+  }
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+
+<div class="topbar">
+  <div>
+    <div class="brand">NEXUS</div>
+    <div class="tagline">Mission Critical Construction Data Centralization</div>
+  </div>
+  <div class="ready-pill">Ready</div>
+</div>
+
+<div class="wrap">
+  <div class="shell">
+    <div class="grid">
+      <!-- LEFT: OPEN EQUIPMENT -->
+      <div class="card">
+        <h3>Open Equipment</h3>
+
+        <div class="field">
+          <label for="eqInput">Equipment ID</label>
+          <input id="eqInput" type="text" placeholder="TR-001" value="TR-001" />
+        </div>
+
+        <!-- NEW: Equipment Image Upload -->
+        <div class="img-block">
+          <label for="nexusEquipImageInput">Equipment Image</label>
+          <input id="nexusEquipImageInput" type="file" accept="image/*" capture="environment" />
+          <img id="nexusEquipImagePreview" alt="Equipment image preview" />
+          <div id="nexusEquipImageStatus" class="img-status"></div>
+          <div class="img-actions">
+            <button id="nexusEquipImageClearBtn" class="mini-btn" type="button">Clear Image</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="bldgInput">Building #</label>
+          <input id="bldgInput" type="text" placeholder="Bldg-01" value="Bldg-01" />
+        </div>
+
+        <div class="field">
+          <label for="phaseSelect">Phase</label>
+          <select id="phaseSelect">
+            <option value="">Select...</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Phase 3">Phase 3</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="podSelect">POD</label>
+          <select id="podSelect">
+            <option value="">Select...</option>
+            <option value="POD A">POD A</option>
+            <option value="POD B">POD B</option>
+            <option value="POD C">POD C</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="procoreEquipUrl">Procore Equipment URL</label>
+          <input id="procoreEquipUrl" type="text" placeholder="Paste Procore equipment link" />
+        </div>
+
+        <div class="field">
+          <label for="procoreEnergUrl">Procore Energization URL</label>
+          <input id="procoreEnergUrl" type="text" placeholder="Paste Procore energization link" />
+        </div>
+
+        <!-- =========================
+             ADD: PHENOLIC SECTION
+             ========================= -->
+        <div class="section-divider"></div>
+        <div class="section-title">Phenolic</div>
+
+        <div class="field">
+          <label for="phenolicColorCode">Color Code</label>
+          <select id="phenolicColorCode">
+            <option value="">Select...</option>
+            <option value="bms_blue">BLUE — BMS</option>
+            <option value="fire_red">RED — Fire Alarm</option>
+            <option value="bus_a_orange">ORANGE — A Bus</option>
+            <option value="bus_b_green">GREEN — B Bus</option>
+            <option value="bus_d_cyan">CYAN — D Bus</option>
+            <option value="bus_e_yellow_white">YELLOW (white) — E Bus</option>
+            <option value="catcher_pink">PINK — CATCHER / C Bus</option>
+            <option value="nonpod_gray">GRAY — Non-Pod Specific</option>
+            <option value="global_black">BLACK — Global / Room</option>
+            <option value="house_brown">BROWN — House Services</option>
+            <option value="epms_yellow_black">YELLOW (black) — EPMS</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="phenolicFedFrom">FED FROM</label>
+          <input id="phenolicFedFrom" type="text" placeholder="Example: PDP-1A / SWBD-1 / etc." />
+        </div>
+
+        <div class="field">
+          <label for="phenolicEquipId">Phenolic Equipment ID (center line)</label>
+          <input id="phenolicEquipId" type="text" placeholder="Defaults to Equipment ID if blank" />
+        </div>
+
+        <div class="field">
+          <label for="phenolicFeeds">FEEDS</label>
+          <input id="phenolicFeeds" type="text" placeholder="Example: RTU-1 / Panel A / etc." />
+        </div>
+        <!-- =========================
+             /ADD: PHENOLIC SECTION
+             ========================= -->
+
+        <div class="btnrow">
+          <button class="btn" id="openEquipmentBtn" type="button">Open Equipment Page</button>
+          <button class="btn secondary" id="generateQrBtn" type="button">Generate QR</button>
+          <a class="btn secondary" id="equipmentStepsBtn" href="#">Equipment Steps</a>
+        </div>
+
+        <div class="hint">
+          QR codes should encode a URL like: <code>equipment.html?eq=TR-001</code><br>
+          Scanning a QR should land on the equipment page and keep <code>eq</code> through every task.
+        </div>
+      </div>
+
+      <!-- RIGHT: QUICK LINKS -->
+      <div class="card">
+        <h3>Quick Links</h3>
+        <div class="btnrow">
+          <button class="btn secondary" id="qrGeneratorLink" type="button">QR Generator</button>
+          <button class="btn secondary" id="scanQrLink" type="button">Scan QR</button>
+          <button class="btn secondary" id="submissionHistoryLink" type="button">Submission History</button>
+        </div>
+
+        <div class="hint">
+          If you arrived here from a QR code (with <code>?eq=</code>), you will be redirected to the correct equipment page automatically.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const incomingEq = (qs.get("eq") || "").trim();
+  if (incomingEq){
+    // If you want auto-redirect when landing with ?eq=, enable this:
+    // location.href = `equipment.html?eq=${encodeURIComponent(incomingEq)}`;
+  }
+
+  const eqInput = document.getElementById("eqInput");
+  const bldgInput = document.getElementById("bldgInput");
+  const phaseSelect = document.getElementById("phaseSelect");
+  const podSelect = document.getElementById("podSelect");
+  const procoreEquipUrl = document.getElementById("procoreEquipUrl");
+  const procoreEnergUrl = document.getElementById("procoreEnergUrl");
+
+  // ADD: Phenolic controls
+  const phenolicColorCode = document.getElementById("phenolicColorCode");
+  const phenolicFedFrom   = document.getElementById("phenolicFedFrom");
+  const phenolicEquipId   = document.getElementById("phenolicEquipId");
+  const phenolicFeeds     = document.getElementById("phenolicFeeds");
+
+  const openEquipmentBtn = document.getElementById("openEquipmentBtn");
+  const generateQrBtn = document.getElementById("generateQrBtn");
+  const equipmentStepsBtn = document.getElementById("equipmentStepsBtn");
+
+  const qrGeneratorLink = document.getElementById("qrGeneratorLink");
+  const scanQrLink = document.getElementById("scanQrLink");
+  const submissionHistoryLink = document.getElementById("submissionHistoryLink");
+
+  function getEq(){ return (eqInput.value || "").trim(); }
+  function metaKey(eq){ return `nexus_meta_${eq || "NO_EQ"}`; }
+
+  function loadMeta(eq){
+    try{
+      const raw = localStorage.getItem(metaKey(eq));
+      if (raw) return JSON.parse(raw);
+    }catch(e){}
+    return {};
+  }
+
+  function saveMeta(eq){
+    if(!eq) return;
+
+    const meta = loadMeta(eq);
+
+    // preserve anything already present by merging
+    const next = {
+      ...meta,
+      building: (bldgInput.value || "").trim(),
+      phase: (phaseSelect.value || "").trim(),
+      pod: (podSelect.value || "").trim(),
+      procoreEquipUrl: (procoreEquipUrl.value || "").trim(),
+      procoreEnergizationUrl: (procoreEnergUrl.value || "").trim(),
+      phenolic: {
+        ...(meta.phenolic || {}),
+        colorCode: (phenolicColorCode.value || "").trim(),
+        fedFrom: (phenolicFedFrom.value || "").trim(),
+        equipId: (phenolicEquipId.value || "").trim(),
+        feeds: (phenolicFeeds.value || "").trim()
+      },
+      updatedAt: Date.now()
+    };
+
+    localStorage.setItem(metaKey(eq), JSON.stringify(next));
+  }
+
+  function loadMetaIntoFields(eq){
+    const meta = loadMeta(eq);
+
+    if (meta.building != null) bldgInput.value = meta.building || bldgInput.value;
+    if (meta.phase != null) phaseSelect.value = meta.phase || "";
+    if (meta.pod != null) podSelect.value = meta.pod || "";
+    if (meta.procoreEquipUrl != null) procoreEquipUrl.value = meta.procoreEquipUrl || "";
+    if (meta.procoreEnergizationUrl != null) procoreEnergUrl.value = meta.procoreEnergizationUrl || "";
+
+    // ADD: phenolic
+    const p = meta.phenolic || {};
+    if (p.colorCode != null) phenolicColorCode.value = p.colorCode || "";
+    if (p.fedFrom != null) phenolicFedFrom.value = p.fedFrom || "";
+    if (p.equipId != null) phenolicEquipId.value = p.equipId || "";
+    if (p.feeds != null) phenolicFeeds.value = p.feeds || "";
+  }
+
+  // persist meta on changes (ADDED phenolic fields, nothing removed)
+  [eqInput,bldgInput,phaseSelect,podSelect,procoreEquipUrl,procoreEnergUrl,
+   phenolicColorCode, phenolicFedFrom, phenolicEquipId, phenolicFeeds
+  ].forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const eq = getEq();
+      saveMeta(eq);
+    });
+    el.addEventListener("input", ()=>{
+      const eq = getEq();
+      if(eq) saveMeta(eq);
+    });
+  });
+
+  // when eq changes, load meta for that eq
+  eqInput.addEventListener("change", ()=>{
+    loadMetaIntoFields(getEq());
+    loadPreviewForCurrentEq();
+  });
+  eqInput.addEventListener("input", ()=>{
+    loadPreviewForCurrentEq();
+  });
+
+  // buttons
+  openEquipmentBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return alert("Enter Equipment ID first.");
+    saveMeta(eq);
+    location.href = `equipment.html?eq=${encodeURIComponent(eq)}`;
+  });
+
+  generateQrBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return alert("Enter Equipment ID first.");
+    saveMeta(eq);
+    location.href = `qr.html?eq=${encodeURIComponent(eq)}`;
+  });
+
+  equipmentStepsBtn.href = `equipment_steps.html?eq=${encodeURIComponent(getEq() || "TR-001")}`;
+
+  qrGeneratorLink.addEventListener("click", ()=> location.href = "qr.html");
+  scanQrLink.addEventListener("click", ()=> location.href = "scan_qr.html");
+  submissionHistoryLink.addEventListener("click", ()=> location.href = "submission_history.html");
+
+  // ===== Equipment Image (GitHub-first localStorage) =====
+  const fileInput = document.getElementById("nexusEquipImageInput");
+  const preview = document.getElementById("nexusEquipImagePreview");
+  const status = document.getElementById("nexusEquipImageStatus");
+  const clearBtn = document.getElementById("nexusEquipImageClearBtn");
+
+  function equipKey(eq){ return `nexus_equipment_${eq}`; }
+
+  function readEquip(eq){
+    try{ return JSON.parse(localStorage.getItem(equipKey(eq)) || "{}"); }
+    catch(e){ return {}; }
+  }
+
+  function writeEquip(eq, patch){
+    const cur = readEquip(eq);
+    const merged = { ...cur, ...patch, _updatedAt: Date.now() };
+    localStorage.setItem(equipKey(eq), JSON.stringify(merged));
+    return merged;
+  }
+
+  function setStatus(msg){ status.textContent = msg || ""; }
+
+  function show(url){
+    if(!url) return;
+    preview.src = url;
+    preview.style.display = "block";
+  }
+
+  function hide(){
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function loadPreviewForCurrentEq(){
+    const eq = getEq();
+    if(!eq){
+      hide();
+      setStatus("Enter Equipment ID to save an image.");
+      return;
+    }
+    const rec = readEquip(eq);
+    if(rec.imageDataUrl){
+      show(rec.imageDataUrl);
+      setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
+    } else {
+      hide();
+      setStatus("No image saved yet for this equipment.");
+    }
+  }
+
+  fileInput.addEventListener("change", async (e)=>{
+    const eq = getEq();
+    if(!eq){ alert("Enter Equipment ID first."); fileInput.value=""; return; }
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    setStatus("Saving image…");
+    const dataUrl = await fileToDataUrl(file);
+    writeEquip(eq, { imageDataUrl: dataUrl });
+    show(dataUrl);
+    setStatus("Saved. This will show on form.html for the same ?eq= value.");
+  });
+
+  clearBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return;
+    const cur = readEquip(eq);
+    delete cur.imageDataUrl;
+    cur._updatedAt = Date.now();
+    localStorage.setItem(equipKey(eq), JSON.stringify(cur));
+    fileInput.value = "";
+    hide();
+    setStatus("Cleared image for this equipment (this device).");
+  });
+
+  // Firebase-ready hook later
+  window.NEXUS_setEquipmentImageUrlFromFirebase = function(url){
+    const eq = getEq();
+    if(!eq || !url) return;
+    writeEquip(eq, { imageDataUrl: url });
+    show(url);
+    setStatus("Image set from Firebase (and cached locally).");
+  };
+
+  // init: if URL has eq, set it; load meta + image
+  if (incomingEq){
+    eqInput.value = incomingEq;
+  }
+  loadMetaIntoFields(getEq());
+  loadPreviewForCurrentEq();
+})();
+</script>
+
+  </div>
+</body>
+</html>

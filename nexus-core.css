@@ -1,0 +1,176 @@
+/* NEXUS Session Banner */
+#nxSessionBanner{
+  width:100%;
+  max-width:1100px;
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.40);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+}
+#nxSessionBanner .nx-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+#nxSessionBanner .nx-pill{
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 800;
+  font-size: 12px;
+}
+#nxSessionBanner select{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.92);
+  color:#111;
+  font-weight: 800;
+}
+@media print{
+  #nxSessionBanner{ display:none !important; }
+  .nx-print-page{ page-break-before: always; }
+  .nx-print-avoid{ break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* === NEXUS STANDARD THEME v1.4 === */
+/* Scope: only within .nexus-page to avoid disturbing legacy page-specific CSS. */
+:root{
+  --nx-font: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --nx-text: rgba(20,20,20,0.92);
+  --nx-muted: rgba(20,20,20,0.70);
+  --nx-paper: rgba(255,255,255,0.94);
+  --nx-border: rgba(0,0,0,0.14);
+  --nx-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  --nx-radius: 16px;
+  --nx-gap: 14px;
+  --nx-maxw: 1100px;
+}
+
+/* Page frame */
+.nexus-page{
+  min-height:100vh;
+  font-family: var(--nx-font);
+  color: var(--nx-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background image (optional). Individual pages can keep their own backgrounds.
+   If the page doesn't set a background, this provides the standard NEXUS look. */
+.nexus-page.nx-bg,
+body.nx-bg .nexus-page{
+  position: relative;
+}
+.nexus-page.nx-bg::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  background: url("transformer.jpg") center/cover no-repeat;
+  filter: blur(6px);
+  transform: scale(1.04);
+  opacity: 0.95;
+  z-index: -2;
+}
+.nexus-page.nx-bg::after{
+  content:"";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.34);
+  z-index: -1;
+}
+
+/* Standard content container (opt-in by adding .nexus-sheet in markup if desired) */
+.nexus-sheet{
+  width: min(var(--nx-maxw), calc(100% - 24px));
+  margin: 18px auto;
+  background: var(--nx-paper);
+  border: 1px solid var(--nx-border);
+  border-radius: var(--nx-radius);
+  box-shadow: var(--nx-shadow);
+  padding: 16px;
+}
+
+/* Forms: gentle defaults, scoped */
+.nexus-page input,
+.nexus-page select,
+.nexus-page textarea{
+  font: inherit;
+}
+
+.nexus-page input[type="text"],
+.nexus-page input[type="number"],
+.nexus-page input[type="email"],
+.nexus-page input[type="tel"],
+.nexus-page input[type="date"],
+.nexus-page input[type="time"],
+.nexus-page input[type="search"],
+.nexus-page select,
+.nexus-page textarea{
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.92);
+  outline: none;
+}
+
+.nexus-page input:focus,
+.nexus-page select:focus,
+.nexus-page textarea:focus{
+  border-color: rgba(0,0,0,0.34);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.10);
+}
+
+/* Buttons: opt-in class, but also safe defaults for bare buttons */
+.nexus-page .nx-btn,
+.nexus-page button{
+  font: inherit;
+}
+
+.nexus-page .nx-btn,
+.nexus-page button:not([class*="nx-"]):not(.pill):not(.chip){
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.62);
+  color: rgba(255,255,255,0.92);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.nexus-page .nx-btn:hover,
+.nexus-page button:not([class*="nx-"]):not(.pill):not(.chip):hover{
+  background: rgba(0,0,0,0.70);
+}
+
+.nexus-page .nx-btn:disabled,
+.nexus-page button:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Tables: minimal polish, scoped */
+.nexus-page table{
+  border-collapse: collapse;
+  width: 100%;
+}
+.nexus-page th,
+.nexus-page td{
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 8px 10px;
+  vertical-align: top;
+}
+.nexus-page th{
+  background: rgba(0,0,0,0.06);
+}
+
+/* Utility */
+.nx-maxw{
+  width: min(var(--nx-maxw), calc(100% - 24px));
+  margin-left: auto;
+  margin-right: auto;
+}
+.nx-muted{ color: var(--nx-muted); }
