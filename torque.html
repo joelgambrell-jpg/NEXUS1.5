@@ -74,11 +74,22 @@
     }catch(e){}
   })();
 </script>
-buttons.push({
-  label: "Torque Application SOP",
-  href: getEqLink("torqueSop") || "#",
-  external: true
-});
+
+<!-- FIX: wrap buttons.push inside a script block so this file remains valid HTML -->
+<script>
+  (function(){
+    try{
+      // Only push if the expected globals exist (prevents errors before redirect)
+      if (window.buttons && typeof window.buttons.push === "function") {
+        window.buttons.push({
+          label: "Torque Application SOP",
+          href: (typeof window.getEqLink === "function" ? (window.getEqLink("torqueSop") || "#") : "#"),
+          external: true
+        });
+      }
+    }catch(e){}
+  })();
+</script>
 
 <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
