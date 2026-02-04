@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEXUS – Snap-on ConnecTorq Import</title>
+  <link rel="stylesheet" href="./snapon_import.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div>
+          <h1>Snap-on ConnecTorq Import</h1>
+          <div class="sub">Export CSV from ConnecTorq → Share/Save to Files → import here.</div>
+        </div>
+        <a class="btn secondary" id="backBtn" href="javascript:history.back()">Back</a>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Job ID</label>
+          <input id="jobId" placeholder="e.g., JOB-1234" />
+        </div>
+        <div>
+          <label>Equipment ID</label>
+          <input id="equipmentId" placeholder="e.g., EQ-777" />
+        </div>
+      </div>
+
+      <label style="margin-top:12px;">ConnecTorq Export (CSV)</label>
+      <input id="file" type="file" accept=".csv,text/csv,text/plain" />
+
+      <div class="actions">
+        <button class="btn" id="parseBtn">Parse & Preview</button>
+        <button class="btn primary" id="saveBtn" disabled>Save to NEXUS</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div id="previewBlock" class="hidden">
+        <div class="sectionTitle">Preview</div>
+        <div class="pills">
+          <span class="pill" id="pillEvents">events: 0</span>
+          <span class="pill ok" id="pillPass">pass: 0</span>
+          <span class="pill bad" id="pillFail">fail: 0</span>
+          <span class="pill warn" id="pillUnits">units: —</span>
+        </div>
+
+        <div class="meta" id="metaLine"></div>
+
+        <div class="tableWrap">
+          <table id="previewTable"></table>
+        </div>
+      </div>
+
+      <div id="savedBlock" class="hidden">
+        <div class="sectionTitle">Saved Sessions (this job/equipment)</div>
+        <div id="sessionList" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./snapon_store.js"></script>
+  <script src="./snapon_import.js"></script>
+</body>
+</html>
