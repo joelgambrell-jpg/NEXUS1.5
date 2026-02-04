@@ -738,6 +738,26 @@
     `;
   }
 
+  /* ===== ADD: Fluke sessions helpers (localStorage) ===== */
+  function readFlukeSessions(){
+    try{
+      const raw = localStorage.getItem("nexus.meg.fluke.sessions.v1") || "[]";
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){
+      return [];
+    }
+  }
+  function flukeSessionsForEq(eqId){
+    const all = readFlukeSessions();
+    const eqTrim = String(eqId||"").trim();
+    return all.filter(s => {
+      if (!s || typeof s !== "object") return false;
+      if (!eqTrim) return true;
+      return String(s.equipmentId||"").trim() === eqTrim;
+    });
+  }
+
   function buildReport(){
     const meta = loadEqMeta() || {};
     const procoreConstructionUrl = meta.procoreEquipUrl || '';
@@ -787,76 +807,11 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== ADD: Snap-on ConnecTorq sessions (optional) =====
-       Reads localStorage key: nexus.torque.sessions.v1
-       Filters by equipmentId == eq
-       Includes first 25 events per session to avoid huge print/PDF
-    */
-    function renderSnaponTorque(eqId){
-      const key = "nexus.torque.sessions.v1";
-      let all = [];
-      try{
-        const raw = localStorage.getItem(key) || "[]";
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) all = parsed;
-      }catch(e){}
-
-      const sessions = all.filter(s => {
-        if (!s || typeof s !== "object") return false;
-        const sid = String(s.equipmentId || "").trim();
-        return eqId ? (sid === eqId) : false;
-      }).sort((a,b) => String(b.createdAt||b.capturedAt||"").localeCompare(String(a.createdAt||a.capturedAt||"")));
-
-      if (!sessions.length){
-        return `<div class="muted">No saved Snap-on ConnecTorq torque sessions found for this equipment.</div>`;
-      }
-
-      function fmt(v){
-        try{
-          if (!v) return "";
-          const d = new Date(v);
-          if (isNaN(d.getTime())) return String(v);
-          return d.toLocaleString();
-        }catch(e){ return String(v||""); }
-      }
-
-      function renderEventsTable(events){
-        const cols = ["timestamp","actualTorque","targetTorque","angle","units","passFail"];
-        const ev = (Array.isArray(events)?events:[]).slice(0,25);
-        if (!ev.length) return `<div class="muted">(No event rows in this session)</div>`;
-        return `
-          <table>
-            <thead><tr>${cols.map(c=>`<th>${safe(c)}</th>`).join('')}</tr></thead>
-            <tbody>
-              ${ev.map(e=>`<tr>${cols.map(c=>`<td>${safe((e && e[c]!=null)?e[c]:"")}</td>`).join('')}</tr>`).join('')}
-            </tbody>
-          </table>
-          <div class="muted" style="margin-top:6px;">
-            Showing first 25 events for print/PDF safety.
-          </div>
-        `;
-      }
-
-      const blocks = sessions.map((s, idx) => {
-        const title = `${safe(s.source || "SNAPON_CONNECTORQ")} • ${safe(String(s.eventCount ?? (Array.isArray(s.events)?s.events.length:0)))} events • ${safe(String(s.passCount||0))} pass / ${safe(String(s.failCount||0))} fail`;
-        const sub = `${safe(s.sourceFileName || "CSV")} • captured ${safe(fmt(s.capturedAt || s.createdAt))}`;
-        const job = safe(s.jobId || "");
-        const sid = safe(s.id || ("local-" + idx));
-        return `
-          <h3>Snap-on Session ${idx+1}</h3>
-          <div class="kv">
-            ${kvRow("Session ID", sid)}
-            ${kvRow("Building / Job", job)}
-            ${kvRow("Source File", s.sourceFileName || "")}
-            ${kvRow("Captured", fmt(s.capturedAt || s.createdAt))}
-            ${kvRow("Pass / Fail", `${s.passCount||0} / ${s.failCount||0}`)}
-          </div>
-          ${renderEventsTable(s.events)}
-        `;
-      }).join('');
-
-      return blocks;
-    }
+    /* ===== ADD: Fluke Connect Import links + completeness ===== */
+    const flukeImportLink = eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`;
+    const flukeEmbedLink  = eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`;
+    const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
+    const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
     reportEl.innerHTML = `
       ${sectionHeader('NEXUS Package', eq ? `Equipment: ${eq}` : '')}
@@ -874,6 +829,7 @@
       ${renderStatusLine('Torque', isDone('torque'), torqueLink)}
       ${renderStatusLine('FPV Photo', fpvComplete, fpvLink)}
       ${renderStatusLine('Pre-FOD', prefodComplete, prefodLink)}
+      ${renderStatusLine('Fluke Connect Meg (Optional Import)', flukeComplete, flukeImportLink)}
 
       <div class="pagebreak"></div>
 
@@ -906,18 +862,23 @@
 
       <div class="pagebreak"></div>
 
-      ${sectionHeader('Torque Log', '')}
-      ${renderTorque(torque)}
+      ${sectionHeader('Fluke Connect Megohmmeter Logs (Optional)', '')}
+      <div style="margin-top:10px;">
+        <iframe
+          src="${safe(flukeEmbedLink)}"
+          style="width:100%; border:0; min-height:520px;"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div style="margin-top:10px" class="muted">
+        Link: <span class="link"><a class="wrap-anywhere" href="${safe(flukeImportLink)}" target="_blank" rel="noopener noreferrer">Open Fluke Import Page</a></span>
+        • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.meg.fluke.sessions.v1</span>
+      </div>
 
       <div class="pagebreak"></div>
 
-      <!-- ===== ADD: Snap-on ConnecTorq (Optional) ===== -->
-      ${sectionHeader('Snap-on ConnecTorq Torque Logs (Optional)', '')}
-      ${renderSnaponTorque(eq)}
-      <div style="margin-top:10px" class="muted">
-        Link: <span class="link"><a class="wrap-anywhere" href="${safe(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`)}" target="_blank" rel="noopener noreferrer">Open Snap-on Import Page</a></span>
-        • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.torque.sessions.v1</span>
-      </div>
+      ${sectionHeader('Torque Log', '')}
+      ${renderTorque(torque)}
 
       <div class="pagebreak"></div>
 
