@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>Torque Application Log</title>
+<style>
+  :root{--bg:#b60000;--panel:rgba(255,255,255,0.20);--line:rgba(255,255,255,0.20);--accent:#00c2ff;--btn-bg:#0a0f24;--btn-txt:#3ecbff;--ok:#00ff66;--bad:#ff3b3b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
+  .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px)}
+  .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center}
+  .nx-header img{height:54px;width:auto;object-fit:contain}
+  .container{max-width:1000px;margin:24px auto 60px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;backdrop-filter:blur(6px)}
+  .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+  h1{margin:0;font-size:28px;font-weight:900}
+  .meta{font-weight:900;opacity:.95}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .btn{padding:12px 16px;font-size:14px;font-weight:900;border-radius:999px;color:var(--btn-txt);background:var(--btn-bg);border:2px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none}
+  .btn.secondary{background:rgba(0,0,0,0.20);color:#fff;border:2px solid rgba(255,255,255,0.35)}
+  .btn.complete{background:#00ff66 !important;color:#002b14 !important;border-color:#00ff66 !important;box-shadow:0 0 14px rgba(0,255,102,.85)}
+  .section{margin-top:18px;padding:16px;border-radius:18px;background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.20)}
+  .section-title{margin:0 0 12px;font-weight:900;letter-spacing:.02em}
+  table{width:100%;border-collapse:separate;border-spacing:0 10px}
+  th{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.95;text-align:left;padding:0 8px}
+  td{padding:0 8px}
+  input,select,textarea{width:100%;padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);outline:none;font-size:14px;background:rgba(255,255,255,0.92);color:#111;font-weight:800}
+  textarea{min-height:44px;resize:vertical}
+  .row-actions{display:flex;gap:8px;justify-content:flex-end}
+  .mini{padding:9px 12px;font-size:13px}
+  .go-wrap{display:flex;gap:10px;align-items:center}
+  .pill{flex:1;display:inline-flex;align-items:center;justify-content:center;height:38px;border-radius:999px;font-weight:900;border:2px solid rgba(255,255,255,0.25);cursor:pointer;user-select:none;transition:.12s}
+  .pill.go{background:rgba(0,255,102,0.18);border-color:rgba(0,255,102,0.55);color:#eafff1}
+  .pill.nogo{background:rgba(255,59,59,0.18);border-color:rgba(255,59,59,0.55);color:#ffecec}
+  .pill.on.go{background:var(--ok);border-color:var(--ok);color:#002b14;box-shadow:0 0 14px rgba(0,255,102,.75)}
+  .pill.on.nogo{background:var(--bad);border-color:var(--bad);color:#240000;box-shadow:0 0 14px rgba(255,59,59,.75)}
+  .hint{opacity:.9;font-weight:800;font-size:13px;line-height:1.35;margin-top:8px}
+  @media (max-width:760px){.top{flex-direction:column;align-items:stretch}}
+
+  /* ===== ADDED: Torque section lock (unlocked by Tilt Test 2-person sign-off) ===== */
+  .nx-torque-lock-wrap{ position:relative; }
+  .nx-torque-lock-wrap.nx-locked{ filter: grayscale(1) opacity(0.55); pointer-events:none; }
+  #nxTorqueLockOverlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    z-index:50;
+  }
+  #nxTorqueLockOverlay .card{
+    width:min(740px,100%);
+    text-align:center;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(20,20,20,0.55);
+    padding:16px;
+    box-shadow:0 18px 50px rgba(0,0,0,0.55);
+  }
+  #nxTorqueLockOverlay .q{ margin:0; font-size:18px; font-weight:900; }
+  #nxTorqueLockOverlay .sub{ margin:10px 0 0; font-size:13px; font-weight:800; opacity:.92; }
+
+  /* ===== ADDED: Tilt sign-off UI ===== */
+  .nx-signoff-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .nx-signoff-card{ border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); border-radius:18px; padding:14px; }
+  .nx-signoff-title{ font-weight:900; margin:0 0 10px; }
+  .nx-signoff-meta{ font-weight:800; font-size:12px; opacity:.92; line-height:1.35; }
+  .nx-signoff-input{ width:100%; margin-top:10px; }
+  .nx-signoff-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; justify-content:flex-end; }
+  .nx-pillbadge{ display:inline-flex; align-items:center; justify-content:center; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); font-weight:900; font-size:12px; }
+  .nx-pillbadge.ok{ border-color:rgba(0,255,102,0.55); background:rgba(0,255,102,0.12); }
+  .nx-pillbadge.bad{ border-color:rgba(255,59,59,0.55); background:rgba(255,59,59,0.10); }
+  @media (max-width:760px){ .nx-signoff-grid{ grid-template-columns:1fr; } }
+
+#stepCompleteBtn{display:none !important;}
+</style>
+
+<style>
+  .nx-footer{
+    margin-top: 40px;
+    padding: 18px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.35);
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+</style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+<body>
+  <div class="nexus-page">\n
+<div id="nxSessionBanner" class="nx-session-banner">
+  <div class="nx-left">
+    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+    <span class="nx-pill" data-nx-status>Ready</span>
+  </div>
+  <div class="nx-right">
+    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+        <option value="viewer">viewer</option>
+        <option value="tech">tech</option>
+        <option value="foreman">foreman</option>
+        <option value="superintendent">superintendent</option>
+        <option value="admin">admin</option>
+      </select>
+    </label>
+  </div>
+</div>
+<script>
+  (function(){
+    try{
+      var sel=document.getElementById("nxRoleSelect");
+      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+        sel.value = window.NEXUS.getRole();
+      }
+    }catch(e){}
+  })();
+</script>
+
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+<div class="container">
+  <div class="top">
+    <div>
+      <h1>Torque Application Log</h1>
+      <div class="meta" id="eqLabel"></div>
+    </div>
+    <div>
+      <div class="actions">
+        <a class="btn secondary" id="backBtn" href="#" onclick="return NEXUS_back();">Back</a>
+        <button class="btn secondary" id="saveBtn" type="button">Save</button>
+        <button class="btn" id="exportEmailBtn" type="button">Export to Email</button>
+        <button class="btn" id="stepCompleteBtn" type="button">STEP COMPLETE</button>
+      </div>
+      <div class="hint">Save persists locally now and includes Firebase hook placeholders. Export opens an email draft (PDF export should be generated server-side in Firebase later).</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Torque Notes &amp; Units</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label style="font-weight:900">Units</label>
+        <select id="notesUnit">
+          <option value="ft-lbs">ft-lbs</option>
+          <option value="in-lbs">in-lbs</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-weight:900">Torque Value</label>
+        <input id="notesTorque" type="number" step="any" placeholder="Enter torque value" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Torque Application Entries</div>
+    <div class="row-actions" style="margin-bottom:10px">
+      <button class="btn secondary mini" type="button" id="addRowBtn">Add Row</button>
+      <button class="btn secondary mini" type="button" id="clearRowsBtn">Clear</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:14%">Date</th>
+          <th style="width:14%">Time</th>
+          <th style="width:18%">Location</th>
+          <th style="width:18%">Bolt Size</th>
+          <th style="width:12%">Unit</th>
+          <th style="width:12%">Value</th>
+          <th style="width:12%">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Tilt Test (Go / No Go)</div>
+    <div class="hint">Select Go or No Go for each required check. Date/Technician tracked elsewhere.</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32%">Pre Torque Tilt Test</th>
+          <th style="width:22%">A-B</th>
+          <th style="width:22%">A-C</th>
+          <th style="width:22%">B-C</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:900">Phase to Phase</td>
+          <td data-tilt="AB"></td>
+          <td data-tilt="AC"></td>
+          <td data-tilt="BC"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="height:10px"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32%"></th>
+          <th style="width:22%">A-G</th>
+          <th style="width:22%">B-G</th>
+          <th style="width:22%">C-G</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:900">Phase to Ground</td>
+          <td data-tilt="AG"></td>
+          <td data-tilt="BG"></td>
+          <td data-tilt="CG"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="height:10px"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32%"></th>
+          <th style="width:22%">A-N</th>
+          <th style="width:22%">B-N</th>
+          <th style="width:22%">C-N</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:900">Phase to Neutral</td>
+          <td data-tilt="AN"></td>
+          <td data-tilt="BN"></td>
+          <td data-tilt="CN"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="height:10px"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32%"></th>
+          <th style="width:68%">N-G</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:900">Neutral to Ground</td>
+          <td data-tilt="NG"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  const qs=new URLSearchParams(location.search);
+  const eq=(qs.get("eq")||"").trim();
+  const stepId="torque";
+
+  const eqLabel=document.getElementById("eqLabel");
+  eqLabel.textContent=eq?`Equipment: ${eq}`:"Missing equipment ID (eq)";
+
+  const backBtn=document.getElementById("backBtn");
+  backBtn.textContent="Back to Equipment";
+const stepBtn=document.getElementById("stepCompleteBtn");
+  if(stepBtn){ stepBtn.style.display="none"; }
+
+  function stepKey(id){return `nexus_${eq||"NO_EQ"}_step_${id}`;}
+  function done(){return !!(eq && localStorage.getItem(stepKey(stepId))==="1");}
+  function refreshStep(){
+    stepBtn.classList.toggle("complete", done());
+    stepBtn.disabled=!eq;
+    stepBtn.title=eq?"":"Missing eq";
+  }
+  stepBtn.addEventListener("click",()=>{
+    if(!eq) return;
+    const next=!done();
+    if(next) localStorage.setItem(stepKey(stepId),"1");
+    else localStorage.removeItem(stepKey(stepId));
+    refreshStep();
+  });
+
+  function dataKey(){return `nexus_${eq||"NO_EQ"}_torque_log_v1`;}
+
+  const boltSizes=[
+    '1/4" slotted','1/4"','5/16"','3/8"','7/16"','1/2"','9/16"','5/8"','3/4"','7/8"','1"',
+    'M6','M8','M10','M12','M16'
+  ];
+
+  const rowsEl=document.getElementById("rows");
+  const addRowBtn=document.getElementById("addRowBtn");
+  const clearRowsBtn=document.getElementById("clearRowsBtn");
+
+  function mkRow(r={}){
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td><input type="date" value="${r.date||""}"></td>
+      <td><input type="time" value="${r.time||""}"></td>
+      <td><input type="text" placeholder="Panel / Room" value="${(r.location||"").replace(/"/g,'&quot;')}"></td>
+      <td>
+        <select>
+          ${boltSizes.map(s=>`<option ${s===r.bolt?"selected":""} value="${s.replace(/"/g,'&quot;')}">${s}</option>`).join('')}
+          <option value="__custom__">Custom…</option>
+        </select>
+      </td>
+      <td>
+        <select>
+          <option value="ft-lbs" ${r.unit==="ft-lbs"?"selected":""}>ft-lbs</option>
+          <option value="in-lbs" ${r.unit==="in-lbs"?"selected":""}>in-lbs</option>
+        </select>
+      </td>
+      <td><input type="number" step="any" value="${r.value||""}"></td>
+      <td><input type="text" placeholder="Notes" value="${(r.notes||"").replace(/"/g,'&quot;')}"></td>
+    `;
+
+    const sel=tr.children[3].querySelector('select');
+    sel.addEventListener('change',()=>{
+      if(sel.value==='__custom__'){
+        const v=prompt('Enter bolt size label (e.g., 1/4" slotted)');
+        if(v){
+          const opt=document.createElement('option');
+          opt.value=v; opt.textContent=v;
+          sel.insertBefore(opt, sel.lastElementChild);
+          sel.value=v;
+        } else {
+          sel.value=boltSizes[0];
+        }
+      }
+    });
+
+    return tr;
+  }
+
+  function readRows(){
+    const out=[];
+    rowsEl.querySelectorAll('tr').forEach(tr=>{
+      const tds=[...tr.querySelectorAll('td')];
+      out.push({
+        date: tds[0].querySelector('input').value,
+        time: tds[1].querySelector('input').value,
+        location: tds[2].querySelector('input').value,
+        bolt: tds[3].querySelector('select').value,
+        unit: tds[4].querySelector('select').value,
+        value: tds[5].querySelector('input').value,
+        notes: tds[6].querySelector('input').value,
+      });
+    });
+    return out;
+  }
+
+  function setRows(rows){
+    rowsEl.innerHTML='';
+    (rows||[]).forEach(r=>rowsEl.appendChild(mkRow(r)));
+    if(!rows || rows.length===0) rowsEl.appendChild(mkRow({}));
+  }
+
+  addRowBtn.addEventListener('click',()=>rowsEl.appendChild(mkRow({}))); 
+  clearRowsBtn.addEventListener('click',()=>{ if(confirm('Clear all rows?')) setRows([]); });
+
+  // Tilt test matrix (Go / No Go)
+  function tiltKey(){return `nexus_${eq||"NO_EQ"}_torque_tilt_v2`;}
+
+  const TILT_KEYS = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
+
+  function mkGoNoGoCell(td, value){
+    td.innerHTML = `
+      <div class="go-wrap">
+        <div class="pill go" data-v="GO">GO</div>
+        <div class="pill nogo" data-v="NO_GO">NO GO</div>
+      </div>
+    `;
+    const pills=[...td.querySelectorAll('.pill')];
+    function apply(v){
+      pills.forEach(p=>p.classList.toggle('on', p.getAttribute('data-v')===v));
+      td.setAttribute('data-result', v||'');
+    }
+    pills.forEach(p=>p.addEventListener('click',()=>apply(p.getAttribute('data-v'))));
+    apply(value);
+  }
+
+  function setTilt(obj){
+    document.querySelectorAll('[data-tilt]').forEach(td=>{
+      const k = td.getAttribute('data-tilt');
+      mkGoNoGoCell(td, (obj && obj[k]) ? obj[k] : '');
+    });
+  }
+
+  function readTilt(){
+    const out = {};
+    document.querySelectorAll('[data-tilt]').forEach(td=>{
+      const k = td.getAttribute('data-tilt');
+      out[k] = td.getAttribute('data-result') || '';
+    });
+    return out;
+  }
+
+  /* ==========================================================
+     ADDED: Tilt Test 2-person sign-off gate (Foreman+ required)
+     - Locks Torque Notes + Torque Application Entries until satisfied
+     - Two distinct signer names
+     - At least one signer role >= foreman
+     ========================================================== */
+  (function(){
+    const ROLE_ORDER = ["viewer","tech","foreman","superintendent","admin"];
+    function roleIndex(r){ return Math.max(0, ROLE_ORDER.indexOf(String(r||"viewer").toLowerCase())); }
+    function getRole(){
+      try{ if (window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole(); }catch(e){}
+      try{ return (localStorage.getItem("nexus_userRole") || "viewer").toLowerCase(); }catch(e){ return "viewer"; }
+    }
+    function roleAtLeast(min){ return roleIndex(getRole()) >= roleIndex(min); }
+
+    function signKey(){ return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`; }
+
+    // Backward compatible storage:
+    // - older versions stored an Array in this key
+    // - new version stores an Object: { signoffs: [], clearLog: [] }
+    function readState(){
+      try{
+        const raw = localStorage.getItem(signKey());
+        if (!raw) return { signoffs: [], clearLog: [] };
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return { signoffs: parsed, clearLog: [] };
+        if (parsed && typeof parsed === "object"){
+          const signoffs = Array.isArray(parsed.signoffs) ? parsed.signoffs : [];
+          const clearLog = Array.isArray(parsed.clearLog) ? parsed.clearLog : [];
+          return { signoffs, clearLog };
+        }
+      }catch(e){}
+      return { signoffs: [], clearLog: [] };
+    }
+    function writeState(state){
+      try{
+        const s = state && typeof state === "object" ? state : { signoffs: [], clearLog: [] };
+        if (!Array.isArray(s.signoffs)) s.signoffs = [];
+        if (!Array.isArray(s.clearLog)) s.clearLog = [];
+        localStorage.setItem(signKey(), JSON.stringify(s));
+      }catch(e){}
+    }
+    function readSignoffs(){ return readState().signoffs || []; }
+
+    // Requirements per approval:
+    // - Slot #1: "Title 1" sign-off (any role)
+    // - Slot #2: "Foreman+" sign-off (role must be foreman || higher)
+    function requirementsMet(arr){
+      const a = Array.isArray(arr) ? arr : [];
+      const s1 = a[0] || null;
+      const s2 = a[1] || null;
+      const s1ok = !!(s1 && String(s1.name||"").trim());
+      const s2ok = !!(s2 && String(s2.name||"").trim() && s2.role && roleIndex(s2.role) >= roleIndex("foreman"));
+      // distinct signer names
+            const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
+      const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
+      const distinct = n1 && n2 && n1 != n2;
+      return s1ok && s2ok && distinct;
+    }
+
+    // Wrap ONLY the torque portion (Notes + Entries) so Tilt Test remains interactive.
+    function findSectionByTitle(titleText){
+      const want = String(titleText||"").trim().toLowerCase();
+      const secs = Array.from(document.querySelectorAll(".section"));
+      for (const sec of secs){
+        const t = sec.querySelector(".section-title");
+        const txt = (t ? t.textContent : "").trim().toLowerCase();
+        if (txt === want) return sec;
+      }
+      return null;
+    }
+
+    const notesSec = findSectionByTitle("Torque Notes & Units");
+    const entriesSec = findSectionByTitle("Torque Application Entries");
+    const tiltSec = findSectionByTitle("Tilt Test (Go / No Go)");
+
+    if (!notesSec || !entriesSec || !tiltSec) return; // fail-safe: do nothing
+
+    const wrap = document.createElement("div");
+    wrap.className = "nx-torque-lock-wrap";
+    wrap.id = "nxTorqueLockWrap";
+
+    // Insert wrapper where notes section currently is.
+    const parent = notesSec.parentNode;
+    parent.insertBefore(wrap, notesSec);
+    wrap.appendChild(notesSec);
+    wrap.appendChild(entriesSec);
+
+    const overlay = document.createElement("div");
+    overlay.id = "nxTorqueLockOverlay";
+    overlay.innerHTML = `
+      <div class="card">
+        <p class="q">Torque section locked</p>
+        <p class="sub">Complete Tilt Test sign-offs (Title 1 + Foreman+) to unlock Torque Notes &amp; Entries.</p>
+      </div>
+    `;
+    wrap.appendChild(overlay);
+
+    // Build sign-off UI inside the Tilt Test section
+    const signUi = document.createElement("div");
+    signUi.id = "nxTiltSignoffs";
+    signUi.innerHTML = `
+      <div class="nx-signoff-wrap">
+        <div class="nx-signoff-title">Tilt Test Sign-Off (2-person)</div>
+        <div class="nx-signoff-sub">Requires two distinct signers. Sign-Off #2 must be Foreman or higher.</div>
+
+        <div class="nx-sign-grid">
+          <div class="nx-sign-card" data-slot="0">
+            <div class="nx-sign-label">TITLE 1 SIGN-OFF</div>
+            <input class="nx-sign-name" type="text" placeholder="Signer name" autocomplete="off" />
+            <button class="btn secondary mini nx-sign-btn" type="button">Sign</button>
+            <div class="nx-sign-meta"></div>
+          </div>
+          <div class="nx-sign-card" data-slot="1">
+            <div class="nx-sign-label">FOREMAN+ SIGN-OFF</div>
+            <input class="nx-sign-name" type="text" placeholder="Signer name" autocomplete="off" />
+            <button class="btn secondary mini nx-sign-btn" type="button">Sign</button>
+            <div class="nx-sign-meta"></div>
+          </div>
+        </div>
+
+        <div class="nx-sign-actions">
+          <div class="nx-sign-status" id="nxTiltSignStatus">Locked</div>
+          <button class="btn secondary mini" id="nxTiltClearSigns" type="button" title="Superintendent+ only (recorded)">Clear Sign-Offs</button>
+        </div>
+      </div>
+    `;
+
+    // Styles (scoped; additive)
+    const style = document.createElement("style");
+    style.textContent = `
+      .nx-signoff-wrap{ margin-top:14px; padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); }
+      .nx-signoff-title{ font-weight:900; font-size:15px; letter-spacing:.02em; }
+      .nx-signoff-sub{ margin-top:6px; font-weight:800; opacity:.92; font-size:13px; line-height:1.35; }
+      .nx-sign-grid{ margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      @media (max-width:760px){ .nx-sign-grid{ grid-template-columns:1fr; } }
+      .nx-sign-card{ padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.08); }
+      .nx-sign-label{ font-weight:900; font-size:12px; letter-spacing:.12em; text-transform:uppercase; opacity:.95; margin-bottom:8px; }
+      .nx-sign-name{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.18); outline:none; font-size:14px; background:rgba(255,255,255,0.92); color:#111; font-weight:800; }
+      .nx-sign-btn{ margin-top:10px; width:100%; }
+      .nx-sign-meta{ margin-top:8px; font-weight:800; font-size:12px; opacity:.92; line-height:1.35; }
+      .nx-sign-actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+      .nx-sign-status{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.22); background:rgba(0,0,0,0.22); font-weight:900; font-size:12px; }
+      .nx-sign-status.ok{ border-color:rgba(0,255,102,0.55); background:rgba(0,255,102,0.12); }
+      .nx-sign-status.bad{ border-color:rgba(255,59,59,0.55); background:rgba(255,59,59,0.10); }
+    `;
+    tiltSec.appendChild(style);
+    tiltSec.appendChild(signUi);
+
+    const statusEl = document.getElementById("nxTiltSignStatus");
+    const clearBtn = document.getElementById("nxTiltClearSigns");
+
+    function render(){
+      const arr = readSignoffs();
+      const met = requirementsMet(arr);
+
+      wrap.classList.toggle("nx-locked", !met);
+      overlay.style.display = met ? "none" : "block";
+
+      if (statusEl){
+        statusEl.textContent = met ? "Unlocked" : "Locked";
+        statusEl.classList.toggle("ok", met);
+        statusEl.classList.toggle("bad", !met);
+      }
+
+      // Fill each slot UI from stored record if present
+      const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
+      cards.forEach((card, idx)=>{
+        const rec = arr[idx] || null;
+        const nameIn = card.querySelector(".nx-sign-name");
+        const meta = card.querySelector(".nx-sign-meta");
+        if (rec && rec.name){
+          if (nameIn) nameIn.value = rec.name;
+          if (meta) meta.textContent = `Signed by ${rec.name} (${rec.role}) on ${new Date(rec.at).toLocaleString()}`;
+        } else {
+          if (meta) meta.textContent = "Not signed";
+        }
+      });
+
+      // Clear is Superintendent+ (and recorded)
+      if (clearBtn){
+        const ok = roleAtLeast("superintendent");
+        clearBtn.disabled = !ok;
+        clearBtn.style.opacity = ok ? "" : "0.55";
+      }
+
+      // Sign buttons always enabled, but role captured at sign time.
+    }
+
+    function sign(slot){
+      const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
+      const card = cards[slot];
+      if (!card) return;
+      const name = String((card.querySelector(".nx-sign-name") || {}).value || "").trim();
+      if (!name){ alert("Signer name is required."); return; }
+
+      // Slot #2 must be Foreman+ at sign time
+      if (Number(slot) === 1 && !roleAtLeast("foreman")){
+        alert("Foreman+ role required for the Foreman+ sign-off.");
+        return;
+      }
+
+      const state = readState();
+      const arr = Array.isArray(state.signoffs) ? state.signoffs : [];
+      arr[slot] = { name, role: getRole(), at: new Date().toISOString(), eq };
+      state.signoffs = arr;
+      writeState(state);
+      render();
+    }
+
+    document.querySelectorAll("#nxTiltSignoffs .nx-sign-card").forEach((card)=>{
+      const slot = Number(card.getAttribute("data-slot")||"0");
+      const btn = card.querySelector(".nx-sign-btn");
+      if (btn) btn.addEventListener("click", ()=>sign(slot));
+    });
+
+    if (clearBtn){
+      clearBtn.addEventListener("click", function(){
+        if (!roleAtLeast("superintendent")){
+          alert("Superintendent+ required to clear sign-offs.");
+          render();
+          return;
+        }
+        const state = readState();
+        const prev = Array.isArray(state.signoffs) ? state.signoffs : [];
+        if (!prev.length){
+          alert("No sign-offs to clear.");
+          return;
+        }
+        if (!confirm("Clear Tilt Test sign-offs? This action will be recorded.")) return;
+
+        const who = prompt("Enter your name to record the clear action:", "");
+        const whoName = String(who || "").trim();
+        if (!whoName){
+          alert("Name is required to clear (recorded).");
+          return;
+        }
+
+        const log = Array.isArray(state.clearLog) ? state.clearLog : [];
+        log.push({
+          by: whoName,
+          role: getRole(),
+          at: new Date().toISOString(),
+          eq,
+          clearedSignoffs: prev
+        });
+
+        state.signoffs = [];
+        state.clearLog = log;
+        writeState(state);
+        render();
+      });
+    }
+
+    window.addEventListener("nexus:rolechange", render);
+    render();
+  })();
+  // Notes section
+  const notesUnit=document.getElementById('notesUnit');
+  const notesTorque=document.getElementById('notesTorque');
+
+  function saveLocal(){
+    const payload={
+      meta:{eq, updatedAt: new Date().toISOString()},
+      notes:{unit:notesUnit.value, torque:notesTorque.value},
+      rows: readRows(),
+      tilt: readTilt(),
+    };
+    localStorage.setItem(dataKey(), JSON.stringify(payload));
+    localStorage.setItem(tiltKey(), JSON.stringify(payload.tilt));
+    // Firebase hook placeholder:
+    // window.nexusFirebase?.saveTorqueLog?.(eq, payload);
+  }
+
+  function loadLocal(){
+    try{
+      const raw=localStorage.getItem(dataKey());
+      if(raw){
+        const p=JSON.parse(raw);
+        notesUnit.value=p?.notes?.unit||'ft-lbs';
+        notesTorque.value=p?.notes?.torque||'';
+        setRows(p?.rows||[]);
+        setTilt(p?.tilt||{});
+        return;
+      }
+    }catch(e){}
+    setRows([]);
+    setTilt({});
+  }
+
+  document.getElementById('saveBtn').addEventListener('click',()=>{saveLocal(); alert('Saved.');});
+
+  document.getElementById('exportEmailBtn').addEventListener('click',()=>{
+    saveLocal();
+    const subject=`NEXUS Torque Log - ${eq||'NO_EQ'}`;
+    const body=`Torque log saved for ${eq||'NO_EQ'} on ${new Date().toLocaleString()}%0D%0A%0D%0A`+
+      `Next step: Firebase Cloud Function should generate PDF and attach it to emails / Procore.\n`;
+    window.location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+
+  loadLocal();
+  refreshStep();
+})();
+</script>
+
+<script>
+(function(){
+  window.NEXUS_back = function(){
+    try{
+      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+        history.back();
+        return false;
+      }
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    const eq = qs.get("eq");
+    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+    return false;
+  };
+})();
+</script>
+
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+</footer>
+
+  <script src="assets/js/nexus-core.js"></script>
+  <script src="assets/js/nexus-firebase-bridge.js"></script>
+  </div>
+</body>
+</html>
