@@ -4,6 +4,7 @@ CHANGES (ADDED ONLY — nothing removed):
 - Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
 - SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
 - Snap-on Import remains Torque-only
+- Torque Supporting Documents dropdown (Torque only): wraps the 4 supporting-doc buttons into a closed-by-default dropdown in the same position
 Everything else preserved.
 -->
 <!doctype html>
@@ -190,6 +191,22 @@ button.btn:empty{ display:none !important; }
   padding:10px 12px;
   border-radius:999px;
   text-align:center;
+}
+
+/* ===== Torque Supporting Documents dropdown (closed by default) ===== */
+.nx-supporting-docs{
+  width:100%;
+}
+.nx-supporting-docs-toggle{
+  width:100%;
+}
+.nx-supporting-docs-menu{
+  width:100%;
+  margin-top:10px;
+  display:none; /* CLOSED by default */
+}
+.nx-supporting-docs.open .nx-supporting-docs-menu{
+  display:block;
 }
 </style>
 
@@ -405,6 +422,83 @@ button.btn:empty{ display:none !important; }
     snaponBtn.setAttribute("href", href);
     snaponBtn.removeAttribute("target");
     snaponBtn.removeAttribute("rel");
+  })();
+
+  /* ===== Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  (function(){
+    if (id !== "torque") return;
+
+    const SUPPORTING_LABELS = new Set([
+      "Manufacturer Torque Specifications (Submittal)",
+      "Transformer Grounding Specification",
+      "ANSI Torque Specification Generalized",
+      "Burndy Torque Specifications for Mechanical Lugs",
+    ]);
+
+    function normTxt(s){
+      return String(s || "").replace(/\s+/g, " ").trim();
+    }
+
+    function findSupportingButtons(){
+      const wrap = document.getElementById("buttonsWrap") || document.body;
+      const btns = Array.from(wrap.querySelectorAll("a.btn, button.btn"));
+      return btns.filter(b => SUPPORTING_LABELS.has(normTxt(b.textContent)));
+    }
+
+    function buildDropdown(anchorBtn){
+      // Prevent double wrap
+      if (anchorBtn.closest(".nx-supporting-docs")) return null;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "nx-supporting-docs";
+
+      // Match your existing button style
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = anchorBtn.className + " nx-supporting-docs-toggle";
+      toggle.textContent = "Torque Supporting Documents";
+      toggle.setAttribute("aria-expanded", "false");
+
+      const menu = document.createElement("div");
+      menu.className = "nx-supporting-docs-menu";
+
+      toggle.addEventListener("click", () => {
+        const open = wrapper.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", String(open));
+      });
+
+      const parent = anchorBtn.parentElement;
+      parent.insertBefore(wrapper, anchorBtn);
+
+      wrapper.appendChild(toggle);
+      wrapper.appendChild(menu);
+
+      return { wrapper, menu };
+    }
+
+    function tryWrap(){
+      const supporting = findSupportingButtons();
+      if (!supporting.length) return false;
+
+      const dd = buildDropdown(supporting[0]);
+      if (!dd) return true; // already wrapped
+
+      // Move the existing supporting-doc buttons into the dropdown menu
+      supporting.forEach(b => dd.menu.appendChild(b));
+      return true;
+    }
+
+    // Try now; if buttons are rendered later, watch and wrap once they appear
+    if (tryWrap()) return;
+
+    const obs = new MutationObserver(() => {
+      if (tryWrap()) obs.disconnect();
+    });
+
+    obs.observe(document.getElementById("buttonsWrap") || document.body, {
+      childList: true,
+      subtree: true
+    });
   })();
 
   // (3) ONLY repurpose #rifNoProcoreBtn to Procore
