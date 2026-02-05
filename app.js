@@ -42,6 +42,28 @@
     document.body.style.backgroundImage = `url("${cfg.backgroundImage}")`;
   }
 
+  const buttonsWrap = document.getElementById("buttonsWrap");
+  const buttonsEl = document.getElementById("buttons");
+  const mediaEl = document.getElementById("media");
+
+  function withEq(href) {
+    if (!eq || !href) return href;
+    if (/^https?:\/\//i.test(href)) return href;
+
+    const u = new URL(href, location.href);
+    if (u.origin !== location.origin) return href;
+
+    u.searchParams.set("eq", eq);
+
+    if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
+      if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
+        u.searchParams.set("form", id);
+      }
+    }
+
+    return u.pathname + u.search + u.hash;
+  }
+
   // =========================
   // SOP button (per-form)
   // =========================
@@ -50,38 +72,26 @@
     if (!sopBtn) return;
 
     // STRICT SOP MODE:
-    // Default = hidden. Only show SOP where explicitly allowed.
-    // Some pages intentionally show the button but do nothing (SOP not created / not applicable).
-    const SOP_ALLOW = {
-      torque: "torque_sop.html",
-      meg: "megohmmeter_sop.html",
-    };
+    // Show ONLY on Meg pages. Never show on RIF/L2/Torque/Prefod/etc.
+    const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
-    const SOP_SHOW_NO_ACTION = new Set(["rif","l2"]);
+    // Default hidden everywhere
+    sopBtn.style.display = "none";
+    sopBtn.onclick = null;
 
-    if (SOP_SHOW_NO_ACTION.has(id)){
-      // Keep visible, but no link/action
-      sopBtn.style.display = "";
-      sopBtn.onclick = null;
-      return;
-    }
+    if (!MEG_IDS.has(id)) return;
 
-    const sopUrl = SOP_ALLOW[id] || null;
-    if (!sopUrl){
-      sopBtn.style.display = "none";
-      return;
-    }
+    const sopUrl = "megohmmeter_sop.html";
 
+    // Show and navigate same-tab (match workflow)
     sopBtn.style.display = "";
     sopBtn.onclick = () => {
-      try{ window.open(sopUrl, "_blank"); }catch(e){}
+      try{
+        location.href = withEq(sopUrl);
+      }catch(e){}
     };
   })();
 
-
-  const buttonsWrap = document.getElementById("buttonsWrap");
-  const buttonsEl = document.getElementById("buttons");
-  const mediaEl = document.getElementById("media");
 
   // Storage keys used by equipment.html
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
@@ -203,24 +213,6 @@
   window.addEventListener("beforeunload", () => {
     try{ if (fbUnsub) fbUnsub(); }catch(e){}
   });
-
-  function withEq(href) {
-    if (!eq || !href) return href;
-    if (/^https?:\/\//i.test(href)) return href;
-
-    const u = new URL(href, location.href);
-    if (u.origin !== location.origin) return href;
-
-    u.searchParams.set("eq", eq);
-
-    if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
-      if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
-        u.searchParams.set("form", id);
-      }
-    }
-
-    return u.pathname + u.search + u.hash;
-  }
 
   // EMBED MODE
   if (cfg.embedUrl) {
