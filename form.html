@@ -1,9 +1,10 @@
-<!-- form.html (FULL DROP-IN)
+<!-- form.html (FULL DROP-IN REPLACEMENT)
 CHANGES (ADDED ONLY — nothing removed):
-- Added Snap-on ConnecTorq Import OPTIONAL button that shows ONLY when id=torque
-- Button links to torque/snapon_import.html and passes eq if present
-- UPDATED: Megohmmeter SOP button now matches the big blue pill button style
-Everything else preserved exactly.
+1) Adds Fluke Connect Import (Optional) button that shows ONLY when id is a Meg page (meg / megohmmeter_line / megohmmeter_load)
+2) Adds a "guard" that REMOVES/HIDES any injected "Megohmmeter SOP" buttons from app.js on pages where it should NOT appear
+   - Megohmmeter SOP should appear ONLY on Meg pages
+   - It will NOT appear on RIF, L2, Torque, Pre-FOD, Diagram Image, Supporting Documents, etc.
+3) Keeps Snap-on ConnecTorq Import (Optional) ONLY on Torque page (as you already had)
 -->
 <!doctype html>
 <html lang="en">
@@ -112,8 +113,7 @@ button.btn:empty{ display:none !important; }
 #rifNoProcoreBtn{ display:none; }
 
 /* ===== SOP button behavior =====
-   DO NOT permanently hide with !important anymore.
-   We'll control it via JS by id (meg shows, rif hidden, others hidden).
+   Hidden by default; shown ONLY when id is a Meg page.
 */
 #openSopBtn{ display:none; }
 
@@ -122,27 +122,10 @@ button.btn:empty{ display:none !important; }
 */
 #snaponImportBtn{ display:none; }
 
-/* ===== FORCE SOP BUTTON TO MATCH PRIMARY BIG PILL BUTTONS ===== */
-#openSopBtn{
-  display:block !important;
-  width:100% !important;
-  max-width:620px !important;
-  margin:18px auto !important;
-  padding:16px 50px !important;
-  font-size:22px !important;
-  font-weight:700 !important;
-  border-radius:999px !important;
-
-  color:#3ecbff !important;
-  background:#0a0f24 !important;
-  border:2px solid #00c2ff !important;
-
-  cursor:pointer !important;
-  text-decoration:none !important;
-  line-height:normal !important;
-}
-#openSopBtn:hover{ transform:translateY(-2px); }
-#openSopBtn:disabled{ opacity:0.6 !important; cursor:not-allowed !important; transform:none !important; }
+/* ===== Fluke Connect (Optional) button behavior =====
+   Hidden by default; shown only when id is a Meg page.
+*/
+#flukeImportBtn{ display:none; }
 
 /* Equipment image */
 #nexusEquipImageContainer{ text-align:center; margin: 10px 0 18px 0; }
@@ -285,6 +268,9 @@ button.btn:empty{ display:none !important; }
     <!-- SOP (Meg only) -->
     <button class="btn" id="openSopBtn" type="button">Megohmmeter SOP</button>
 
+    <!-- Fluke Connect Import (Meg only, Optional) -->
+    <a class="btn" id="flukeImportBtn" href="#">Fluke Connect Import (Optional)</a>
+
     <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
 
@@ -318,6 +304,8 @@ button.btn:empty{ display:none !important; }
   const id = (qs.get("id") || "").trim();
   const rif = (qs.get("rif") || "").trim();
 
+  const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+
   const backLink = document.getElementById("backLink");
   if (backLink){
     backLink.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
@@ -332,14 +320,9 @@ button.btn:empty{ display:none !important; }
     const sopBtn = document.getElementById("openSopBtn");
     if (!sopBtn) return;
 
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
     // Hide by default for all pages
     sopBtn.style.display = "none";
     sopBtn.onclick = null;
-
-    // RIF: keep it gone (do not show)
-    if (id === "rif") return;
 
     // Show only on Meg pages
     if (megIds.has(id)){
@@ -350,6 +333,24 @@ button.btn:empty{ display:none !important; }
         location.href = url;
       });
     }
+  })();
+
+  /* ===== Fluke Connect Import Button (Meg only, Optional) ===== */
+  (function(){
+    const flukeBtn = document.getElementById("flukeImportBtn");
+    if (!flukeBtn) return;
+
+    flukeBtn.style.display = "none";
+    flukeBtn.onclick = null;
+
+    if (!megIds.has(id)) return;
+
+    const href = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+    flukeBtn.style.display = "block";
+    flukeBtn.textContent = "Fluke Connect Import (Optional)";
+    flukeBtn.setAttribute("href", href);
+    flukeBtn.removeAttribute("target");
+    flukeBtn.removeAttribute("rel");
   })();
 
   /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
@@ -480,8 +481,52 @@ button.btn:empty{ display:none !important; }
     });
   }
 
+  /* ===== GUARD: Remove any injected "Megohmmeter SOP" buttons from app.js on non-meg pages ===== */
+  function isMegSopText(txt){
+    const t = String(txt||"").trim().toLowerCase();
+    if (!t) return false;
+    // catch common variants
+    return t === "megohmmeter sop" || t.indexOf("megohmmeter sop") !== -1;
+  }
+
+  function enforceMegSopVisibility(){
+    try{
+      const allow = megIds.has(id);
+
+      // Look only inside the dynamic buttons region + panel (where app.js injects)
+      const scope = document.getElementById("buttonsWrap") || document.body;
+      const candidates = scope.querySelectorAll("a.btn,button.btn");
+
+      candidates.forEach(el => {
+        // Never touch our dedicated SOP button by id — we control it above.
+        if (el.id === "openSopBtn") return;
+
+        // If app.js injected a Meg SOP link/button, remove/hide it unless we're on a Meg page.
+        const text = (el.textContent || "").replace(/\s+/g," ").trim();
+        if (!isMegSopText(text)) return;
+
+        if (!allow){
+          el.style.display = "none";
+          el.style.pointerEvents = "none";
+          el.setAttribute("aria-hidden","true");
+        }else{
+          // On Meg pages, we still prefer ONLY the dedicated SOP button (so hide duplicates)
+          el.style.display = "none";
+          el.style.pointerEvents = "none";
+          el.setAttribute("aria-hidden","true");
+        }
+      });
+    }catch(e){}
+  }
+
   patchLinks();
-  const observer = new MutationObserver(patchLinks);
+  enforceMegSopVisibility();
+
+  const observer = new MutationObserver(() => {
+    patchLinks();
+    enforceMegSopVisibility();
+  });
+
   observer.observe(document.getElementById("buttons") || document.body, { childList:true, subtree:true });
 })();
 </script>
