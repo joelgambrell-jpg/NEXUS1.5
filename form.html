@@ -1,9 +1,9 @@
 <!-- form.html (FULL DROP-IN)
 CHANGES (ADDED ONLY — nothing removed):
-- Added Snap-on ConnecTorq Import OPTIONAL button that shows ONLY when id=torque
-- Button links to torque/snapon_import.html and passes eq if present
-- FIX: Force legacy Megohmmeter SOP button (#openSopBtn) to NEVER display (app.js renders SOP as a normal .btn now)
-Everything else preserved exactly.
+- Megohmmeter SOP now renders as a full-size blue .btn link (anchor) and ONLY shows on Meg pages
+- No global hiding of SOP (prevents "missing button/link" side effects)
+- Snap-on ConnecTorq Import OPTIONAL button still shows ONLY when id=torque
+Everything else preserved.
 -->
 <!doctype html>
 <html lang="en">
@@ -111,9 +111,7 @@ button.btn:empty{ display:none !important; }
 /* hidden by default; shown only when id=rif */
 #rifNoProcoreBtn{ display:none; }
 
-/* ===== SOP button behavior =====
-   Legacy SOP button: keep hidden. SOP is rendered via app.js as a normal .btn so it matches styling.
-*/
+/* SOP hidden by default; shown only when id is Meg page (controlled via JS below) */
 #openSopBtn{ display:none; }
 
 /* ===== Snap-on (Optional) button behavior =====
@@ -259,8 +257,8 @@ button.btn:empty{ display:none !important; }
     <!-- #3: Procore (RIF only) -->
     <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
 
-    <!-- Legacy SOP button (kept for compatibility; FORCE HIDDEN) -->
-    <button class="btn" id="openSopBtn" type="button">Megohmmeter SOP</button>
+    <!-- SOP (Meg ONLY) - must match big blue buttons -->
+    <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
 
     <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
@@ -304,12 +302,23 @@ button.btn:empty{ display:none !important; }
   const label = document.getElementById("eqLabel");
   if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
 
-  /* ===== SOP BUTTON (FORCE OFF — SOP rendered in app.js as normal .btn) ===== */
+  /* ===== SOP BUTTON (Meg ONLY, full-size .btn) ===== */
   (function(){
     const sopBtn = document.getElementById("openSopBtn");
     if (!sopBtn) return;
+
+    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+
     sopBtn.style.display = "none";
     sopBtn.onclick = null;
+
+    if (!megIds.has(id)) return;
+
+    const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+    sopBtn.style.display = "block";
+    sopBtn.setAttribute("href", href);
+    sopBtn.removeAttribute("target");
+    sopBtn.removeAttribute("rel");
   })();
 
   /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
@@ -317,21 +326,14 @@ button.btn:empty{ display:none !important; }
     const snaponBtn = document.getElementById("snaponImportBtn");
     if (!snaponBtn) return;
 
-    // Hidden by default (CSS + here)
     snaponBtn.style.display = "none";
     snaponBtn.onclick = null;
 
-    // Show ONLY on Torque page
     if (id !== "torque") return;
 
-    // Set link to importer (already created in /torque/)
-    // Pass eq if present (importer reads ?eq=)
     const href = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
     snaponBtn.style.display = "block";
     snaponBtn.setAttribute("href", href);
-
-    // Keep it same-tab (field flow). Prevent external/new tab behavior.
     snaponBtn.removeAttribute("target");
     snaponBtn.removeAttribute("rel");
   })();
@@ -366,11 +368,9 @@ button.btn:empty{ display:none !important; }
     }
 
     function getProcoreUrl(){
-      // 1) if Setup forwards it
       const qp = (qs.get("procore") || "").trim();
       if (looksLikeUrl(qp)) return qp;
 
-      // 2) common global keys
       const keys = [
         "nexus_procore_url",
         "nx_procore_url",
@@ -383,7 +383,6 @@ button.btn:empty{ display:none !important; }
         if (looksLikeUrl(v)) return v;
       }
 
-      // 3) equipment record
       if (eq){
         const raw = localStorage.getItem(`nexus_equipment_${eq}`);
         if (raw){
@@ -457,7 +456,6 @@ button.btn:empty{ display:none !important; }
   const img = document.getElementById("nexusEquipImageDisplay");
   if (!container || !img) return;
 
-  // ONLY show the equipment image on the Diagram Image page
   if (id !== "transformer"){
     container.style.display = "none";
     return;
@@ -479,12 +477,10 @@ button.btn:empty{ display:none !important; }
     if(rec.imageDataUrl) show(rec.imageDataUrl);
   }
 
-  // Firebase-ready hook
   window.NEXUS_setEquipmentImageUrl = function(url){
     show(url);
   };
 
-  // ===== Zoom / Lightbox =====
   const modal = document.getElementById("nxImgModal");
   const modalImg = document.getElementById("nxImgModalImg");
   const closeBtn = document.getElementById("nxImgModalCloseBtn");
@@ -522,21 +518,17 @@ button.btn:empty{ display:none !important; }
   }
 
   img.addEventListener("click", openModal);
-
   closeBtn.addEventListener("click", closeModal);
   resetBtn.addEventListener("click", resetTransform);
 
-  // click outside image closes
   modal.addEventListener("click", (e) => {
     if (e.target === modal || e.target === document.getElementById("nxImgModalInner")) closeModal();
   });
 
-  // ESC closes
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.style.display === "block") closeModal();
   });
 
-  // Mouse wheel zoom (desktop)
   modal.addEventListener("wheel", (e) => {
     if (modal.style.display !== "block") return;
     e.preventDefault();
@@ -546,7 +538,6 @@ button.btn:empty{ display:none !important; }
     applyTransform();
   }, { passive:false });
 
-  // Drag to pan (desktop + mobile single-finger)
   modalImg.addEventListener("pointerdown", (e) => {
     dragging = true;
     startX = e.clientX - panX;
