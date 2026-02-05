@@ -46,53 +46,6 @@
   const buttonsEl = document.getElementById("buttons");
   const mediaEl = document.getElementById("media");
 
-  function withEq(href) {
-    if (!eq || !href) return href;
-    if (/^https?:\/\//i.test(href)) return href;
-
-    const u = new URL(href, location.href);
-    if (u.origin !== location.origin) return href;
-
-    u.searchParams.set("eq", eq);
-
-    if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
-      if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
-        u.searchParams.set("form", id);
-      }
-    }
-
-    return u.pathname + u.search + u.hash;
-  }
-
-  // =========================
-  // SOP button (per-form)
-  // =========================
-  (function configureSopButton(){
-    const sopBtn = document.getElementById("openSopBtn");
-    if (!sopBtn) return;
-
-    // STRICT SOP MODE:
-    // Show ONLY on Meg pages. Never show on RIF/L2/Torque/Prefod/etc.
-    const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
-    // Default hidden everywhere
-    sopBtn.style.display = "none";
-    sopBtn.onclick = null;
-
-    if (!MEG_IDS.has(id)) return;
-
-    const sopUrl = "megohmmeter_sop.html";
-
-    // Show and navigate same-tab (match workflow)
-    sopBtn.style.display = "";
-    sopBtn.onclick = () => {
-      try{
-        location.href = withEq(sopUrl);
-      }catch(e){}
-    };
-  })();
-
-
   // Storage keys used by equipment.html
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
@@ -214,6 +167,35 @@
     try{ if (fbUnsub) fbUnsub(); }catch(e){}
   });
 
+  function withEq(href) {
+    if (!eq || !href) return href;
+    if (/^https?:\/\//i.test(href)) return href;
+
+    const u = new URL(href, location.href);
+    if (u.origin !== location.origin) return href;
+
+    u.searchParams.set("eq", eq);
+
+    if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
+      if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
+        u.searchParams.set("form", id);
+      }
+    }
+
+    return u.pathname + u.search + u.hash;
+  }
+
+  // =========================
+  // IMPORTANT: Kill the legacy SOP button entirely.
+  // We render SOP as a normal .btn entry so it matches styling.
+  // =========================
+  (function hardHideLegacySopBtn(){
+    const sopBtn = document.getElementById("openSopBtn");
+    if (!sopBtn) return;
+    sopBtn.style.display = "none";
+    sopBtn.onclick = null;
+  })();
+
   // EMBED MODE
   if (cfg.embedUrl) {
     if (buttonsWrap) buttonsWrap.style.display = "none";
@@ -252,6 +234,16 @@
       text: "Torque SOP",
       href: "torque_sop.html",
       newTab: true
+    });
+  }
+
+  // MEG: SOP under Megohmmeter Test Log (matches styling)
+  const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+  if (MEG_IDS.has(id)) {
+    btnList.splice(1, 0, {
+      text: "Megohmmeter SOP",
+      href: "megohmmeter_sop.html",
+      newTab: false
     });
   }
 
