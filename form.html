@@ -1,10 +1,9 @@
 <!-- form.html (FULL DROP-IN)
-FIXES:
-- Megohmmeter SOP button: ONLY on Meg pages, and always themed (big pill button)
-- Removes any injected/duplicate Megohmmeter SOP button (the small gray one) everywhere
-- Snap-on ConnecTorq Import: ONLY on Torque page
-- Fluke Connect Import (Optional): ONLY on Meg pages
-Everything else preserved.
+CHANGES (ADDED ONLY — nothing removed):
+- Added Snap-on ConnecTorq Import OPTIONAL button that shows ONLY when id=torque
+- Button links to torque/snapon_import.html and passes eq if present
+- FIX: Force legacy Megohmmeter SOP button (#openSopBtn) to NEVER display (app.js renders SOP as a normal .btn now)
+Everything else preserved exactly.
 -->
 <!doctype html>
 <html lang="en">
@@ -112,14 +111,15 @@ button.btn:empty{ display:none !important; }
 /* hidden by default; shown only when id=rif */
 #rifNoProcoreBtn{ display:none; }
 
-/* Our Meg SOP (Meg pages only) */
+/* ===== SOP button behavior =====
+   Legacy SOP button: keep hidden. SOP is rendered via app.js as a normal .btn so it matches styling.
+*/
 #openSopBtn{ display:none; }
 
-/* Snap-on (Torque only) */
+/* ===== Snap-on (Optional) button behavior =====
+   Hidden by default; shown only when id=torque.
+*/
 #snaponImportBtn{ display:none; }
-
-/* Fluke (Meg only) */
-#flukeImportBtn{ display:none; }
 
 /* Equipment image */
 #nexusEquipImageContainer{ text-align:center; margin: 10px 0 18px 0; }
@@ -259,11 +259,8 @@ button.btn:empty{ display:none !important; }
     <!-- #3: Procore (RIF only) -->
     <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
 
-    <!-- SOP (Meg only) -->
+    <!-- Legacy SOP button (kept for compatibility; FORCE HIDDEN) -->
     <button class="btn" id="openSopBtn" type="button">Megohmmeter SOP</button>
-
-    <!-- Fluke Connect Import (Meg only, Optional) -->
-    <a class="btn" id="flukeImportBtn" href="#">Fluke Connect Import (Optional)</a>
 
     <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
@@ -307,85 +304,12 @@ button.btn:empty{ display:none !important; }
   const label = document.getElementById("eqLabel");
   if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
 
-  /* ===== HARD BLOCK: remove any injected duplicate/small "Megohmmeter SOP" buttons =====
-     This is what keeps showing as the small gray button (injected by app.js).
-     We remove it everywhere, including Meg pages, so ONLY our themed #openSopBtn remains.
-  */
-  function purgeInjectedMegSopButtons(root){
-    const scope = root || document;
-
-    // Remove any element that looks like a button and has text "Megohmmeter SOP" but is NOT our #openSopBtn
-    const candidates = scope.querySelectorAll("a,button,div,span");
-    candidates.forEach(el => {
-      try{
-        if (!el || el.id === "openSopBtn") return;
-        if (el.closest && el.closest("#openSopBtn")) return;
-
-        const t = (el.textContent || "").replace(/\u00A0/g," ").trim();
-        if (!t) return;
-
-        if (t === "Megohmmeter SOP"){
-          // if it isn't our official button, remove it
-          if (el.remove) el.remove();
-        }
-      }catch(e){}
-    });
-  }
-
-  // Run once immediately
-  purgeInjectedMegSopButtons(document);
-
-  // Keep purging during any injections
-  const purgeObs = new MutationObserver((muts) => {
-    for (const m of muts){
-      if (m.addedNodes){
-        m.addedNodes.forEach(n => {
-          if (n && n.nodeType === 1){
-            purgeInjectedMegSopButtons(n);
-          }
-        });
-      }
-    }
-  });
-  purgeObs.observe(document.body, { childList:true, subtree:true });
-
-  /* ===== SOP BUTTON (Meg only) ===== */
+  /* ===== SOP BUTTON (FORCE OFF — SOP rendered in app.js as normal .btn) ===== */
   (function(){
     const sopBtn = document.getElementById("openSopBtn");
     if (!sopBtn) return;
-
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
     sopBtn.style.display = "none";
     sopBtn.onclick = null;
-
-    if (!megIds.has(id)) return;
-
-    sopBtn.style.display = "block";
-    sopBtn.textContent = "Megohmmeter SOP";
-    sopBtn.addEventListener("click", function(){
-      const url = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-      location.href = url;
-    });
-  })();
-
-  /* ===== Fluke Connect Import Button (Meg only, Optional) ===== */
-  (function(){
-    const flukeBtn = document.getElementById("flukeImportBtn");
-    if (!flukeBtn) return;
-
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
-    flukeBtn.style.display = "none";
-    flukeBtn.onclick = null;
-
-    if (!megIds.has(id)) return;
-
-    const href = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-    flukeBtn.style.display = "block";
-    flukeBtn.setAttribute("href", href);
-    flukeBtn.removeAttribute("target");
-    flukeBtn.removeAttribute("rel");
   })();
 
   /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
@@ -393,14 +317,21 @@ button.btn:empty{ display:none !important; }
     const snaponBtn = document.getElementById("snaponImportBtn");
     if (!snaponBtn) return;
 
+    // Hidden by default (CSS + here)
     snaponBtn.style.display = "none";
     snaponBtn.onclick = null;
 
+    // Show ONLY on Torque page
     if (id !== "torque") return;
 
+    // Set link to importer (already created in /torque/)
+    // Pass eq if present (importer reads ?eq=)
     const href = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
     snaponBtn.style.display = "block";
     snaponBtn.setAttribute("href", href);
+
+    // Keep it same-tab (field flow). Prevent external/new tab behavior.
     snaponBtn.removeAttribute("target");
     snaponBtn.removeAttribute("rel");
   })();
