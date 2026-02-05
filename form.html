@@ -1,8 +1,8 @@
 <!-- form.html (FULL DROP-IN)
 CHANGES (ADDED ONLY — nothing removed):
 - Added Snap-on ConnecTorq Import OPTIONAL button that shows ONLY when id=torque
-- Added Fluke Connect Import OPTIONAL button that shows ONLY when id is a Meg page (meg / megohmmeter_line / megohmmeter_load)
-- Fluke button links to meg/fluke_import.html and passes eq if present
+- Button links to torque/snapon_import.html and passes eq if present
+- UPDATED: Megohmmeter SOP button now matches the big blue pill button style
 Everything else preserved exactly.
 -->
 <!doctype html>
@@ -122,10 +122,27 @@ button.btn:empty{ display:none !important; }
 */
 #snaponImportBtn{ display:none; }
 
-/* ===== Fluke (Optional) button behavior =====
-   Hidden by default; shown only when id is Meg page.
-*/
-#flukeImportBtn{ display:none; }
+/* ===== FORCE SOP BUTTON TO MATCH PRIMARY BIG PILL BUTTONS ===== */
+#openSopBtn{
+  display:block !important;
+  width:100% !important;
+  max-width:620px !important;
+  margin:18px auto !important;
+  padding:16px 50px !important;
+  font-size:22px !important;
+  font-weight:700 !important;
+  border-radius:999px !important;
+
+  color:#3ecbff !important;
+  background:#0a0f24 !important;
+  border:2px solid #00c2ff !important;
+
+  cursor:pointer !important;
+  text-decoration:none !important;
+  line-height:normal !important;
+}
+#openSopBtn:hover{ transform:translateY(-2px); }
+#openSopBtn:disabled{ opacity:0.6 !important; cursor:not-allowed !important; transform:none !important; }
 
 /* Equipment image */
 #nexusEquipImageContainer{ text-align:center; margin: 10px 0 18px 0; }
@@ -268,9 +285,6 @@ button.btn:empty{ display:none !important; }
     <!-- SOP (Meg only) -->
     <button class="btn" id="openSopBtn" type="button">Megohmmeter SOP</button>
 
-    <!-- Fluke Connect Import (Meg only, Optional) -->
-    <a class="btn" id="flukeImportBtn" href="#">Fluke Connect Import (Optional)</a>
-
     <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
 
@@ -336,30 +350,6 @@ button.btn:empty{ display:none !important; }
         location.href = url;
       });
     }
-  })();
-
-  /* ===== Fluke Connect Import Button (Meg only, Optional) ===== */
-  (function(){
-    const flukeBtn = document.getElementById("flukeImportBtn");
-    if (!flukeBtn) return;
-
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
-    // Hidden by default (CSS + here)
-    flukeBtn.style.display = "none";
-    flukeBtn.onclick = null;
-
-    // Show ONLY on Meg pages
-    if (!megIds.has(id)) return;
-
-    const href = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-    flukeBtn.style.display = "block";
-    flukeBtn.setAttribute("href", href);
-
-    // Same-tab flow
-    flukeBtn.removeAttribute("target");
-    flukeBtn.removeAttribute("rel");
   })();
 
   /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
