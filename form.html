@@ -4,7 +4,7 @@ CHANGES (ADDED ONLY — nothing removed):
 - Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
 - SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
 - Snap-on Import remains Torque-only
-- Torque Supporting Documents dropdown (Torque only): wraps the 4 supporting-doc buttons into a closed-by-default dropdown in the same position
+- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
 Everything else preserved.
 -->
 <!doctype html>
@@ -193,21 +193,39 @@ button.btn:empty{ display:none !important; }
   text-align:center;
 }
 
-/* ===== Torque Supporting Documents dropdown (closed by default) ===== */
-.nx-supporting-docs{
-  width:100%;
-}
+/* ===== ADDED: Force same font even if external CSS overrides ===== */
+body{ font-family: Arial, sans-serif !important; }
+.btn{ font-family: inherit !important; }
+
+/* ===== ADDED: Torque Supporting Documents dropdown (closed by default) ===== */
+.nx-supporting-docs{ width:100%; }
 .nx-supporting-docs-toggle{
   width:100%;
+  position:relative;
+  padding-right:74px; /* room for arrow */
+  font-family: inherit !important;
+}
+.nx-supporting-docs-toggle::after{
+  content:"▾";
+  position:absolute;
+  right:28px;
+  top:50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  transition: transform 160ms ease;
+  pointer-events:none;
+}
+.nx-supporting-docs.open .nx-supporting-docs-toggle::after{
+  transform: translateY(-50%) rotate(180deg);
 }
 .nx-supporting-docs-menu{
   width:100%;
   margin-top:10px;
   display:none; /* CLOSED by default */
 }
-.nx-supporting-docs.open .nx-supporting-docs-menu{
-  display:block;
-}
+.nx-supporting-docs.open .nx-supporting-docs-menu{ display:block; }
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -424,7 +442,7 @@ button.btn:empty{ display:none !important; }
     snaponBtn.removeAttribute("rel");
   })();
 
-  /* ===== Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
   (function(){
     if (id !== "torque") return;
 
@@ -432,7 +450,7 @@ button.btn:empty{ display:none !important; }
       "Manufacturer Torque Specifications (Submittal)",
       "Transformer Grounding Specification",
       "ANSI Torque Specification Generalized",
-      "Burndy Torque Specifications for Mechanical Lugs",
+      "Burndy Torque Specifications for Mechanical Lugs"
     ]);
 
     function normTxt(s){
@@ -446,13 +464,11 @@ button.btn:empty{ display:none !important; }
     }
 
     function buildDropdown(anchorBtn){
-      // Prevent double wrap
       if (anchorBtn.closest(".nx-supporting-docs")) return null;
 
       const wrapper = document.createElement("div");
       wrapper.className = "nx-supporting-docs";
 
-      // Match your existing button style
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = anchorBtn.className + " nx-supporting-docs-toggle";
@@ -481,14 +497,12 @@ button.btn:empty{ display:none !important; }
       if (!supporting.length) return false;
 
       const dd = buildDropdown(supporting[0]);
-      if (!dd) return true; // already wrapped
+      if (!dd) return true;
 
-      // Move the existing supporting-doc buttons into the dropdown menu
       supporting.forEach(b => dd.menu.appendChild(b));
       return true;
     }
 
-    // Try now; if buttons are rendered later, watch and wrap once they appear
     if (tryWrap()) return;
 
     const obs = new MutationObserver(() => {
