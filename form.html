@@ -1,8 +1,9 @@
 <!-- form.html (FULL DROP-IN)
 CHANGES (ADDED ONLY — nothing removed):
-- Megohmmeter SOP now renders as a full-size blue .btn link (anchor) and ONLY shows on Meg pages
-- No global hiding of SOP (prevents "missing button/link" side effects)
-- Snap-on ConnecTorq Import OPTIONAL button still shows ONLY when id=torque
+- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
+- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
+- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
+- Snap-on Import remains Torque-only
 Everything else preserved.
 -->
 <!doctype html>
@@ -108,15 +109,12 @@ button.btn:empty{ display:none !important; }
 }
 
 #stepCompleteBtn{ display:none; }
-/* hidden by default; shown only when id=rif */
 #rifNoProcoreBtn{ display:none; }
 
-/* SOP hidden by default; shown only when id is Meg page (controlled via JS below) */
+/* SOP fallback hidden by default; shown only via JS and ONLY if config.js didn't already add one */
 #openSopBtn{ display:none; }
 
-/* ===== Snap-on (Optional) button behavior =====
-   Hidden by default; shown only when id=torque.
-*/
+/* Snap-on (Optional) button behavior: torque-only */
 #snaponImportBtn{ display:none; }
 
 /* Equipment image */
@@ -257,7 +255,7 @@ button.btn:empty{ display:none !important; }
     <!-- #3: Procore (RIF only) -->
     <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
 
-    <!-- SOP (Meg ONLY) - must match big blue buttons -->
+    <!-- SOP FALLBACK (Meg only, shown only if config.js didn't already add SOP) -->
     <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
 
     <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
@@ -302,23 +300,94 @@ button.btn:empty{ display:none !important; }
   const label = document.getElementById("eqLabel");
   if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
 
-  /* ===== SOP BUTTON (Meg ONLY, full-size .btn) ===== */
+  function norm(s){ return String(s||"").trim().toLowerCase(); }
+  function findBtnByText(text){
+    const want = norm(text);
+    const wrap = document.getElementById("buttonsWrap") || document.body;
+    const btns = wrap.querySelectorAll("a.btn, button.btn");
+    for (const b of btns){
+      if (norm(b.textContent) === want) return b;
+    }
+    return null;
+  }
+  function ensureBtn(text, href, insertAfterText){
+    const existing = findBtnByText(text);
+    if (existing) return existing;
+
+    const buttonsEl = document.getElementById("buttons");
+    if (!buttonsEl) return null;
+
+    const a = document.createElement("a");
+    a.className = "btn";
+    a.textContent = text;
+    a.href = href;
+
+    // keep same-tab for internal pages
+    a.removeAttribute("target");
+    a.removeAttribute("rel");
+
+    if (insertAfterText){
+      const after = findBtnByText(insertAfterText);
+      if (after && after.parentElement){
+        // insert after "after"
+        if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
+        else after.parentElement.appendChild(a);
+        return a;
+      }
+    }
+    buttonsEl.appendChild(a);
+    return a;
+  }
+
+  /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
   (function(){
-    const sopBtn = document.getElementById("openSopBtn");
-    if (!sopBtn) return;
+    const sopFallback = document.getElementById("openSopBtn");
+    if (!sopFallback) return;
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
-    sopBtn.style.display = "none";
-    sopBtn.onclick = null;
+    // default hidden
+    sopFallback.style.display = "none";
+    sopFallback.onclick = null;
 
     if (!megIds.has(id)) return;
 
+    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
+    const existingSop = findBtnByText("Megohmmeter SOP");
+    if (existingSop && existingSop !== sopFallback){
+      sopFallback.style.display = "none";
+      return;
+    }
+
+    // Otherwise show fallback SOP
     const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-    sopBtn.style.display = "block";
-    sopBtn.setAttribute("href", href);
-    sopBtn.removeAttribute("target");
-    sopBtn.removeAttribute("rel");
+    sopFallback.style.display = "block";
+    sopFallback.setAttribute("href", href);
+    sopFallback.removeAttribute("target");
+    sopFallback.removeAttribute("rel");
+  })();
+
+  /* ===== Fluke Import: Meg ONLY, ensure present (auto-add if missing) ===== */
+  (function(){
+    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+    if (!megIds.has(id)) return;
+
+    const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+    // If config.js already provides it, do nothing.
+    const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
+    if (existingFluke) return;
+
+    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
+    ensureBtn(
+      "Fluke Connect Import (Optional)",
+      flukeHref,
+      "Megohmmeter SOP"
+    ) || ensureBtn(
+      "Fluke Connect Import (Optional)",
+      flukeHref,
+      "Megohmmeter Test Log (Fillable)"
+    );
   })();
 
   /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
