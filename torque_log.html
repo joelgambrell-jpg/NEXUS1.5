@@ -417,19 +417,40 @@ const stepBtn=document.getElementById("stepCompleteBtn");
   }
 
   /* ==========================================================
-     ADDED: Tilt Test 2-person sign-off gate (Foreman+ required)
+     ADDED: Tilt Test 2-person sign-off gate (No role requirement)
      - Locks Torque Notes + Torque Application Entries until satisfied
      - Two distinct signer names
-     - At least one signer role >= foreman
+     - No role requirement (role rules removed)
      ========================================================== */
   (function(){
     const ROLE_ORDER = ["viewer","tech","foreman","superintendent","admin"];
-    function roleIndex(r){ return Math.max(0, ROLE_ORDER.indexOf(String(r||"viewer").toLowerCase())); }
+    function roleIndex(r){ return 999; }
     function getRole(){
-      try{ if (window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole(); }catch(e){}
-      try{ return (localStorage.getItem("nexus_userRole") || "viewer").toLowerCase(); }catch(e){ return "viewer"; }
+      // Prefer the on-page role selector value (exists before nexus-core loads)
+      try{
+        var sel = document.getElementById("nxRoleSelect");
+        if (sel && sel.value) return String(sel.value).toLowerCase();
+      }catch(e){}
+
+      // Then prefer NEXUS role getter (after nexus-core loads)
+      try{
+        if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+          var r = window.NEXUS.getRole();
+          if (r) return String(r).toLowerCase();
+        }
+      }catch(e){}
+
+      // Finally fall back to common localStorage keys
+      try{
+        var keys = ["nexus_userRole","nexus_role","nx_role","nexusRole","role"]; 
+        for (var i=0;i<keys.length;i++){
+          var v = (localStorage.getItem(keys[i]) || "").trim();
+          if (v) return v.toLowerCase();
+        }
+      }catch(e){}
+      return "viewer";
     }
-    function roleAtLeast(min){ return roleIndex(getRole()) >= roleIndex(min); }
+    function roleAtLeast(min){ return true; }
 
     function signKey(){ return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`; }
 
@@ -462,13 +483,13 @@ const stepBtn=document.getElementById("stepCompleteBtn");
 
     // Requirements per approval:
     // - Slot #1: "Title 1" sign-off (any role)
-    // - Slot #2: "Foreman+" sign-off (role must be foreman || higher)
+    // - Slot #2: "Foreman+" sign-off (role rules removed)
     function requirementsMet(arr){
       const a = Array.isArray(arr) ? arr : [];
       const s1 = a[0] || null;
       const s2 = a[1] || null;
       const s1ok = !!(s1 && String(s1.name||"").trim());
-      const s2ok = !!(s2 && String(s2.name||"").trim() && s2.role && roleIndex(s2.role) >= roleIndex("foreman"));
+      const s2ok = !!(s2 && String(s2.name||"").trim());
       // distinct signer names
             const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
       const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
@@ -597,9 +618,9 @@ const stepBtn=document.getElementById("stepCompleteBtn");
 
       // Clear is Superintendent+ (and recorded)
       if (clearBtn){
-        const ok = roleAtLeast("superintendent");
-        clearBtn.disabled = !ok;
-        clearBtn.style.opacity = ok ? "" : "0.55";
+        const ok = true;
+        clearBtn.disabled = false;
+        clearBtn.style.opacity = "";
       }
 
       // Sign buttons always enabled, but role captured at sign time.
@@ -613,14 +634,14 @@ const stepBtn=document.getElementById("stepCompleteBtn");
       if (!name){ alert("Signer name is required."); return; }
 
       // Slot #2 must be Foreman+ at sign time
-      if (Number(slot) === 1 && !roleAtLeast("foreman")){
+      if (Number(slot) === 1 && !true){
         alert("Foreman+ role required for the Foreman+ sign-off.");
         return;
       }
 
       const state = readState();
       const arr = Array.isArray(state.signoffs) ? state.signoffs : [];
-      arr[slot] = { name, role: getRole(), at: new Date().toISOString(), eq };
+      arr[slot] = { name, role: String(getRole()||"viewer").toLowerCase(), at: new Date().toISOString(), eq };
       state.signoffs = arr;
       writeState(state);
       render();
@@ -634,8 +655,8 @@ const stepBtn=document.getElementById("stepCompleteBtn");
 
     if (clearBtn){
       clearBtn.addEventListener("click", function(){
-        if (!roleAtLeast("superintendent")){
-          alert("Superintendent+ required to clear sign-offs.");
+        if (!true){
+          alert("No role requirement to clear sign-offs.");
           render();
           return;
         }
@@ -670,7 +691,12 @@ const stepBtn=document.getElementById("stepCompleteBtn");
       });
     }
 
+    // Role change hooks (supports both the banner selector and any NEXUS event)
     window.addEventListener("nexus:rolechange", render);
+    try{
+      var roleSel = document.getElementById("nxRoleSelect");
+      if (roleSel) roleSel.addEventListener("change", render);
+    }catch(e){}
     render();
   })();
   // Notes section

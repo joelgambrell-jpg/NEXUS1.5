@@ -234,7 +234,7 @@
     <a class="btn" id="mopBtn" href="#">MOP</a>
     <a class="btn" id="sopBtn" href="#">SOP</a>
     <a class="btn" id="docsBtn" href="#">Documents</a>
-    <!-- ADDED: Step Complete (hidden until inspection sign-off). Superintendent+ only. -->
+    <!-- ADDED: Step Complete (hidden until inspection sign-off). Role rules removed. -->
     <button class="btn" id="energStepCompleteBtn" type="button" style="display:none;">STEP COMPLETE</button>
   </div>
 
@@ -247,7 +247,7 @@
     <h2 id="nxEnergLockQuestion">Has the electrical inspection been completed?</h2>
     <div id="nxEnergLockBadge" class="nx-lock-warn">Locked</div>
     <div id="nxEnergLockSub">
-      Superintendent+ sign-off required to unlock Energization. This does not mark the Energization step complete.
+      Sign-off required to unlock Energization. This does not mark the Energization step complete.
     </div>
     <input id="nxEnergLockName" type="text" placeholder="Signer name (required)" autocomplete="off" />
     <div id="nxEnergLockActions">
@@ -283,19 +283,19 @@
   document.getElementById("docsBtn").href = link("energ_docs");
 </script>
 
-<!-- ===== ADDED: Inspection lock + Superintendent+ sign-off + Step Complete gate ===== -->
+<!-- ===== ADDED: Inspection lock + sign-off + Step Complete gate (role rules removed) ===== -->
 <script>
 (function(){
-  const ROLE_ORDER = ["viewer","tech","foreman","superintendent","admin"];
-  function roleIndex(r){ return Math.max(0, ROLE_ORDER.indexOf(String(r||"viewer").toLowerCase())); }
   function getRole(){
     try{
-      if (window.NEXUS && typeof window.NEXUS.getRole === "function") return window.NEXUS.getRole();
+      const sel = document.getElementById("nxRoleSelect");
+      if (sel && sel.value) return String(sel.value).toLowerCase();
     }catch(e){}
+    try{ if (window.NEXUS && typeof window.NEXUS.getRole === "function") return String(window.NEXUS.getRole()).toLowerCase(); }
+    catch(e){}
     try{ return (localStorage.getItem("nexus_userRole") || "viewer").toLowerCase(); }
     catch(e){ return "viewer"; }
   }
-  function roleAtLeast(minRole){ return roleIndex(getRole()) >= roleIndex(minRole); }
 
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
@@ -323,7 +323,7 @@
   }
   function isSigned(){
     const s = readSignoff();
-    return !!(s && s.name && s.role && s.at);
+    return !!(s && s.name && s.at);
   }
   function isStepComplete(){
     try{
@@ -373,13 +373,11 @@
       stepBtn.style.display = signed ? "inline-flex" : "none";
       const done = isStepComplete();
       stepBtn.classList.toggle("complete", done);
-
-      // Superintendent+ only
-      const okRole = roleAtLeast("superintendent");
-      stepBtn.disabled = !okRole;
-      stepBtn.style.opacity = okRole ? "" : "0.55";
-      stepBtn.title = okRole ? "" : "Superintendent+ required";
-    }
+      // Role gating removed
+      stepBtn.disabled = false;
+      stepBtn.style.opacity = "";
+      stepBtn.title = "";
+}
 
     /* ===== ADDED: Energization progress (2 steps) ===== */
     try{
@@ -395,15 +393,13 @@
 
     if (!signed) showOverlay();
     else hideOverlay();
-
-    // sign button state
+    // sign button state (role gating removed)
     if (yesBtn){
-      const okRole = roleAtLeast("superintendent");
-      yesBtn.disabled = !okRole;
-      yesBtn.style.opacity = okRole ? "" : "0.55";
-      yesBtn.title = okRole ? "" : "Superintendent+ required";
+      yesBtn.disabled = false;
+      yesBtn.style.opacity = "";
+      yesBtn.title = "";
     }
-  }
+}
 
   // Guard: missing eq should not lock the whole browser.
   if (!eq){
@@ -427,11 +423,6 @@
 
   if (yesBtn){
     yesBtn.addEventListener("click", function(){
-      if (!roleAtLeast("superintendent")){
-        alert("Superintendent+ required to sign off.");
-        updateUi();
-        return;
-      }
       const name = String((nameInput && nameInput.value) || "").trim();
       if (!name){
         alert("Signer name is required.");
@@ -449,11 +440,6 @@
 
   if (stepBtn){
     stepBtn.addEventListener("click", function(){
-      if (!roleAtLeast("superintendent")){
-        alert("Superintendent+ required.");
-        updateUi();
-        return;
-      }
       if (!isSigned()){
         alert("Inspection sign-off required first.");
         updateUi();
