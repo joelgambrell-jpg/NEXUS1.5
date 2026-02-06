@@ -1,3 +1,4 @@
+<!-- meg/fluke_export_embed.html (FULL DROP-IN, OPTIONAL/SAFE TO KEEP) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -192,7 +193,7 @@
   const rowsHtml = sessions.map(s=>{
     const when = pick(s, ["at","date","datetime","timestamp","time"]);
     const label = pick(s, ["label","name","test","title"]);
-    const summary = pick(s, ["summary","notes","result","reading","details"]);
+    const details = pick(s, ["summary","notes","result","reading","details"]);
     const fileName = pick(s, ["fileName","filename","sourceFile","file"]);
 
     return `
@@ -200,7 +201,7 @@
         <td>${esc(when)}</td>
         <td><b>${esc(label)}</b></td>
         <td>
-          ${esc(summary)}
+          ${esc(details)}
           ${fileName ? `<div class="muted" style="margin-top:6px;"><b>File:</b> ${esc(fileName)}</div>` : ``}
         </td>
       </tr>
