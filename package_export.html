@@ -197,8 +197,7 @@
   backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
 
   /* ===== ADD: robust URL builder for GitHub Pages project folders =====
-     Ensures links/iframes resolve under the same folder as package_export.html,
-     e.g. https://.../NEXUS1.5/ + "meg/fluke_import.html"
+     Ensures links/iframes resolve under the same folder as package_export.html
   */
   function nexusUrl(relPath){
     const base = new URL(window.location.href);
@@ -801,9 +800,9 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== ADD: Snap-on ConnecTorq Import links + completeness ===== */
-    const snaponImportLink = nexusUrl(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`);
-    const snaponEmbedLink  = nexusUrl(eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`);
+    /* ===== FIXED PATHS: Snap-on ConnecTorq Import/Embed ===== */
+    const snaponImportLink = nexusUrl(eq ? `torque/torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/torque/snapon_import.html`);
+    const snaponEmbedLink  = nexusUrl(eq ? `torque/torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/torque/snapon_export_embed.html`);
     const snaponSessions = (function(){
       try{
         const raw = localStorage.getItem("nexus.torque.sessions.v1") || "[]";
@@ -815,9 +814,9 @@
     })();
     const snaponComplete = !!(snaponSessions && snaponSessions.length);
 
-    /* ===== ADD: Fluke Connect Import links + completeness ===== */
-    const flukeImportLink = nexusUrl(eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`);
-    const flukeEmbedLink  = nexusUrl(eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`);
+    /* ===== FIXED PATHS: Fluke Connect Import/Embed ===== */
+    const flukeImportLink = nexusUrl(eq ? `meg/meg/meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/meg/meg/fluke_import.html`);
+    const flukeEmbedLink  = nexusUrl(eq ? `meg/meg/meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/meg/meg/fluke_export_embed.html`);
     const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
     const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
