@@ -1,3 +1,4 @@
+<!-- package_export.html (FULL DROP-IN) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -758,6 +759,48 @@
     });
   }
 
+  /* ===== NEW: Render Fluke inline (identical export behavior to Torque) ===== */
+  function renderFlukeSessionsInline(eqId){
+    const sessions = (eqId ? flukeSessionsForEq(eqId) : readFlukeSessions()) || [];
+    if (!sessions.length){
+      return `<div class="muted">No Fluke sessions saved.</div>`;
+    }
+
+    function pick(o, keys){
+      for (const k of keys){
+        const v = o && o[k];
+        if (v != null && String(v).trim() !== "") return String(v);
+      }
+      return "";
+    }
+
+    const rowsHtml = sessions.map(s=>{
+      const when = pick(s, ["at","date","datetime","timestamp","time"]);
+      const label = pick(s, ["label","name","test","title"]);
+      const details = pick(s, ["summary","notes","result","reading","details"]);
+      const fileName = pick(s, ["fileName","filename","sourceFile","file"]);
+
+      return `<tr>
+        <td>${safe(when)}</td>
+        <td><b>${safe(label)}</b></td>
+        <td>${safe(details)}${fileName ? `<div class="muted" style="margin-top:6px;"><b>File:</b> ${safe(fileName)}</div>` : ``}</td>
+      </tr>`;
+    }).join("");
+
+    return `
+      <table>
+        <thead>
+          <tr>
+            <th style="width:190px;">Date/Time</th>
+            <th style="width:220px;">Label</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    `;
+  }
+
   function buildReport(){
     const meta = loadEqMeta() || {};
     const procoreConstructionUrl = meta.procoreEquipUrl || '';
@@ -807,9 +850,8 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== ADD: Fluke Connect Import links + completeness ===== */
+    /* ===== Fluke Connect Import links + completeness ===== */
     const flukeImportLink = eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`;
-    const flukeEmbedLink  = eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`;
     const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
     const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
@@ -863,13 +905,7 @@
       <div class="pagebreak"></div>
 
       ${sectionHeader('Fluke Connect Megohmmeter Logs (Optional)', '')}
-      <div style="margin-top:10px;">
-        <iframe
-          src="${safe(flukeEmbedLink)}"
-          style="width:100%; border:0; min-height:520px;"
-          loading="lazy"
-        ></iframe>
-      </div>
+      ${renderFlukeSessionsInline(eq)}
       <div style="margin-top:10px" class="muted">
         Link: <span class="link"><a class="wrap-anywhere" href="${safe(flukeImportLink)}" target="_blank" rel="noopener noreferrer">Open Fluke Import Page</a></span>
         • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.meg.fluke.sessions.v1</span>
