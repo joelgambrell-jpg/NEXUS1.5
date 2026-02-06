@@ -16,7 +16,6 @@
   }
   *{box-sizing:border-box;}
 
-  /* IMPORTANT: match Package Export report area (white background, dark text) */
   html,body{
     margin:0;
     padding:0;
@@ -25,7 +24,6 @@
     color:#111;
   }
 
-  /* Wrap long strings everywhere */
   .wrap-anywhere,
   a,
   .link,
@@ -39,9 +37,7 @@
     white-space:normal;
   }
 
-  .wrap{
-    padding: 10px 6px 12px;
-  }
+  .wrap{ padding: 10px 6px 12px; }
 
   .header{
     display:flex;
@@ -111,7 +107,6 @@
   }
 
   @media print{
-    /* Keep it clean inside the export PDF */
     html,body{ background:#fff !important; }
     table, tr, td, th{
       break-inside:avoid;
@@ -151,7 +146,6 @@
   }
 
   function readSessions(){
-    // Your export page declares this is the storage key
     const raw = localStorage.getItem("nexus.meg.fluke.sessions.v1") || "[]";
     const arr = safeParse(raw);
     return Array.isArray(arr) ? arr : [];
@@ -187,7 +181,6 @@
     return;
   }
 
-  // Best-effort fields (keeps future-proof flexibility)
   function pick(o, keys){
     for (const k of keys){
       const v = o && o[k];
