@@ -229,33 +229,11 @@
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
     <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
     <span class="nx-pill" data-nx-status>Ready</span>
   </div>
   <div class="nx-right">
-    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-        <option value="viewer">viewer</option>
-        <option value="tech">tech</option>
-        <option value="foreman">foreman</option>
-        <option value="superintendent">superintendent</option>
-        <option value="admin">admin</option>
-      </select>
-    </label>
-  </div>
 </div>
-
-<script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
-      }
-    }catch(e){}
-  })();
-</script>
-
+</div>
 <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
 <div class="nx-header-wrap">
