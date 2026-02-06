@@ -2,185 +2,235 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NEXUS – Fluke Meg Export Embed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fluke Export Embed</title>
 
 <link rel="stylesheet" href="../nexus-core.css" />
-<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+<link rel="stylesheet" href="../nexus-core.print.css" media="print" />
 
 <style>
-body{ margin:0; font-family: Arial, sans-serif; color:#111; background: transparent; }
-.section{
-  background: rgba(255,255,255,0.92);
-  border-radius: 12px;
-  padding: 14px;
-  border: 1px solid rgba(0,0,0,0.12);
-}
-.hdr{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.hdr h2{ margin:0; font-size:16px; font-weight:900; }
-.meta{ margin-top:4px; font-size:12px; font-weight:700; color:#444; }
-.pills{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
-.pill{
-  display:inline-flex;
-  align-items:center;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(0,0,0,0.18);
-  font-size:12px;
-  font-weight:800;
-  background:#fff;
-}
-.list{ margin-top:12px; display:grid; gap:10px; }
-.item{
-  border:1px solid rgba(0,0,0,0.12);
-  border-radius:12px;
-  padding:10px;
-  background:#fff;
-}
-.itemTop{ display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.itemTitle{ font-weight:900; font-size:13px; }
-.itemSub{ margin-top:2px; color:#444; font-size:12px; font-weight:700; }
-.mono{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size:12px;
-  color:#333;
-  margin-top:4px;
-}
-.tableWrap{
-  margin-top:10px;
-  overflow:auto;
-  border-radius:10px;
-  border:1px solid rgba(0,0,0,0.12);
-}
-table{ width:100%; border-collapse:collapse; min-width: 860px; }
-th,td{ padding:7px 8px; border-bottom:1px solid rgba(0,0,0,0.08); font-size:12px; }
-th{ text-align:left; background: rgba(0,0,0,0.04); font-weight:900; }
-.smallNote{ margin-top:10px; font-size:11px; font-weight:700; color:#555; }
+  :root{
+    --line: rgba(0,0,0,0.15);
+    --muted: rgba(0,0,0,0.70);
+    --soft: rgba(0,0,0,0.05);
+  }
+  *{box-sizing:border-box;}
+
+  /* IMPORTANT: match Package Export report area (white background, dark text) */
+  html,body{
+    margin:0;
+    padding:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: transparent;
+    color:#111;
+  }
+
+  /* Wrap long strings everywhere */
+  .wrap-anywhere,
+  a,
+  .link,
+  td,
+  th,
+  p,
+  div{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    word-wrap:break-word;
+    white-space:normal;
+  }
+
+  .wrap{
+    padding: 10px 6px 12px;
+  }
+
+  .header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+
+  .title{
+    font-size:15px;
+    font-weight:900;
+    margin:0;
+    letter-spacing:.02em;
+  }
+
+  .meta{
+    font-size:12px;
+    font-weight:800;
+    color:var(--muted);
+  }
+
+  .pillrow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin: 8px 0 10px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:var(--soft);
+    border:1px solid rgba(0,0,0,0.10);
+    font-weight:900;
+    font-size:12px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    font-size:13px;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:8px 8px;
+    vertical-align:top;
+  }
+  th{
+    background:rgba(0,0,0,0.05);
+    text-align:left;
+    font-weight:900;
+  }
+
+  .muted{ opacity:.8; }
+  .empty{
+    padding:12px;
+    border:1px dashed rgba(0,0,0,0.22);
+    border-radius:12px;
+    background:rgba(0,0,0,0.03);
+    font-weight:900;
+  }
+
+  @media print{
+    /* Keep it clean inside the export PDF */
+    html,body{ background:#fff !important; }
+    table, tr, td, th{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+  }
 </style>
 </head>
 
 <body>
-<div class="section" id="root">
-  <div class="hdr">
+<div class="wrap" id="root">
+  <div class="header">
     <div>
-      <h2>Fluke Connect Megohmmeter Logs (Optional)</h2>
-      <div class="meta" id="metaLine">Loading…</div>
-    </div>
-    <div class="pills">
-      <span class="pill" id="pillEq">Equipment: —</span>
-      <span class="pill" id="pillJob">Building: —</span>
-      <span class="pill" id="pillCount">Sessions: 0</span>
+      <div class="title">Fluke Connect Megohmmeter Logs (Optional)</div>
+      <div class="meta">Storage: <span style="font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">nexus.meg.fluke.sessions.v1</span></div>
     </div>
   </div>
 
-  <div class="list" id="list"></div>
+  <div class="pillrow" id="pillRow" style="display:none;"></div>
 
-  <div class="smallNote">
-    Source: localStorage key <span class="mono">nexus.meg.fluke.sessions.v1</span>
-  </div>
+  <div id="out" class="empty">No Fluke sessions found.</div>
 </div>
 
 <script>
 (function(){
-  const STORE_KEY = "nexus.meg.fluke.sessions.v1";
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
 
-  function qs(name){
-    try{ return (new URL(location.href)).searchParams.get(name) || ""; }
-    catch(e){ return ""; }
+  function safeParse(v){
+    try{ return JSON.parse(v); }catch(e){ return null; }
   }
-  function safeJsonParse(s, fallback){
-    try{
-      const v = JSON.parse(s);
-      return (v == null ? fallback : v);
-    }catch(e){
-      return fallback;
-    }
-  }
-  function fmt(v){
-    try{
-      if (!v) return "";
-      var d = new Date(v);
-      if (isNaN(d.getTime())) return String(v);
-      return d.toLocaleString();
-    }catch(e){ return String(v || ""); }
-  }
+
   function esc(s){
-    return String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    return String(s ?? "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
   }
 
-  var eq = (qs("eq") || qs("equipmentId") || "").trim();
-  var job = (qs("building") || qs("job") || qs("jobId") || "").trim();
+  function readSessions(){
+    // Your export page declares this is the storage key
+    const raw = localStorage.getItem("nexus.meg.fluke.sessions.v1") || "[]";
+    const arr = safeParse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }
 
-  if (!eq) eq = (localStorage.getItem("nexus_active_eq") || "").trim();
-  if (!job) job = (localStorage.getItem("nexus_active_building") || "").trim();
+  function forEq(all, eqId){
+    const eqTrim = String(eqId||"").trim();
+    if (!eqTrim) return all;
+    return all.filter(s=>{
+      if(!s || typeof s !== "object") return false;
+      return String(s.equipmentId||"").trim() === eqTrim;
+    });
+  }
 
-  document.getElementById("pillEq").textContent = "Equipment: " + (eq || "—");
-  document.getElementById("pillJob").textContent = "Building: " + (job || "—");
+  const all = readSessions();
+  const sessions = forEq(all, eq);
 
-  var all = safeJsonParse(localStorage.getItem(STORE_KEY) || "[]", []);
-  if (!Array.isArray(all)) all = [];
+  const pillRow = document.getElementById("pillRow");
+  if (pillRow){
+    pillRow.style.display = "flex";
+    pillRow.innerHTML = `
+      <span class="pill">Equipment: ${esc(eq || "(all)")}</span>
+      <span class="pill">Sessions: ${esc(String(sessions.length))}</span>
+    `;
+  }
 
-  var sessions = all.filter(function(s){
-    if (!s || typeof s !== "object") return false;
-    if (eq && String(s.equipmentId||"").trim() !== eq) return false;
-    if (job){
-      var sj = String(s.jobId||"").trim();
-      if (sj !== job) return false;
-    }
-    return true;
-  }).sort(function(a,b){
-    return String(b.createdAt||b.capturedAt||"").localeCompare(String(a.createdAt||a.capturedAt||""));
-  });
-
-  document.getElementById("pillCount").textContent = "Sessions: " + sessions.length;
-  document.getElementById("metaLine").textContent =
-    sessions.length ? ("Rendered " + sessions.length + " saved session(s).") : "No saved Fluke sessions found for this equipment/building.";
-
-  var list = document.getElementById("list");
+  const out = document.getElementById("out");
   if (!sessions.length){
-    list.innerHTML =
-      '<div class="item">' +
-      '<div class="itemTitle">No Fluke meg logs attached yet.</div>' +
-      '<div class="itemSub">When available, export CSV from Fluke Connect and import on the Fluke Import page.</div>' +
-      '</div>';
+    if (out){
+      out.className = "empty";
+      out.innerHTML = "No Fluke sessions found.";
+    }
     return;
   }
 
-  function renderRowsTable(rows){
-    var cols = ["timestamp","voltage","resistance","units","pi","dar","passFail","notes"];
-    var r = Array.isArray(rows) ? rows.slice(0,25) : [];
-    if (!r.length) return '<div class="itemSub">(No rows)</div>';
-    return '' +
-      '<div class="tableWrap"><table>' +
-      '<thead><tr>' + cols.map(c=>'<th>'+esc(c)+'</th>').join('') + '</tr></thead>' +
-      '<tbody>' +
-      r.map(function(x){
-        return '<tr>' + cols.map(function(c){
-          return '<td>' + esc((x && x[c]!=null) ? x[c] : "") + '</td>';
-        }).join('') + '</tr>';
-      }).join('') +
-      '</tbody></table></div>' +
-      '<div class="itemSub" style="margin-top:6px;">Showing first 25 rows for print/PDF safety.</div>';
+  // Best-effort fields (keeps future-proof flexibility)
+  function pick(o, keys){
+    for (const k of keys){
+      const v = o && o[k];
+      if (v != null && String(v).trim() !== "") return String(v);
+    }
+    return "";
   }
 
-  list.innerHTML = sessions.map(function(s, idx){
-    var rows = Array.isArray(s.rows) ? s.rows.length : 0;
-    var title = (s.source || "FLUKE_CONNECT_IMPORT") + " • " + rows + " rows";
-    var sub = (s.sourceFileName || "CSV") + " • captured " + fmt(s.capturedAt || s.createdAt);
-    var sid = s.id || ("local-" + idx);
+  const rowsHtml = sessions.map(s=>{
+    const when = pick(s, ["at","date","datetime","timestamp","time"]);
+    const label = pick(s, ["label","name","test","title"]);
+    const summary = pick(s, ["summary","notes","result","reading","details"]);
+    const fileName = pick(s, ["fileName","filename","sourceFile","file"]);
 
-    return '' +
-      '<div class="item">' +
-      '  <div class="itemTop">' +
-      '    <div>' +
-      '      <div class="itemTitle">' + esc(title) + '</div>' +
-      '      <div class="itemSub">' + esc(sub) + '</div>' +
-      '      <div class="mono">sessionId: ' + esc(sid) + '</div>' +
-      '    </div>' +
-      '  </div>' +
-      renderRowsTable(s.rows) +
-      '</div>';
+    return `
+      <tr>
+        <td>${esc(when)}</td>
+        <td><b>${esc(label)}</b></td>
+        <td>
+          ${esc(summary)}
+          ${fileName ? `<div class="muted" style="margin-top:6px;"><b>File:</b> ${esc(fileName)}</div>` : ``}
+        </td>
+      </tr>
+    `;
   }).join("");
+
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th style="width:190px;">Date/Time</th>
+          <th style="width:220px;">Label</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+
+  if(out){
+    out.className = "";
+    out.innerHTML = html;
+  }
 })();
 </script>
 </body>
