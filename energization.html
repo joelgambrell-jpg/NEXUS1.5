@@ -1,161 +1,248 @@
-<!-- =========================
-     energization.html
-     (Formatted like equipment.html)
-     Buttons: MOP, SOP, Documents
-     Carries ?eq= through links
-     ========================= -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
+
 <title>Energization</title>
 
 <style>
   :root{
     --bg:#b60000;
-    --panel:rgba(255,255,255,0.25);
-    --btn-bg:#ffffffdd;
-    --btn-color:#000;
-    --btn-hover-bg:#fff;
-    --btn-hover-color:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.22);
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --ok:#2dff9b;
+    --warn:#ffb800;
+    --bad:#ff3b3b;
+    --text:#fff;
   }
-  html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
-  .page-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; }
-  main.container{
-    width:100%; max-width:960px; background:var(--panel); padding:28px; border-radius:18px;
-    backdrop-filter: blur(6px); text-align:center;
-  }
-  h1{ margin:0 0 8px; font-size:34px; }
-  .eq{ font-size:20px; font-weight:900; margin:0 0 18px; }
 
-  .actions{
-    display:flex;
-    justify-content:center;
-    gap:12px;
-    flex-wrap:wrap;
-    margin: 0 0 18px;
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color:var(--text);
+    background:var(--bg);
   }
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
+
+  .page-wrap{ max-width:1100px; margin: 22px auto 60px; padding: 0 18px; }
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  h1{
+    margin: 0 0 8px;
+    font-size: 34px;
+    font-weight: 900;
+    text-shadow: 0 4px 18px rgba(0,0,0,.35);
+    text-align:center;
+  }
+  .eq{
+    font-weight: 900;
+    opacity: .95;
+    margin-bottom: 14px;
+    text-align:center;
+  }
+
+  .row-center{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; }
 
   .btn{
-    width:100%; height:60px; background:var(--btn-bg); color:var(--btn-color);
-    border:2px solid #ff0000; border-radius:12px; font-size:15px; font-weight:700;
-    cursor:pointer; display:inline-flex; justify-content:center; align-items:center;
-    text-decoration:none; transition:0.2s; box-shadow:0 0 12px #ff0000;
-  }
-  .btn:hover{ background:var(--btn-hover-bg); color:var(--btn-hover-color); transform:translateY(-2px); }
-
-  .btn.small{
-    width:auto;
-    height:46px;
-    padding:0 18px;
+    padding:12px 14px;
+    font-size:15px;
+    font-weight:900;
     border-radius:999px;
-    font-size:14px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+    min-height:44px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn.danger{
+    background: rgba(255,59,59,0.18);
+    color:#fff;
+    border:2px solid rgba(255,59,59,0.65);
+  }
+  .btn.ok{
+    background: rgba(45,255,155,0.16);
+    color:#fff;
+    border:2px solid rgba(45,255,155,0.65);
+  }
+  .btn.locked{ opacity:.55; pointer-events:none; }
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
   }
 
-  .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+  .top-actions{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 10px;
+  }
 
-
-  /* ===== ADDED: Energization progress tracker (page-specific) ===== */
   .progress-wrap{
-    margin: 14px 0 18px;
+    margin: 12px 0 18px;
     padding: 14px 14px 12px;
     border-radius: 18px;
     background: rgba(0,0,0,0.18);
     border: 1px solid rgba(255,255,255,0.20);
   }
-  .progress-label{ display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:900; margin-bottom:10px; }
-  .progress-track{ width:100%; height:14px; border-radius:999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); overflow:hidden; }
-  .progress-fill{ height:100%; width:0%; background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%); border-radius:999px; transition: width .25s ease; }
-  .progress-hint{ margin-top:10px; font-size:12px; font-weight:800; opacity:.9; }
-
-  /* ===== ADDED: Energization inspection lock overlay (Superintendent+ sign-off required) ===== */
-  #nxEnergLockOverlay{
-    position:fixed;
-    inset:0;
-    z-index:99999;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-    background:rgba(0,0,0,0.72);
-    backdrop-filter: blur(6px);
-  }
-  #nxEnergLockCard{
-    width:min(780px, 100%);
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.20);
-    background:rgba(20,20,20,0.55);
-    padding:18px;
-    box-shadow:0 18px 50px rgba(0,0,0,0.55);
-    text-align:center;
-  }
-  #nxEnergLockQuestion{
-    margin:0;
-    font-size:22px;
-    font-weight:900;
-    letter-spacing:.01em;
-  }
-  #nxEnergLockSub{
-    margin:10px 0 0;
-    font-weight:800;
-    opacity:.92;
-    font-size:13px;
-    line-height:1.35;
-  }
-  #nxEnergLockActions{
+  .progress-label{
     display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin-top:14px;
-  }
-  .nx-lock-mini{
-    width:auto !important;
-    height:46px !important;
-    padding:0 18px !important;
-    border-radius:999px !important;
-    font-size:14px !important;
-  }
-  #nxEnergLockName{
-    margin-top:14px;
-    width:min(420px, 100%);
-    padding:12px 12px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,0.20);
-    background:rgba(255,255,255,0.92);
-    color:#111;
-    font-weight:900;
-    outline:none;
-  }
-  #nxEnergLockBadge{
-    margin-top:12px;
-    display:inline-flex;
     align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:10px 12px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,0.20);
-    background:rgba(0,0,0,0.22);
+    justify-content:space-between;
+    gap:12px;
     font-weight:900;
+    margin-bottom:10px;
+  }
+  .progress-track{
+    width:100%;
+    height:14px;
+    border-radius:999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%);
+    border-radius:999px;
+    transition: width .25s ease;
+  }
+  .progress-hint{
+    margin-top:10px;
     font-size:12px;
+    font-weight:800;
     opacity:.95;
   }
-  .nx-lock-warn{
-    border-color:rgba(255,59,59,0.55) !important;
-    background:rgba(255,59,59,0.10) !important;
-  }
-  .nx-lock-ok{
-    border-color:rgba(0,255,102,0.55) !important;
-    background:rgba(0,255,102,0.12) !important;
-  }
-</style>
 
-<style>
+  .button-bar{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:12px;
+    margin-top: 12px;
+  }
+  @media (max-width: 900px){
+    .button-bar{ grid-template-columns: 1fr; }
+  }
+  .button-bar .btn{
+    width:100%;
+    font-size:16px;
+    padding:14px 14px;
+  }
+
+  /* ===== Lock overlay (HIGH CONTRAST, readable) ===== */
+  .lock-layer{
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0,0,0,0.70);
+    backdrop-filter: blur(7px);
+  }
+  .lock-dialog{
+    width: min(720px, 100%);
+    border-radius: 18px;
+    background: rgba(20,20,20,0.92);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+    padding: 18px;
+    color: #fff;
+    text-align:center;
+  }
+  .lock-title{
+    font-size: 22px;
+    font-weight: 900;
+    margin: 0 0 10px;
+    letter-spacing: 0.01em;
+  }
+  .lock-sub{
+    margin: 0 0 14px;
+    font-weight: 800;
+    opacity: .95;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+  .lock-actions{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .lock-input{
+    width: min(420px, 100%);
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.20);
+    outline: none;
+    font-size: 15px;
+    background: rgba(255,255,255,0.95);
+    color: #111;
+    font-weight: 800;
+  }
+  .lock-note{
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    opacity: .9;
+  }
+
+  /* lock visual on page content */
+  .page-locked{
+    filter: grayscale(1) opacity(.55);
+    pointer-events: none;
+    user-select: none;
+  }
+
   .nx-footer{
     margin-top: 40px;
     padding: 18px 12px;
@@ -166,321 +253,361 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
-</style>
 
-  <link rel="stylesheet" href="assets/css/nexus-core.css">
+  @media print{
+    .nx-session-banner, .nx-back-btn, .button-bar, .top-actions, .lock-layer { display:none !important; }
+    body{ background:#fff !important; color:#000 !important; }
+    .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
+  }
+</style>
 </head>
 
 <body>
-  <div class="nexus-page">\n
-<div id="nxSessionBanner" class="nx-session-banner">
-  <div class="nx-left">
-    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-    <span class="nx-pill" data-nx-status>Ready</span>
-  </div>
-  <div class="nx-right">
-    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-        <option value="viewer">viewer</option>
-        <option value="tech">tech</option>
-        <option value="foreman">foreman</option>
-        <option value="superintendent">superintendent</option>
-        <option value="admin">admin</option>
-      </select>
-    </label>
-  </div>
-</div>
-<script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
+  <div class="nexus-page">
+
+    <!-- Session Banner (role-free) -->
+    <div id="nxSessionBanner" class="nx-session-banner">
+      <div class="nx-left">
+        <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+        <span class="nx-pill" data-nx-status>Ready</span>
+      </div>
+    </div>
+
+    <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+    <div class="nx-header-wrap">
+      <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="card" id="pageCard">
+        <div class="top-actions">
+          <button class="btn secondary" id="backBtn" type="button">← Back</button>
+
+          <!-- Visible only when signed and/or step completed -->
+          <button class="btn danger" id="clearAllBtn" type="button" style="display:none;">Clear / Un-Sign</button>
+        </div>
+
+        <h1>Energization</h1>
+        <div class="eq" id="eqLabel">Equipment: (none)</div>
+
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <div id="progressText">Progress: 0%</div>
+            <div id="progressCount">0/2</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-hint" id="progressHint">
+            This tracker is specific to Energization and does not affect the Equipment page progress bar.
+          </div>
+        </div>
+
+        <div class="button-bar">
+          <a class="btn" id="mopBtn" href="#" target="_blank" rel="noopener">MOP</a>
+          <a class="btn" id="sopBtn" href="#" target="_blank" rel="noopener">SOP</a>
+          <a class="btn" id="docsBtn" href="#" target="_blank" rel="noopener">Documents</a>
+          <button class="btn ok" id="stepCompleteBtn" type="button" disabled>STEP COMPLETE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lock Overlay -->
+    <div class="lock-layer" id="lockLayer" aria-hidden="true">
+      <div class="lock-dialog">
+        <div class="lock-title">Has the electrical inspection been completed?</div>
+        <div class="lock-sub">
+          Enter your name to sign off. This unlocks the Energization page buttons and enables Step Complete.
+        </div>
+
+        <input class="lock-input" id="signNameInput" type="text" placeholder="Sign-off name (required)" />
+
+        <div class="lock-actions" style="margin-top:12px;">
+          <button class="btn ok" id="signYesBtn" type="button">Yes — Sign Off</button>
+          <button class="btn secondary" id="signNoBtn" type="button">Not yet</button>
+        </div>
+
+        <div class="lock-note">
+          Tip: If you signed by mistake, use the “Clear / Un-Sign” button on the page.
+        </div>
+      </div>
+    </div>
+
+    <footer class="nx-footer">
+      © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+    </footer>
+
+    <script src="assets/js/nexus-core.js"></script>
+    <script src="assets/js/nexus-firebase-bridge.js"></script>
+
+    <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const eq = (qs.get("eq") || "").trim();
+
+      const eqLabel = document.getElementById("eqLabel");
+      if (eqLabel) eqLabel.textContent = eq ? ("Equipment: " + eq) : "Equipment: (none)";
+
+      const pageCard = document.getElementById("pageCard");
+      const lockLayer = document.getElementById("lockLayer");
+
+      const progressFill = document.getElementById("progressFill");
+      const progressText = document.getElementById("progressText");
+      const progressCount = document.getElementById("progressCount");
+
+      const mopBtn = document.getElementById("mopBtn");
+      const sopBtn = document.getElementById("sopBtn");
+      const docsBtn = document.getElementById("docsBtn");
+      const stepCompleteBtn = document.getElementById("stepCompleteBtn");
+
+      const clearAllBtn = document.getElementById("clearAllBtn");
+      const backBtn = document.getElementById("backBtn");
+
+      const signNameInput = document.getElementById("signNameInput");
+      const signYesBtn = document.getElementById("signYesBtn");
+      const signNoBtn = document.getElementById("signNoBtn");
+
+      function kInspection(){ return `nexus_${eq || "NO_EQ"}_energization_inspection_signoff_v1`; }
+      function kStepDone(){ return `nexus_${eq || "NO_EQ"}_energization_step_complete_v1`; }
+
+      function nowIso(){ try{ return new Date().toISOString(); }catch(e){ return ""; } }
+
+      function readJSON(key){
+        try{
+          const raw = localStorage.getItem(key);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        }catch(e){ return null; }
       }
-    }catch(e){}
-  })();
-</script>
-
-<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
-
-<div class="page-wrap">
-<main class="container">
-
-  <h1>Energization</h1>
-  <div class="eq" id="eqLabel"></div>
-
-  <div class="actions">
-    <a class="btn small" id="backBtn" href="#">← Back</a>
-  </div>
-
-
-  <!-- ===== ADDED: Energization progress tracker (separate from Equipment progress) ===== -->
-  <div class="progress-wrap" id="energProgressWrap">
-    <div class="progress-label">
-      <div id="energProgressText">Progress: 0%</div>
-      <div id="energProgressCount">0/2</div>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="energProgressFill"></div>
-    </div>
-    <div class="progress-hint" id="energProgressHint">
-      This tracker is specific to Energization and does not affect the Equipment page progress bar.
-    </div>
-  </div>
-
-
-  <div class="grid">
-    <a class="btn" id="mopBtn" href="#">MOP</a>
-    <a class="btn" id="sopBtn" href="#">SOP</a>
-    <a class="btn" id="docsBtn" href="#">Documents</a>
-    <!-- ADDED: Step Complete (hidden until inspection sign-off). Role rules removed. -->
-    <button class="btn" id="energStepCompleteBtn" type="button" style="display:none;">STEP COMPLETE</button>
-  </div>
-
-</main>
-</div>
-
-<!-- ===== ADDED: Energization inspection lock overlay ===== -->
-<div id="nxEnergLockOverlay" aria-hidden="true">
-  <div id="nxEnergLockCard">
-    <h2 id="nxEnergLockQuestion">Has the electrical inspection been completed?</h2>
-    <div id="nxEnergLockBadge" class="nx-lock-warn">Locked</div>
-    <div id="nxEnergLockSub">
-      Sign-off required to unlock Energization. This does not mark the Energization step complete.
-    </div>
-    <input id="nxEnergLockName" type="text" placeholder="Signer name (required)" autocomplete="off" />
-    <div id="nxEnergLockActions">
-      <button class="btn secondary nx-lock-mini" id="nxEnergLockBackBtn" type="button">Not yet (Back)</button>
-      <button class="btn nx-lock-mini" id="nxEnergLockYesBtn" type="button">Yes — Sign Off</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
-
-  document.title = eq ? `Energization ${eq}` : "Energization";
-  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
-
-  // Back
-  document.getElementById("backBtn").href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-  // Prefer browser back (previous page) when available
-  document.getElementById("backBtn").addEventListener("click", function(e){
-    try{
-      if (history.length > 1){ e.preventDefault(); history.back(); return; }
-    }catch(err){}
-  });
-
-  // For now, route to task.html with new ids
-  function link(id){
-    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
-  }
-
-  document.getElementById("mopBtn").href = link("mop");
-  document.getElementById("sopBtn").href = link("sop");
-  document.getElementById("docsBtn").href = link("energ_docs");
-</script>
-
-<!-- ===== ADDED: Inspection lock + sign-off + Step Complete gate (role rules removed) ===== -->
-<script>
-(function(){
-  function getRole(){
-    try{
-      const sel = document.getElementById("nxRoleSelect");
-      if (sel && sel.value) return String(sel.value).toLowerCase();
-    }catch(e){}
-    try{ if (window.NEXUS && typeof window.NEXUS.getRole === "function") return String(window.NEXUS.getRole()).toLowerCase(); }
-    catch(e){}
-    try{ return (localStorage.getItem("nexus_userRole") || "viewer").toLowerCase(); }
-    catch(e){ return "viewer"; }
-  }
-
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
-
-  const overlay = document.getElementById("nxEnergLockOverlay");
-  const pFill = document.getElementById("energProgressFill");
-  const pText = document.getElementById("energProgressText");
-  const pCount = document.getElementById("energProgressCount");
-  const badge = document.getElementById("nxEnergLockBadge");
-  const nameInput = document.getElementById("nxEnergLockName");
-  const yesBtn = document.getElementById("nxEnergLockYesBtn");
-  const backBtn = document.getElementById("nxEnergLockBackBtn");
-  const stepBtn = document.getElementById("energStepCompleteBtn");
-
-  function signoffKey(){ return `nexus_${eq || "NO_EQ"}_energization_inspection_signoff_v1`; }
-  function legacyStepKey(){ return `nexus_${eq || "NO_EQ"}_energization_step_complete_v1`; }
-  function stepKeyStd(){ return `nexus_${eq || "NO_EQ"}_step_energization`; }
-
-  function readSignoff(){
-    try{ return JSON.parse(localStorage.getItem(signoffKey()) || "null"); }
-    catch(e){ return null; }
-  }
-  function writeSignoff(rec){
-    try{ localStorage.setItem(signoffKey(), JSON.stringify(rec)); }catch(e){}
-  }
-  function isSigned(){
-    const s = readSignoff();
-    return !!(s && s.name && s.at);
-  }
-  function isStepComplete(){
-    try{
-      return localStorage.getItem(stepKeyStd()) === "1" || localStorage.getItem(legacyStepKey()) === "1";
-    }catch(e){ return false; }
-  }
-  function setStepComplete(on){
-    try{
-      if(on){
-        localStorage.setItem(stepKeyStd(), "1");
-        // keep legacy key for backward compatibility
-        localStorage.setItem(legacyStepKey(), "1");
-      } else {
-        localStorage.removeItem(stepKeyStd());
-        localStorage.removeItem(legacyStepKey());
+      function writeJSON(key, obj){
+        try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}
       }
-    }catch(e){}
-  }
-
-  function showOverlay(){
-    if (!overlay) return;
-    overlay.style.display = "flex";
-    overlay.setAttribute("aria-hidden","false");
-  }
-  function hideOverlay(){
-    if (!overlay) return;
-    overlay.style.display = "none";
-    overlay.setAttribute("aria-hidden","true");
-  }
-
-  function updateUi(){
-    const signed = isSigned();
-
-    if (badge){
-      if (signed){
-        badge.textContent = "Unlocked";
-        badge.classList.remove("nx-lock-warn");
-        badge.classList.add("nx-lock-ok");
-      } else {
-        badge.textContent = "Locked";
-        badge.classList.add("nx-lock-warn");
-        badge.classList.remove("nx-lock-ok");
+      function delKey(key){
+        try{ localStorage.removeItem(key); }catch(e){}
       }
-    }
 
-    if (stepBtn){
-      stepBtn.style.display = signed ? "inline-flex" : "none";
-      const done = isStepComplete();
-      stepBtn.classList.toggle("complete", done);
-      // Role gating removed
-      stepBtn.disabled = false;
-      stepBtn.style.opacity = "";
-      stepBtn.title = "";
-}
-
-    /* ===== ADDED: Energization progress (2 steps) ===== */
-    try{
-      const stepsTotal = 2;
-      let done = 0;
-      if (signed) done++;
-      if (isStepComplete()) done++;
-      const pct = Math.round((done/stepsTotal)*100);
-      if (pFill) pFill.style.width = `${pct}%`;
-      if (pText) pText.textContent = `Progress: ${pct}%`;
-      if (pCount) pCount.textContent = `${done}/${stepsTotal}`;
-    }catch(e){}
-
-    if (!signed) showOverlay();
-    else hideOverlay();
-    // sign button state (role gating removed)
-    if (yesBtn){
-      yesBtn.disabled = false;
-      yesBtn.style.opacity = "";
-      yesBtn.title = "";
-    }
-}
-
-  // Guard: missing eq should not lock the whole browser.
-  if (!eq){
-    hideOverlay();
-    if (stepBtn) stepBtn.style.display = "none";
-    return;
-  }
-
-  if (backBtn){
-    backBtn.addEventListener("click", function(){
-      try{
-        if (history.length > 1){ history.back(); return; }
-      }catch(err){}
-      try{
-        if (history.length > 1){ history.back(); return; }
-      }catch(err){}
-      try{ if (history.length > 1){ history.back(); return; } }catch(err){}
-      location.href = `equipment.html?eq=${encodeURIComponent(eq)}`;
-    });
-  }
-
-  if (yesBtn){
-    yesBtn.addEventListener("click", function(){
-      const name = String((nameInput && nameInput.value) || "").trim();
-      if (!name){
-        alert("Signer name is required.");
-        return;
+      function setButtonsEnabled(enabled){
+        if (!mopBtn || !sopBtn || !docsBtn) return;
+        [mopBtn, sopBtn, docsBtn].forEach(el => {
+          if (!el) return;
+          el.classList.toggle("locked", !enabled);
+          el.style.pointerEvents = enabled ? "auto" : "none";
+          el.setAttribute("aria-disabled", (!enabled).toString());
+        });
+        if (stepCompleteBtn){
+          stepCompleteBtn.disabled = !enabled;
+          stepCompleteBtn.setAttribute("aria-disabled", (!enabled).toString());
+        }
       }
-      writeSignoff({
-        name,
-        role: getRole(),
-        at: new Date().toISOString(),
-        eq
+
+      function showLock(show){
+        if (!lockLayer || !pageCard) return;
+        lockLayer.style.display = show ? "flex" : "none";
+        lockLayer.setAttribute("aria-hidden", show ? "false" : "true");
+        pageCard.classList.toggle("page-locked", show);
+      }
+
+      function countProgress(){
+        const signed = !!readJSON(kInspection());
+        const stepDone = !!readJSON(kStepDone());
+        const done = (signed ? 1 : 0) + (stepDone ? 1 : 0);
+        const pct = Math.round((done / 2) * 100);
+
+        if (progressFill) progressFill.style.width = pct + "%";
+        if (progressText) progressText.textContent = "Progress: " + pct + "%";
+        if (progressCount) progressCount.textContent = done + "/2";
+      }
+
+      function applyState(){
+        const signed = !!readJSON(kInspection());
+        const stepDone = !!readJSON(kStepDone());
+
+        // If not signed, lock the page
+        showLock(!signed);
+
+        // Buttons enabled only after sign-off
+        setButtonsEnabled(!!signed);
+
+        // Step complete remains clickable after sign-off; but once done, disable it and show complete text
+        if (stepCompleteBtn){
+          if (!signed){
+            stepCompleteBtn.disabled = true;
+            stepCompleteBtn.textContent = "STEP COMPLETE";
+          } else if (stepDone){
+            stepCompleteBtn.disabled = true;
+            stepCompleteBtn.textContent = "STEP COMPLETE ✓";
+          } else {
+            stepCompleteBtn.disabled = false;
+            stepCompleteBtn.textContent = "STEP COMPLETE";
+          }
+        }
+
+        // Clear/un-sign button visible if anything saved
+        if (clearAllBtn){
+          clearAllBtn.style.display = (signed || stepDone) ? "inline-flex" : "none";
+        }
+
+        countProgress();
+      }
+
+      function openMaybe(url){
+        if (!url) return;
+        try{ window.open(url, "_blank", "noopener"); }catch(e){ location.href = url; }
+      }
+
+      // Keep these IDs stable, but you can change URLs to your actual docs later
+      function setDocLinks(){
+        const base = ""; // keep blank unless you have a docs folder
+        const q = eq ? ("?eq=" + encodeURIComponent(eq)) : "";
+        if (mopBtn) mopBtn.href = base + "energization_mop.html" + q;
+        if (sopBtn) sopBtn.href = base + "energization_sop.html" + q;
+        if (docsBtn) docsBtn.href = base + "energization_documents.html" + q;
+      }
+
+      // Back behavior: prefer true previous page, else equipment.html?eq=
+      function goBack(){
+        try{
+          if (document.referrer){
+            const ref = new URL(document.referrer);
+            if (ref.origin === location.origin){
+              history.back();
+              return;
+            }
+          }
+        }catch(e){}
+        try{
+          const target = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+          location.href = target;
+        }catch(e){
+          location.href = "equipment.html";
+        }
+      }
+
+      if (backBtn) backBtn.addEventListener("click", goBack);
+
+      // Lock overlay actions
+      if (signNoBtn) signNoBtn.addEventListener("click", function(){
+        // keep locked; just close keyboard / keep overlay
+        try{ signNameInput && signNameInput.blur(); }catch(e){}
       });
-      updateUi();
-    });
-  }
 
-  if (stepBtn){
-    stepBtn.addEventListener("click", function(){
-      if (!isSigned()){
-        alert("Inspection sign-off required first.");
-        updateUi();
-        return;
-      }
-      const next = !isStepComplete();
-      setStepComplete(next);
-      updateUi();
-    });
-  }
+      if (signYesBtn) signYesBtn.addEventListener("click", function(){
+        const name = (signNameInput && signNameInput.value ? signNameInput.value : "").trim();
+        if (!name){
+          alert("Name is required to sign off.");
+          try{ signNameInput && signNameInput.focus(); }catch(e){}
+          return;
+        }
 
-  // Refresh UI on role changes
-  window.addEventListener("nexus:rolechange", updateUi);
-  updateUi();
-})();
-</script>
+        // Save sign-off
+        writeJSON(kInspection(), {
+          name,
+          at: nowIso(),
+          eq: eq || "NO_EQ"
+        });
 
-<script>
-(function(){
-  window.NEXUS_back = function(){
-    try{
-      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-        history.back();
+        try{ window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_inspection_signed", { eq:eq || "NO_EQ", name }); }catch(e){}
+
+        applyState();
+      });
+
+      // Step complete
+      if (stepCompleteBtn) stepCompleteBtn.addEventListener("click", function(){
+        const signed = !!readJSON(kInspection());
+        if (!signed){
+          alert("Complete the inspection sign-off first.");
+          return;
+        }
+
+        const already = !!readJSON(kStepDone());
+        if (already) return;
+
+        const name = prompt("Step Complete — enter your name (required):", "") || "";
+        const trimmed = name.trim();
+        if (!trimmed){
+          alert("Name is required to mark Step Complete.");
+          return;
+        }
+
+        writeJSON(kStepDone(), {
+          name: trimmed,
+          at: nowIso(),
+          eq: eq || "NO_EQ"
+        });
+
+        try{ window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_step_complete", { eq:eq || "NO_EQ", name: trimmed }); }catch(e){}
+
+        applyState();
+      });
+
+      // Clear / Un-sign (visible on page)
+      if (clearAllBtn) clearAllBtn.addEventListener("click", function(){
+        const confirmText = "This will clear the saved inspection sign-off and step complete for this equipment. Continue?";
+        if (!confirm(confirmText)) return;
+
+        const name = (prompt("Enter your name to confirm clearing (required):", "") || "").trim();
+        if (!name){
+          alert("Name is required to clear.");
+          return;
+        }
+
+        const prevSign = readJSON(kInspection());
+        const prevStep = readJSON(kStepDone());
+
+        delKey(kInspection());
+        delKey(kStepDone());
+
+        try{
+          window.NEXUS && typeof window.NEXUS.audit === "function" && window.NEXUS.audit("energization_cleared", {
+            eq: eq || "NO_EQ",
+            clearedBy: name,
+            previous: { inspection: prevSign, stepComplete: prevStep }
+          });
+        }catch(e){}
+
+        // Reset overlay name input
+        try{ if (signNameInput) signNameInput.value = ""; }catch(e){}
+
+        applyState();
+      });
+
+      // Set links + init
+      setDocLinks();
+      applyState();
+
+      // Keep state fresh across navigation
+      window.addEventListener("pageshow", applyState);
+      window.addEventListener("focus", applyState);
+      window.addEventListener("storage", applyState);
+    })();
+    </script>
+
+    <script>
+    (function(){
+      // Keep global back helper consistent if core exists
+      window.NEXUS_back = function(){
+        try{
+          if (document.referrer){
+            const ref = new URL(document.referrer);
+            if (ref.origin === location.origin){
+              history.back();
+              return false;
+            }
+          }
+        }catch(e){}
+        try{
+          const qs = new URLSearchParams(location.search);
+          const eq = (qs.get("eq") || "").trim();
+          location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+        }catch(e){
+          location.href = "equipment.html";
+        }
         return false;
-      }
-    }catch(e){}
-    const qs = new URLSearchParams(location.search);
-    const eq = qs.get("eq");
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-    return false;
-  };
-})();
-</script>
+      };
+    })();
+    </script>
 
-
-<footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
-</footer>
-
-  <script src="assets/js/nexus-core.js"></script>
-  <script src="assets/js/nexus-firebase-bridge.js"></script>
   </div>
 </body>
 </html>
