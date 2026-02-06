@@ -196,6 +196,21 @@
   eqLabel.textContent = eq ? `Equipment: ${eq}` : 'Equipment: (missing eq)';
   backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : 'index.html';
 
+  /* ===== ADD: robust URL builder for GitHub Pages project folders =====
+     Ensures links/iframes resolve under the same folder as package_export.html,
+     e.g. https://.../NEXUS1.5/ + "meg/fluke_import.html"
+  */
+  function nexusUrl(relPath){
+    const base = new URL(window.location.href);
+    base.hash = '';
+    // Drop filename, keep folder path (ends with '/')
+    base.pathname = base.pathname.replace(/[^/]*$/, '');
+    // Normalize relPath
+    relPath = String(relPath || '').replace(/^\/+/, '');
+    // Preserve query (?eq=...) automatically by leaving base.search intact.
+    return new URL(relPath, base).toString();
+  }
+
   function eqMetaKey(){return `nexus_meta_${eq||'NO_EQ'}`;}
   function loadEqMeta(){
     try{
@@ -575,7 +590,7 @@
 
     const exceptionsBlock = exceptions.length ? `
       <table>
-        <thead><tr><th style="width:90px;">Step</th><th>Exception</th><th style="width:320px;">Remarks</th></tr></thead>
+        <thead><tr><th style="width:90px;">Step</th><th>Exception</th><th>Remarks</th></tr></thead>
         <tbody>
           ${exceptions.map(x=>`<tr><td class="mono">${safe(x.step)}</td><td>${safe(x.text)}</td><td>${safe(x.note)}</td></tr>`).join('')}
         </tbody>
@@ -786,11 +801,9 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== ADD: Fluke Connect Import links + completeness ===== */
-
     /* ===== ADD: Snap-on ConnecTorq Import links + completeness ===== */
-    const snaponImportLink = eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`;
-    const snaponEmbedLink  = eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`;
+    const snaponImportLink = nexusUrl(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`);
+    const snaponEmbedLink  = nexusUrl(eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`);
     const snaponSessions = (function(){
       try{
         const raw = localStorage.getItem("nexus.torque.sessions.v1") || "[]";
@@ -801,8 +814,10 @@
       }catch(e){ return []; }
     })();
     const snaponComplete = !!(snaponSessions && snaponSessions.length);
-    const flukeImportLink = eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`;
-    const flukeEmbedLink  = eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`;
+
+    /* ===== ADD: Fluke Connect Import links + completeness ===== */
+    const flukeImportLink = nexusUrl(eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`);
+    const flukeEmbedLink  = nexusUrl(eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`);
     const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
     const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
@@ -871,9 +886,6 @@
 
       <div class="pagebreak"></div>
 
-      
-      <div class="pagebreak"></div>
-
       ${sectionHeader('Snap-on ConnecTorq Torque Logs (Optional)', '')}
       <div style="margin-top:10px;">
         <iframe
@@ -887,7 +899,7 @@
         • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.torque.sessions.v1</span>
       </div>
 
-${sectionHeader('Torque Log', '')}
+      ${sectionHeader('Torque Log', '')}
       ${renderTorque(torque)}
 
       <div class="pagebreak"></div>
