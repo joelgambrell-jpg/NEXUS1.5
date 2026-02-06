@@ -1,4 +1,3 @@
-<!-- package_export.html (FULL DROP-IN) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -131,32 +130,11 @@
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
     <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
     <span class="nx-pill" data-nx-status>Ready</span>
   </div>
   <div class="nx-right">
-    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-        <option value="viewer">viewer</option>
-        <option value="tech">tech</option>
-        <option value="foreman">foreman</option>
-        <option value="superintendent">superintendent</option>
-        <option value="admin">admin</option>
-      </select>
-    </label>
-  </div>
 </div>
-<script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
-      }
-    }catch(e){}
-  })();
-</script>
-
+</div>
 <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
 <div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
@@ -759,48 +737,6 @@
     });
   }
 
-  /* ===== NEW: Render Fluke inline (identical export behavior to Torque) ===== */
-  function renderFlukeSessionsInline(eqId){
-    const sessions = (eqId ? flukeSessionsForEq(eqId) : readFlukeSessions()) || [];
-    if (!sessions.length){
-      return `<div class="muted">No Fluke sessions saved.</div>`;
-    }
-
-    function pick(o, keys){
-      for (const k of keys){
-        const v = o && o[k];
-        if (v != null && String(v).trim() !== "") return String(v);
-      }
-      return "";
-    }
-
-    const rowsHtml = sessions.map(s=>{
-      const when = pick(s, ["at","date","datetime","timestamp","time"]);
-      const label = pick(s, ["label","name","test","title"]);
-      const details = pick(s, ["summary","notes","result","reading","details"]);
-      const fileName = pick(s, ["fileName","filename","sourceFile","file"]);
-
-      return `<tr>
-        <td>${safe(when)}</td>
-        <td><b>${safe(label)}</b></td>
-        <td>${safe(details)}${fileName ? `<div class="muted" style="margin-top:6px;"><b>File:</b> ${safe(fileName)}</div>` : ``}</td>
-      </tr>`;
-    }).join("");
-
-    return `
-      <table>
-        <thead>
-          <tr>
-            <th style="width:190px;">Date/Time</th>
-            <th style="width:220px;">Label</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-    `;
-  }
-
   function buildReport(){
     const meta = loadEqMeta() || {};
     const procoreConstructionUrl = meta.procoreEquipUrl || '';
@@ -850,8 +786,23 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== Fluke Connect Import links + completeness ===== */
+    /* ===== ADD: Fluke Connect Import links + completeness ===== */
+
+    /* ===== ADD: Snap-on ConnecTorq Import links + completeness ===== */
+    const snaponImportLink = eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`;
+    const snaponEmbedLink  = eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`;
+    const snaponSessions = (function(){
+      try{
+        const raw = localStorage.getItem("nexus.torque.sessions.v1") || "[]";
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        if (!eq) return arr;
+        return arr.filter(s => s && typeof s === "object" && String(s.equipmentId||"").trim() === eq);
+      }catch(e){ return []; }
+    })();
+    const snaponComplete = !!(snaponSessions && snaponSessions.length);
     const flukeImportLink = eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`;
+    const flukeEmbedLink  = eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`;
     const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
     const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
@@ -869,6 +820,7 @@
       ${renderStatusLine('Megohmmeter (Line/Load)', isDone('meg'), megLink)}
       ${renderStatusLine('Equipment Meg (If Applicable)', equipMegHasData, equipMegLink)}
       ${renderStatusLine('Torque', isDone('torque'), torqueLink)}
+      ${renderStatusLine('Snap-on ConnecTorq Torque (Optional Import)', snaponComplete, snaponImportLink)}
       ${renderStatusLine('FPV Photo', fpvComplete, fpvLink)}
       ${renderStatusLine('Pre-FOD', prefodComplete, prefodLink)}
       ${renderStatusLine('Fluke Connect Meg (Optional Import)', flukeComplete, flukeImportLink)}
@@ -905,7 +857,13 @@
       <div class="pagebreak"></div>
 
       ${sectionHeader('Fluke Connect Megohmmeter Logs (Optional)', '')}
-      ${renderFlukeSessionsInline(eq)}
+      <div style="margin-top:10px;">
+        <iframe
+          src="${safe(flukeEmbedLink)}"
+          style="width:100%; border:0; min-height:520px;"
+          loading="lazy"
+        ></iframe>
+      </div>
       <div style="margin-top:10px" class="muted">
         Link: <span class="link"><a class="wrap-anywhere" href="${safe(flukeImportLink)}" target="_blank" rel="noopener noreferrer">Open Fluke Import Page</a></span>
         • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.meg.fluke.sessions.v1</span>
@@ -913,7 +871,23 @@
 
       <div class="pagebreak"></div>
 
-      ${sectionHeader('Torque Log', '')}
+      
+      <div class="pagebreak"></div>
+
+      ${sectionHeader('Snap-on ConnecTorq Torque Logs (Optional)', '')}
+      <div style="margin-top:10px;">
+        <iframe
+          src="${safe(snaponEmbedLink)}"
+          style="width:100%; border:0; min-height:520px;"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div style="margin-top:10px" class="muted">
+        Link: <span class="link"><a class="wrap-anywhere" href="${safe(snaponImportLink)}" target="_blank" rel="noopener noreferrer">Open Snap-on Import Page</a></span>
+        • <span class="muted">Storage:</span> <span class="mono wrap-anywhere">nexus.torque.sessions.v1</span>
+      </div>
+
+${sectionHeader('Torque Log', '')}
       ${renderTorque(torque)}
 
       <div class="pagebreak"></div>
