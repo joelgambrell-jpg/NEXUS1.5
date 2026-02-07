@@ -1,11 +1,8 @@
-<!-- form.html (FULL DROP-IN)
-CHANGES (ADDED ONLY — nothing removed):
-- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
-- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
-- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
-- Snap-on Import remains Torque-only
-- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
-Everything else preserved.
+<!-- form.html (FULL DROP-IN REPLACEMENT)
+FIXES INCLUDED:
+1) If "Fluke Connect Import (Optional)" already exists (from config.js), FORCE its href to meg/fluke_import.html (prevents root fluke_import.html 404).
+2) If "Megohmmeter SOP" already exists (from config.js), FORCE its href to megohmmeter_sop.html and keep fallback hidden (prevents wrong SOP targets + duplicates).
+3) Keeps your existing behavior: auto-add Fluke button if missing; SOP fallback Meg-only; Snap-on torque-only; Torque supporting docs dropdown; eq propagation.
 -->
 <!doctype html>
 <html lang="en">
@@ -368,7 +365,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     if (insertAfterText){
       const after = findBtnByText(insertAfterText);
       if (after && after.parentElement){
-        // insert after "after"
         if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
         else after.parentElement.appendChild(a);
         return a;
@@ -378,6 +374,29 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     return a;
   }
 
+  /* ===== FIX: Always correct Meg links if config.js created them ===== */
+  (function(){
+    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+    if (!megIds.has(id)) return;
+
+    const sopHref = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+    const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+    const existingSop = findBtnByText("Megohmmeter SOP");
+    if (existingSop){
+      existingSop.setAttribute("href", sopHref);
+      existingSop.removeAttribute("target");
+      existingSop.removeAttribute("rel");
+    }
+
+    const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
+    if (existingFluke){
+      existingFluke.setAttribute("href", flukeHref);
+      existingFluke.removeAttribute("target");
+      existingFluke.removeAttribute("rel");
+    }
+  })();
+
   /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
   (function(){
     const sopFallback = document.getElementById("openSopBtn");
@@ -385,20 +404,17 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
-    // default hidden
     sopFallback.style.display = "none";
     sopFallback.onclick = null;
 
     if (!megIds.has(id)) return;
 
-    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
     const existingSop = findBtnByText("Megohmmeter SOP");
     if (existingSop && existingSop !== sopFallback){
       sopFallback.style.display = "none";
       return;
     }
 
-    // Otherwise show fallback SOP
     const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
     sopFallback.style.display = "block";
     sopFallback.setAttribute("href", href);
@@ -413,11 +429,10 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-    // If config.js already provides it, do nothing.
+    // If config.js already provides it, we already forced href above; do nothing else.
     const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
     if (existingFluke) return;
 
-    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
     ensureBtn(
       "Fluke Connect Import (Optional)",
       flukeHref,
@@ -446,7 +461,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     snaponBtn.removeAttribute("rel");
   })();
 
-  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  /* ===== Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
   (function(){
     if (id !== "torque") return;
 
