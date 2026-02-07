@@ -800,9 +800,9 @@
     const prefodHasData = !!prefodDoc;
     const prefodComplete = isDone('prefod') || prefodHasData;
 
-    /* ===== FIXED PATHS: Snap-on ConnecTorq Import/Embed ===== */
-    const snaponImportLink = nexusUrl(eq ? `torque/torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/torque/snapon_import.html`);
-    const snaponEmbedLink  = nexusUrl(eq ? `torque/torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/torque/snapon_export_embed.html`);
+    /* ===== CORRECT PATHS (YOUR CURRENT REPO): Snap-on Import/Embed live in /torque ===== */
+    const snaponImportLink = nexusUrl(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`);
+    const snaponEmbedLink  = nexusUrl(eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`);
     const snaponSessions = (function(){
       try{
         const raw = localStorage.getItem("nexus.torque.sessions.v1") || "[]";
@@ -814,9 +814,9 @@
     })();
     const snaponComplete = !!(snaponSessions && snaponSessions.length);
 
-    /* ===== FIXED PATHS: Fluke Connect Import/Embed ===== */
-    const flukeImportLink = nexusUrl(eq ? `meg/meg/meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/meg/meg/fluke_import.html`);
-    const flukeEmbedLink  = nexusUrl(eq ? `meg/meg/meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/meg/meg/fluke_export_embed.html`);
+    /* ===== CORRECT PATHS (YOUR CURRENT REPO): Fluke Import/Embed live in /meg ===== */
+    const flukeImportLink = nexusUrl(eq ? `meg/fluke_import.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_import.html`);
+    const flukeEmbedLink  = nexusUrl(eq ? `meg/fluke_export_embed.html?eq=${encodeURIComponent(eq)}` : `meg/fluke_export_embed.html`);
     const flukeSessions = eq ? flukeSessionsForEq(eq) : readFlukeSessions();
     const flukeComplete = !!(flukeSessions && flukeSessions.length);
 
