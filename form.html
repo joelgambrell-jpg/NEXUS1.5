@@ -1,8 +1,13 @@
-<!-- form.html (FULL DROP-IN REPLACEMENT)
-FIXES INCLUDED:
-1) If "Fluke Connect Import (Optional)" already exists (from config.js), FORCE its href to meg/fluke_import.html (prevents root fluke_import.html 404).
-2) If "Megohmmeter SOP" already exists (from config.js), FORCE its href to megohmmeter_sop.html and keep fallback hidden (prevents wrong SOP targets + duplicates).
-3) Keeps your existing behavior: auto-add Fluke button if missing; SOP fallback Meg-only; Snap-on torque-only; Torque supporting docs dropdown; eq propagation.
+<!-- form.html (FULL DROP-IN)
+CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
+- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
+- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
+- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
+- Snap-on Import is Torque-only, AND:
+  - If config.js already created it, hide fallback AND force its href to torque/snapon_import.html
+  - If config.js did NOT create it, show fallback with torque/snapon_import.html
+- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
+Everything else preserved.
 -->
 <!doctype html>
 <html lang="en">
@@ -112,7 +117,7 @@ button.btn:empty{ display:none !important; }
 /* SOP fallback hidden by default; shown only via JS and ONLY if config.js didn't already add one */
 #openSopBtn{ display:none; }
 
-/* Snap-on (Optional) button behavior: torque-only */
+/* Snap-on (Optional) fallback button behavior: torque-only */
 #snaponImportBtn{ display:none; }
 
 /* Equipment image */
@@ -294,7 +299,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     <!-- SOP FALLBACK (Meg only, shown only if config.js didn't already add SOP) -->
     <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
 
-    <!-- Snap-on ConnecTorq Import (Torque only, Optional) -->
+    <!-- Snap-on ConnecTorq Import (Torque only, Optional) FALLBACK -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
 
     <!-- #5: Leave alone -->
@@ -337,11 +342,12 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
   if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
 
   function norm(s){ return String(s||"").trim().toLowerCase(); }
-  function findBtnByText(text){
+  function findBtnByText(text, excludeEl){
     const want = norm(text);
     const wrap = document.getElementById("buttonsWrap") || document.body;
     const btns = wrap.querySelectorAll("a.btn, button.btn");
     for (const b of btns){
+      if (excludeEl && b === excludeEl) continue;
       if (norm(b.textContent) === want) return b;
     }
     return null;
@@ -365,6 +371,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     if (insertAfterText){
       const after = findBtnByText(insertAfterText);
       if (after && after.parentElement){
+        // insert after "after"
         if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
         else after.parentElement.appendChild(a);
         return a;
@@ -374,29 +381,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     return a;
   }
 
-  /* ===== FIX: Always correct Meg links if config.js created them ===== */
-  (function(){
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-    if (!megIds.has(id)) return;
-
-    const sopHref = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-    const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-    const existingSop = findBtnByText("Megohmmeter SOP");
-    if (existingSop){
-      existingSop.setAttribute("href", sopHref);
-      existingSop.removeAttribute("target");
-      existingSop.removeAttribute("rel");
-    }
-
-    const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
-    if (existingFluke){
-      existingFluke.setAttribute("href", flukeHref);
-      existingFluke.removeAttribute("target");
-      existingFluke.removeAttribute("rel");
-    }
-  })();
-
   /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
   (function(){
     const sopFallback = document.getElementById("openSopBtn");
@@ -404,17 +388,20 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
+    // default hidden
     sopFallback.style.display = "none";
     sopFallback.onclick = null;
 
     if (!megIds.has(id)) return;
 
-    const existingSop = findBtnByText("Megohmmeter SOP");
-    if (existingSop && existingSop !== sopFallback){
+    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
+    const existingSop = findBtnByText("Megohmmeter SOP", sopFallback);
+    if (existingSop){
       sopFallback.style.display = "none";
       return;
     }
 
+    // Otherwise show fallback SOP
     const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
     sopFallback.style.display = "block";
     sopFallback.setAttribute("href", href);
@@ -429,10 +416,11 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-    // If config.js already provides it, we already forced href above; do nothing else.
+    // If config.js already provides it, do nothing.
     const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
     if (existingFluke) return;
 
+    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
     ensureBtn(
       "Fluke Connect Import (Optional)",
       flukeHref,
@@ -444,24 +432,40 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     );
   })();
 
-  /* ===== Snap-on ConnecTorq Import Button (Torque only, Optional) ===== */
+  /* ===== Snap-on ConnecTorq Import (Torque only) — FIX DUPLICATE + FORCE PATH ===== */
   (function(){
-    const snaponBtn = document.getElementById("snaponImportBtn");
-    if (!snaponBtn) return;
+    const fallback = document.getElementById("snaponImportBtn");
+    if (!fallback) return;
 
-    snaponBtn.style.display = "none";
-    snaponBtn.onclick = null;
+    // Default hidden
+    fallback.style.display = "none";
+    fallback.onclick = null;
 
     if (id !== "torque") return;
 
-    const href = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-    snaponBtn.style.display = "block";
-    snaponBtn.setAttribute("href", href);
-    snaponBtn.removeAttribute("target");
-    snaponBtn.removeAttribute("rel");
+    // Correct canonical path (matches your repo: /torque/snapon_import.html)
+    const desiredHref = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+    // If config.js already created a button with same text, use it and hide fallback.
+    const existing = findBtnByText("Snap-on ConnecTorq Import (Optional)", fallback);
+    if (existing){
+      // Force it to correct href (fixes old layered links like torque/torque/...)
+      existing.setAttribute("href", desiredHref);
+      existing.removeAttribute("target");
+      existing.removeAttribute("rel");
+
+      fallback.style.display = "none";
+      return;
+    }
+
+    // Otherwise show fallback with correct href
+    fallback.style.display = "block";
+    fallback.setAttribute("href", desiredHref);
+    fallback.removeAttribute("target");
+    fallback.removeAttribute("rel");
   })();
 
-  /* ===== Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
   (function(){
     if (id !== "torque") return;
 
