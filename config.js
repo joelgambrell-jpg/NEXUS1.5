@@ -104,7 +104,9 @@ window.FORMS = {
     buttons: [
       { text: "Pre-FOD Inspection Check List (Use if Procore is not updated)", href: "prefod_checklist.html" },
       { text: "Pre-FOD SOP", href: "prefod_sop.html" },
-      { text: "Pre-FOD Inspection Link to Procore (Live after updated by customer)", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/IQCpW0cDseVESZtxpMJhVbtoARkKtiVva1DMB0G5HlUuGPc?e=S2yeDr" }
+
+      // CHANGED: token resolved in app.js to per-equipment Procore URL saved on equipment page
+      { text: "Pre-FOD Inspection Link to Procore (Live after updated by customer)", href: "NEXUS_PROCORE_PREFOD" }
     ]
   },
 
