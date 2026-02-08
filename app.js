@@ -188,6 +188,33 @@
   // =========================
   // Resolve special href tokens (per-equipment links)
   // =========================
+  function getFirstNonEmptyLocalStorage(keys){
+    for (const k of keys){
+      try{
+        const v = (localStorage.getItem(k) || "").trim();
+        if (v) return v;
+      }catch(e){}
+    }
+    return "";
+  }
+
+  function getMetaUrlGuess(meta){
+    if (!meta || typeof meta !== "object") return "";
+    // try a handful of likely property names without breaking anything
+    const candidates = [
+      meta.procoreEquipmentUrl,
+      meta.procoreEquipmentURL,
+      meta.procore_equipment_url,
+      meta.procoreUrl,
+      meta.procoreURL,
+      meta.procore_url,
+      meta.equipmentProcoreUrl,
+      meta.equipment_procore_url
+    ].map(v => String(v || "").trim()).filter(Boolean);
+
+    return candidates[0] || "";
+  }
+
   function resolveHref(href){
     if (!href) return href;
 
@@ -198,11 +225,37 @@
       return saved || "https://login.procore.com/?cookies_enabled=true";
     }
 
-    // RIF → use per-equipment Procore URL saved on equipment page
+    // RIF → use per-equipment Procore Equipment URL (same one you enter on Setup)
+    // This tries several likely keys + the meta blob, so it works even if your setup page key name differs.
     if (href === "NEXUS_PROCORE_RIF") {
-      const key = `nexus_${eq || "NO_EQ"}_rif_procore_url`;
-      const saved = (localStorage.getItem(key) || "").trim();
-      return saved || "https://login.procore.com/?cookies_enabled=true";
+      const eqId = eq || "NO_EQ";
+
+      // 1) direct per-step keys (if you add later)
+      const direct = getFirstNonEmptyLocalStorage([
+        `nexus_${eqId}_rif_procore_url`,
+        `nexus_${eqId}_procore_rif_url`
+      ]);
+
+      if (direct) return direct;
+
+      // 2) equipment procore keys (most likely what your setup page is already saving)
+      const equipmentLevel = getFirstNonEmptyLocalStorage([
+        `nexus_${eqId}_procore_equipment_url`,
+        `nexus_${eqId}_equipment_procore_url`,
+        `nexus_${eqId}_procore_url`,
+        `nexus_${eqId}_procore`,
+        `nexus_${eqId}_procoreEquipmentUrl`
+      ]);
+
+      if (equipmentLevel) return equipmentLevel;
+
+      // 3) meta object (nexus_meta_${eq})
+      const meta = loadEqMeta();
+      const metaGuess = getMetaUrlGuess(meta);
+      if (metaGuess) return metaGuess;
+
+      // fallback
+      return "https://login.procore.com/?cookies_enabled=true";
     }
 
     return href;
@@ -296,7 +349,6 @@
     const a = document.createElement("a");
     a.className = "btn";
     a.textContent = b.text || "Open";
-
     a.href = withEq(resolveHref(b.href) || "#");
 
     if (b.newTab || /^https?:\/\//i.test(a.href)) {
