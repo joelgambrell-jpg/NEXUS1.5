@@ -1,265 +1,168 @@
-/* app.js (FULL drop-in) */
-(function () {
-  const params = new URLSearchParams(location.search);
-  const id = (params.get("id") || "").trim();
-  const eq = (params.get("eq") || "").trim();
+// app.js
+// NEXUS Landing / Form page renderer
+// - Uses window.FORMS from config.js
+// - Builds buttons, handles embed pages, completion, role banner integration
+// - GitHub Pages safe (relative links)
+// NOTE: Patched to prevent duplicate "Megohmmeter SOP" when config.js already provides it.
 
-  function loadEqMeta(){
-    if (!eq) return null;
-    const primaryKey = `nexus_meta_${eq}`;
-    const legacyKey = "nexus_meta_";
+(function(){
+  "use strict";
+
+  // ===== Helpers =====
+  function qs(){
+    return new URLSearchParams(window.location.search);
+  }
+  function getParam(name){
+    return (qs().get(name) || "").trim();
+  }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+  function looksLikeUrl(v){
+    return typeof v === "string" && /^https?:\/\//i.test((v||"").trim());
+  }
+  function safeHref(href){
+    // allow absolute http(s), otherwise treat as relative
+    href = (href || "").trim();
+    if (!href) return "#";
+    if (looksLikeUrl(href)) return href;
+
+    // Keep within same origin relative path
+    // IMPORTANT: do not auto-prepend leading slash (breaks project pages)
+    return href.replace(/^\/*/, "");
+  }
+
+  function applyEqToHref(href, eq, rif){
+    href = (href || "").trim();
+    if (!href) return href;
     try{
-      const raw = localStorage.getItem(primaryKey);
-      if (raw) return JSON.parse(raw);
-      const legacyRaw = localStorage.getItem(legacyKey);
-      if (legacyRaw) return JSON.parse(legacyRaw);
-    }catch(e){}
-    return null;
-  }
-
-  // Require FORMS + valid ID
-  if (!id || !window.FORMS || !window.FORMS[id]) {
-    document.body.innerHTML =
-      '<div style="background:#b60000;color:white;padding:40px;font-family:Arial">' +
-      "<h2>Invalid or missing form ID</h2>" +
-      "<p>Example: <code>form.html?id=rif</code></p>" +
-      "</div>";
-    return;
-  }
-
-  const cfg = window.FORMS[id];
-
-  document.title = cfg.title || "Form";
-  const pageTitle = document.getElementById("page-title");
-  const sectionTitle = document.getElementById("section-title");
-  if (pageTitle) pageTitle.textContent = cfg.title || "";
-  if (sectionTitle) sectionTitle.textContent = cfg.sectionTitle || "";
-
-  const eqLabel = document.getElementById("eqLabel");
-  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "";
-
-  if (cfg.backgroundImage) {
-    document.body.style.backgroundImage = `url("${cfg.backgroundImage}")`;
-  }
-
-  const buttonsWrap = document.getElementById("buttonsWrap");
-  const buttonsEl = document.getElementById("buttons");
-  const mediaEl = document.getElementById("media");
-
-  // Storage keys used by equipment.html
-  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
-  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
-
-  // =========================
-  // Firebase sync (optional)
-  // =========================
-  async function fbSetStep(eqId, stepId, isDone){
-    try{
-      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
-      const { db, auth } = window.NEXUS_FB;
-
-      const { doc, setDoc, serverTimestamp } =
-        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
-
-      const ref = doc(db, "equipment", eqId, "steps", stepId);
-      await setDoc(ref, {
-        done: !!isDone,
-        updatedAt: serverTimestamp(),
-        updatedBy: auth?.currentUser?.uid || null
-      }, { merge:true });
+      const u = new URL(href, window.location.href);
+      if (u.origin !== window.location.origin) return href; // leave external links alone
+      if (eq) u.searchParams.set("eq", eq);
+      if (rif) u.searchParams.set("rif", rif);
+      return u.pathname.replace(/^\//,"") + u.search + u.hash;
     }catch(e){
-      console.warn("Firebase step sync failed:", e);
+      return href;
     }
   }
 
-  let fbUnsub = null;
-  async function fbListenStep(eqId, stepId){
-    try{
-      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
-      const { db } = window.NEXUS_FB;
-
-      const { doc, onSnapshot } =
-        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
-
-      const ref = doc(db, "equipment", eqId, "steps", stepId);
-
-      fbUnsub = onSnapshot(ref, (snap) => {
-        if (!snap.exists()) return;
-        const data = snap.data() || {};
-        if (data.done) localStorage.setItem(stepKey(stepId), "1");
-        else localStorage.removeItem(stepKey(stepId));
-        refreshStepBtn();
-      });
-    }catch(e){
-      console.warn("Firebase listener failed:", e);
-    }
+  function setBg(img){
+    if (!img) return;
+    document.body.style.backgroundImage = 'url("' + img + '")';
   }
 
-  // =========================
-  // Step Complete button (ALL TASKS)
-  // =========================
-  const stepBtn = document.getElementById("stepCompleteBtn");
-
-  // pages that should never be completable
-  const NON_COMPLETABLE = new Set(["construction","phenolic","transformer","supporting","megger_reporting"]);
-  const hideToggle = NON_COMPLETABLE.has(id);
-
-  // Hide immediately (prevents flash)
-  if (stepBtn) stepBtn.style.display = "none";
-
-  function usable(){ return !!(eq && id); }
-  function done(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
-
-  async function setDoneState(nextDone){
-    if (!usable()) return;
-
-    if (cfg.completedKey){
-      if (nextDone) localStorage.setItem(cfg.completedKey, "true");
-      else localStorage.removeItem(cfg.completedKey);
-    }
-
-    if (nextDone){
-      localStorage.setItem(stepKey(id), "1");
-      localStorage.setItem(landingKey(), "1");
-    } else {
-      localStorage.removeItem(stepKey(id));
-    }
-
-    await fbSetStep(eq, id, nextDone);
+  function setTitle(t){
+    var el = document.getElementById("page-title");
+    if (el) el.textContent = t || "";
+    document.title = t ? (t + " — NEXUS") : "NEXUS";
   }
 
-  function refreshStepBtn(){
-    if (!stepBtn) return;
+  function setSectionTitle(t){
+    var el = document.getElementById("section-title");
+    if (el) el.textContent = t || "";
+  }
 
-    if (hideToggle){
-      stepBtn.style.display = "none";
+  // ===== Completion storage (existing pattern) =====
+  function completionKey(eq, formId){
+    // keep legacy behavior compatible
+    return "nexus_" + (eq || "NO_EQ") + "_step_" + formId;
+  }
+  function isComplete(eq, formId){
+    try{ return localStorage.getItem(completionKey(eq, formId)) === "1"; }
+    catch(e){ return false; }
+  }
+
+  // ===== Main render =====
+  function render(){
+    var id = getParam("id");
+    var eq = getParam("eq");
+    var rif = getParam("rif");
+
+    if (!id){
+      setTitle("Form");
+      setSectionTitle("");
       return;
     }
 
-    // Show on ALL task pages
-    stepBtn.style.display = "block";
-    stepBtn.disabled = !usable();
-    stepBtn.title = usable() ? "" : "Missing eq or id in URL";
+    var cfg = (window.FORMS && window.FORMS[id]) ? window.FORMS[id] : null;
+    if (!cfg){
+      setTitle("Unknown Form");
+      setSectionTitle("Unknown");
+      return;
+    }
 
-    const isDone = done();
-    stepBtn.classList.toggle("complete", isDone);
-    stepBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
-  }
+    setBg(cfg.backgroundImage || "");
+    setTitle(cfg.title || id);
+    setSectionTitle(cfg.sectionTitle || "");
 
-  if (stepBtn){
-    stepBtn.addEventListener("click", async () => {
-      if (!usable()) return;
-      const next = !done();
-      await setDoneState(next);
-      refreshStepBtn();
-    });
-  }
+    // If this form is an embed-only page, app.js historically used #media.
+    // In your current form.html, media is removed; we keep logic but no-op.
+    if (cfg.embedUrl){
+      // nothing to do here in current UI; user launches embeds from buttons elsewhere
+    }
 
-  // keep in sync
-  refreshStepBtn();
-  window.addEventListener("storage", refreshStepBtn);
-  window.addEventListener("focus", refreshStepBtn);
-  window.addEventListener("pageshow", refreshStepBtn);
+    // Build buttons
+    var buttonsEl = document.getElementById("buttons");
+    if (!buttonsEl) return;
+    buttonsEl.innerHTML = "";
 
-  if (usable() && !hideToggle) fbListenStep(eq, id);
+    var btnList = Array.isArray(cfg.buttons) ? cfg.buttons.slice() : [];
 
-  window.addEventListener("beforeunload", () => {
-    try{ if (fbUnsub) fbUnsub(); }catch(e){}
-  });
-
-  function withEq(href) {
-    if (!eq || !href) return href;
-    if (/^https?:\/\//i.test(href)) return href;
-
-    const u = new URL(href, location.href);
-    if (u.origin !== location.origin) return href;
-
-    u.searchParams.set("eq", eq);
-
-    if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
-      if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
-        u.searchParams.set("form", id);
+    // ---- PATCH: prevent duplicate SOP injection if config already provides it ----
+    // MEG: SOP under Megohmmeter Test Log (matches styling)
+    // Only inject if config.js did NOT already provide a SOP button (prevents duplicates).
+    const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
+    if (MEG_IDS.has(id)) {
+      const hasSop = btnList.some(x => String((x && x.text) || "").trim().toLowerCase() === "megohmmeter sop");
+      if (!hasSop) {
+        btnList.splice(1, 0, {
+          text: "Megohmmeter SOP",
+          href: "megohmmeter_sop.html",
+          newTab: false
+        });
       }
     }
+    // ---------------------------------------------------------------------------
 
-    return u.pathname + u.search + u.hash;
-  }
+    btnList.forEach(function(b){
+      if (!b || !b.text) return;
 
-  // =========================
-  // IMPORTANT: Kill the legacy SOP button entirely.
-  // We render SOP as a normal .btn entry so it matches styling.
-  // =========================
-  (function hardHideLegacySopBtn(){
-    const sopBtn = document.getElementById("openSopBtn");
-    if (!sopBtn) return;
-    sopBtn.style.display = "none";
-    sopBtn.onclick = null;
-  })();
+      var a = document.createElement("a");
+      a.className = "btn";
+      a.textContent = b.text;
 
-  // EMBED MODE
-  if (cfg.embedUrl) {
-    if (buttonsWrap) buttonsWrap.style.display = "none";
-    if (mediaEl){
-      mediaEl.style.display = "block";
-      mediaEl.innerHTML = `<iframe class="embed" src="${withEq(cfg.embedUrl)}" title="${cfg.title || ""}"></iframe>`;
-    }
-    return;
-  }
+      var href = safeHref(b.href || "#");
+      href = applyEqToHref(href, eq, rif);
+      a.setAttribute("href", href);
 
-  // IMAGE MODE
-  if (cfg.imageUrl) {
-    if (buttonsWrap) buttonsWrap.style.display = "none";
-    if (mediaEl){
-      mediaEl.style.display = "block";
-      mediaEl.innerHTML = `
-        <img id="mainImg" src="${cfg.imageUrl}" alt="${cfg.title || "Image"}" style="max-width:100%;border-radius:18px;cursor:zoom-in;">
-        <div style="margin-top:12px;">
-          <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
-        </div>
-      `;
-    }
-    return;
-  }
+      // newTab behavior: only for external unless explicitly requested
+      var isExternal = looksLikeUrl((b.href||"").trim());
+      var openNew = !!b.newTab || isExternal;
+      if (openNew){
+        a.setAttribute("target","_blank");
+        a.setAttribute("rel","noopener");
+      }
 
-  // BUTTON MODE
-  if (buttonsWrap) buttonsWrap.style.display = "inline-block";
-  if (mediaEl) mediaEl.style.display = "none";
-  if (buttonsEl) buttonsEl.innerHTML = "";
+      // completion state (existing pattern)
+      if (isComplete(eq, id)){
+        a.classList.add("complete");
+      }
 
-  const btnList = Array.isArray(cfg.buttons) ? [...cfg.buttons] : [];
-
-  // TORQUE: SOP under Torque Application Log
-  if (id === "torque") {
-    btnList.splice(1, 0, {
-      text: "Torque SOP",
-      href: "torque_sop.html",
-      newTab: true
+      buttonsEl.appendChild(a);
     });
   }
 
-  // MEG: SOP under Megohmmeter Test Log (matches styling)
-  const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-  if (MEG_IDS.has(id)) {
-    btnList.splice(1, 0, {
-      text: "Megohmmeter SOP",
-      href: "megohmmeter_sop.html",
-      newTab: false
-    });
+  // Some legacy elements existed in earlier versions; keep harmless.
+  function hardHideLegacySopBtn(){
+    try{
+      var sop = document.getElementById("openSopBtn");
+      if (sop) sop.style.display = "none";
+    }catch(e){}
   }
 
-  btnList.forEach((b) => {
-    const a = document.createElement("a");
-    a.className = "btn";
-    a.textContent = b.text || "Open";
-    a.href = withEq(b.href || "#");
-
-    if (b.newTab || /^https?:\/\//i.test(a.href)) {
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-    }
-
-    buttonsEl.appendChild(a);
+  document.addEventListener("DOMContentLoaded", function(){
+    hardHideLegacySopBtn();
+    render();
   });
 
-  refreshStepBtn();
 })();
