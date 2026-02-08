@@ -10,7 +10,7 @@ CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
 Everything else preserved.
 
 ADJUSTED (THIS CHANGE ONLY, PER AGREEMENT):
-- RIF "RIF — Procore" getProcoreUrl() now robustly reads the per-equipment Procore URL saved in Setup (adds localStorage scan by eq+procore).
+- RIF fallback "RIF — Procore" no longer shows/alerts if config.js already provides the Procore link button.
 -->
 <!doctype html>
 <html lang="en">
@@ -541,13 +541,21 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     });
   })();
 
-  // (3) ONLY repurpose #rifNoProcoreBtn to Procore
+  // (3) RIF: ONLY use fallback button if config.js did NOT already provide the Procore link button
   (function(){
     const btn = document.getElementById("rifNoProcoreBtn");
     if(!btn) return;
 
     if (id !== "rif"){
       btn.style.display = "none";
+      return;
+    }
+
+    // If config/app already rendered the Procore link button, DO NOT show fallback and DO NOT alert.
+    const configProcoreBtn = findBtnByText("RIF Link to Procore (Live after updated by customer)");
+    if (configProcoreBtn){
+      btn.style.display = "none";
+      btn.onclick = null;
       return;
     }
 
@@ -574,98 +582,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
       const qp = (qs.get("procore") || "").trim();
       if (looksLikeUrl(qp)) return qp;
 
-      function lsGet(k){
-        try{ return (localStorage.getItem(k) || "").trim(); }catch(e){ return ""; }
-      }
-
-      // ---- PREFERRED: per-equipment keys + meta ----
-      if (eq){
-        const directEqKeys = [
-          `nexus_${eq}_procore_equipment_url`,
-          `nexus_${eq}_equipment_procore_url`,
-          `nexus_${eq}_procore_url`,
-          `nexus_${eq}_procore`,
-          `nexus_${eq}_procoreEquipmentUrl`,
-          `nexus_${eq}_procoreEquipmentURL`,
-          `nexus_${eq}_procore_equipment`,
-          `nexus_${eq}_equipment_procore`,
-          `nexus_${eq}_rif_procore_url`
-        ];
-
-        for (const k of directEqKeys){
-          const v = lsGet(k);
-          if (looksLikeUrl(v)) return v;
-        }
-
-        // meta object (nexus_meta_{eq} or legacy nexus_meta_)
-        try{
-          const raw = lsGet(`nexus_meta_${eq}`) || lsGet("nexus_meta_");
-          if (raw){
-            const meta = JSON.parse(raw);
-            const candidates = [
-              meta?.procoreEquipmentUrl,
-              meta?.procoreEquipmentURL,
-              meta?.procore_equipment_url,
-              meta?.equipmentProcoreUrl,
-              meta?.equipment_procore_url,
-              meta?.procoreUrl,
-              meta?.procoreURL,
-              meta?.procore_url
-            ].map(v => String(v || "").trim());
-
-            for (const v of candidates){
-              if (looksLikeUrl(v)) return v;
-            }
-          }
-        }catch(e){}
-
-        // nexus_equipment_{eq} record (explicit fields + deep scan)
-        const rawEq = lsGet(`nexus_equipment_${eq}`);
-        if (rawEq){
-          try{
-            const rec = JSON.parse(rawEq);
-            const explicit = [
-              rec?.procoreEquipmentUrl,
-              rec?.procoreEquipmentURL,
-              rec?.procore_equipment_url,
-              rec?.equipmentProcoreUrl,
-              rec?.equipment_procore_url,
-              rec?.procore,
-              rec?.procoreUrl,
-              rec?.procore_url
-            ].map(v => String(v || "").trim());
-
-            for (const v of explicit){
-              if (looksLikeUrl(v)) return v;
-            }
-
-            const found = deepFindProcore(rec);
-            if (looksLikeUrl(found)) return found;
-          }catch(e){}
-        }
-
-        // ---- ROBUST FALLBACK: scan localStorage for eq + "procore" ----
-        try{
-          const eqLower = String(eq).toLowerCase();
-          let best = "";
-
-          for (let i = 0; i < localStorage.length; i++){
-            const k = localStorage.key(i);
-            if (!k) continue;
-
-            const kLower = k.toLowerCase();
-            if (kLower.includes("procore") && kLower.includes(eqLower)){
-              const v = lsGet(k);
-              if (looksLikeUrl(v)) { best = v; break; }
-            }
-          }
-
-          if (best) return best;
-        }catch(e){}
-      }
-      // ---- END preferred block ----
-
-      // legacy/global keys
       const keys = [
         "nexus_procore_url",
         "nx_procore_url",
@@ -676,6 +592,19 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
       for (const k of keys){
         const v = (localStorage.getItem(k) || "").trim();
         if (looksLikeUrl(v)) return v;
+      }
+
+      if (eq){
+        const raw = localStorage.getItem(`nexus_equipment_${eq}`);
+        if (raw){
+          try{
+            const rec = JSON.parse(raw);
+            const direct = (rec.procore || rec.procoreUrl || rec.procore_url || "").toString().trim();
+            if (looksLikeUrl(direct)) return direct;
+            const found = deepFindProcore(rec);
+            if (looksLikeUrl(found)) return found;
+          }catch(e){}
+        }
       }
 
       return "";
@@ -701,6 +630,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     btn.href = procoreUrl;
     btn.target = "_blank";
     btn.rel = "noopener";
+    btnbtn_onclick_null = null;
     btn.onclick = null;
   })();
 
