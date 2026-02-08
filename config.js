@@ -9,6 +9,10 @@ window.FORMS = {
     completedKey: "rifCompleted",
     buttons: [
       { text: "RIF – No Procore (Fillable)", href: "rif_no_procore.html" },
+
+      // ADDED: token resolved in app.js to per-equipment Procore URL saved on equipment page
+      { text: "RIF Link to Procore (Live after updated by customer)", href: "NEXUS_PROCORE_RIF" },
+
       { text: "Equipment Megohmmeter Test (If Applicable)", href: "meg_log.html?mode=equipment" }
     ]
   },
@@ -104,8 +108,6 @@ window.FORMS = {
     buttons: [
       { text: "Pre-FOD Inspection Check List (Use if Procore is not updated)", href: "prefod_checklist.html" },
       { text: "Pre-FOD SOP", href: "prefod_sop.html" },
-
-      // CHANGED: token resolved in app.js to per-equipment Procore URL saved on equipment page
       { text: "Pre-FOD Inspection Link to Procore (Live after updated by customer)", href: "NEXUS_PROCORE_PREFOD" }
     ]
   },
