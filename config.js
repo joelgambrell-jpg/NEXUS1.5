@@ -10,7 +10,7 @@ window.FORMS = {
     buttons: [
       { text: "RIF – No Procore (Fillable)", href: "rif_no_procore.html" },
 
-      // ADDED: token resolved in app.js to per-equipment Procore URL saved on equipment page
+      // RIF Procore (per-equipment; resolved in app.js to the Procore Equipment URL from Setup)
       { text: "RIF Link to Procore (Live after updated by customer)", href: "NEXUS_PROCORE_RIF" },
 
       { text: "Equipment Megohmmeter Test (If Applicable)", href: "meg_log.html?mode=equipment" }
