@@ -1,7 +1,5 @@
-// config.js — FULL REPLACEMENT (canonical paths only)
-
+// config.js — ONLY window.FORMS
 window.FORMS = {
-
   rif: {
     title: "Receipt Inspection Form",
     sectionTitle: "Receipt Inspection Form",
@@ -12,7 +10,6 @@ window.FORMS = {
       { text: "Equipment Megohmmeter Test (If Applicable)", href: "meg_log.html?mode=equipment" }
     ]
   },
-
 
   lvt: {
     title: "LVT Meg Cover Sheet",
@@ -25,10 +22,6 @@ window.FORMS = {
     ]
   },
 
-
-  // =========================
-  // MEG — FIXED PATHS
-  // =========================
   meg: {
     title: "Megohmmeter Testing",
     sectionTitle: "Megohmmeter Testing of Conductors",
@@ -41,7 +34,6 @@ window.FORMS = {
     ]
   },
 
-
   megger_reporting: {
     title: "Megger Reporting",
     sectionTitle: "Megger Reporting",
@@ -49,7 +41,6 @@ window.FORMS = {
     completedKey: "meggerReportingViewed",
     embedUrl: "megger_reporting.pdf"
   },
-
 
   fpv_photo: {
     title: "Finished Product Verification",
@@ -61,10 +52,6 @@ window.FORMS = {
     ]
   },
 
-
-  // =========================
-  // TORQUE — FIXED PATHS
-  // =========================
   torque: {
     title: "Torque",
     sectionTitle: "Torque Application Resources",
@@ -72,17 +59,14 @@ window.FORMS = {
     completedKey: "torqueCompleted",
     buttons: [
       { text: "Torque Application Log", href: "torque_log.html" },
-
-      // NEW: Snap-on import (correct folder)
+      { text: "Torque SOP", href: "torque_sop.html" },
       { text: "Snap-on ConnecTorq Import (Optional)", href: "torque/snapon_import.html" },
-
       { text: "Manufacturer Torque Specifications (Submittal)", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/Ebq0m0FcOsdAvi8flKZlWA8BXjve29RsOoA2XcVIlGdSrg?e=lfKesG" },
       { text: "Transformer Grounding Specification", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/Ebq0m0FcOsdAvi8flKZlWA8BXjve29RsOoA2XcVIlGdSrg?e=lfKesG" },
       { text: "ANSI Torque Specification Generalized", href: "https://aceelectricnet.sharepoint.com/:b:/s/CMH098QAQC/EfjsJTafbJtGtGe-K24K9mwB6o3p6ZOohg6BQCvuD6ruAg?e=pf72Ci" },
       { text: "Burndy Torque Specifications for Mechanical Lugs", href: "https://aceelectricnet.sharepoint.com/:b:/s/CMH098QAQC/Efgq4Mh9nB9EgFE02sYoMg8B8yexajLDN__obEG9_QGuOA?e=RXauzp" }
     ]
   },
-
 
   l2: {
     title: "LVT L2 Installation Verification Form",
@@ -94,7 +78,6 @@ window.FORMS = {
       { text: "L2 IVF Link to Procore (Live after updated by customer)", href: "https://login.procore.com/?cookies_enabled=true" }
     ]
   },
-
 
   prefod: {
     title: "Pre-FOD Inspection",
@@ -108,7 +91,6 @@ window.FORMS = {
     ]
   },
 
-
   phenolic: {
     title: "Phenolic Display",
     sectionTitle: "Phenolic Display",
@@ -119,7 +101,6 @@ window.FORMS = {
       { text: "Reference Pictogram", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/IQAZTk1tl3diQYYHeEzRsh6tAWwAYGeZ3jMsBCEkFK-PFO4?e=lbao5X" }
     ]
   },
-
 
   transformer: {
     title: "Diagram Image",
@@ -132,7 +113,6 @@ window.FORMS = {
       { text: "Supporting Documents", href: "form.html?id=supporting" }
     ]
   },
-
 
   supporting: {
     title: "Supporting Documents",
@@ -147,16 +127,11 @@ window.FORMS = {
     ]
   },
 
-
-  // =========================
-  // FIXED: correct filename
-  // =========================
   construction: {
     title: "Construction Check Sheet",
     sectionTitle: "Construction Check Sheet",
     backgroundImage: "transformer.jpg",
     completedKey: "constructionViewed",
-    embedUrl: "construction_check_sheet.html"
+    embedUrl: "_sheet_table.html"
   }
-
 };
