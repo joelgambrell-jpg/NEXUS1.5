@@ -28,9 +28,7 @@ window.FORMS = {
     backgroundImage: "transformer.jpg",
     completedKey: "megCompleted",
     buttons: [
-      { text: "Megohmmeter Test Log (Fillable)", href: "meg_log.html" },
-      { text: "Megohmmeter SOP", href: "megohmmeter_sop.html" },
-      { text: "Fluke Connect Import (Optional)", href: "meg/fluke_import.html" }
+      { text: "Megohmmeter Test Log (Fillable)", href: "meg_log.html" }
     ]
   },
 
@@ -59,8 +57,6 @@ window.FORMS = {
     completedKey: "torqueCompleted",
     buttons: [
       { text: "Torque Application Log", href: "torque_log.html" },
-      { text: "Torque SOP", href: "torque_sop.html" },
-      { text: "Snap-on ConnecTorq Import (Optional)", href: "torque/snapon_import.html" },
       { text: "Manufacturer Torque Specifications (Submittal)", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/Ebq0m0FcOsdAvi8flKZlWA8BXjve29RsOoA2XcVIlGdSrg?e=lfKesG" },
       { text: "Transformer Grounding Specification", href: "https://aceelectricnet.sharepoint.com/:w:/s/CMH098QAQC/Ebq0m0FcOsdAvi8flKZlWA8BXjve29RsOoA2XcVIlGdSrg?e=lfKesG" },
       { text: "ANSI Torque Specification Generalized", href: "https://aceelectricnet.sharepoint.com/:b:/s/CMH098QAQC/EfjsJTafbJtGtGe-K24K9mwB6o3p6ZOohg6BQCvuD6ruAg?e=pf72Ci" },
@@ -79,6 +75,8 @@ window.FORMS = {
     ]
   },
 
+  // Pre-FOD: FIRST button goes to your new HTML checklist (local).
+  // No "Full Export PDF" here — export stays on equipment.html only.
   prefod: {
     title: "Pre-FOD Inspection",
     sectionTitle: "Pre-FOD Inspection",
@@ -132,6 +130,6 @@ window.FORMS = {
     sectionTitle: "Construction Check Sheet",
     backgroundImage: "transformer.jpg",
     completedKey: "constructionViewed",
-    embedUrl: "_sheet_table.html"
+    embedUrl: "construction_sheet.html"
   }
 };
