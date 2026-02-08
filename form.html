@@ -8,6 +8,9 @@ CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
   - If config.js did NOT create it, show fallback with torque/snapon_import.html
 - Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
 Everything else preserved.
+
+ADDED (THIS CHANGE ONLY, PER AGREEMENT):
+- RIF "RIF — Procore" now reads the per-equipment Procore URL saved in Setup (tries per-equipment keys + nexus_meta_{eq} + existing legacy locations).
 -->
 <!doctype html>
 <html lang="en">
@@ -570,6 +573,53 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     function getProcoreUrl(){
       const qp = (qs.get("procore") || "").trim();
       if (looksLikeUrl(qp)) return qp;
+
+      // ---- ADDED: Prefer per-equipment saved Setup URL (same field you circled) ----
+      function lsGet(k){
+        try{ return (localStorage.getItem(k) || "").trim(); }catch(e){ return ""; }
+      }
+
+      if (eq){
+        const directEqKeys = [
+          // most likely per-equipment keys
+          `nexus_${eq}_procore_equipment_url`,
+          `nexus_${eq}_equipment_procore_url`,
+          `nexus_${eq}_procore_url`,
+          `nexus_${eq}_procore`,
+          `nexus_${eq}_procoreEquipmentUrl`,
+
+          // keep compatibility if you later store per-form
+          `nexus_${eq}_rif_procore_url`
+        ];
+
+        for (const k of directEqKeys){
+          const v = lsGet(k);
+          if (looksLikeUrl(v)) return v;
+        }
+
+        // meta object used elsewhere in NEXUS
+        try{
+          const raw = lsGet(`nexus_meta_${eq}`) || lsGet("nexus_meta_");
+          if (raw){
+            const meta = JSON.parse(raw);
+            const candidates = [
+              meta?.procoreEquipmentUrl,
+              meta?.procoreEquipmentURL,
+              meta?.procore_equipment_url,
+              meta?.equipmentProcoreUrl,
+              meta?.equipment_procore_url,
+              meta?.procoreUrl,
+              meta?.procoreURL,
+              meta?.procore_url
+            ].map(v => String(v || "").trim());
+
+            for (const v of candidates){
+              if (looksLikeUrl(v)) return v;
+            }
+          }
+        }catch(e){}
+      }
+      // ---- END ADDED ----
 
       const keys = [
         "nexus_procore_url",
