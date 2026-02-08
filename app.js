@@ -228,13 +228,13 @@
 
   const btnList = Array.isArray(cfg.buttons) ? [...cfg.buttons] : [];
 
-  // Helpers to prevent duplicates
+  // --- helpers to prevent duplicates ---
   const norm = (s) => String(s || "").toLowerCase().trim();
   function hasButton(matchFn){
     return btnList.some((b) => matchFn(b || {}));
   }
 
-  // TORQUE: SOP under Torque Application Log (ONLY if not already present)
+  // TORQUE: SOP under Torque Application Log (only if not already present)
   if (id === "torque") {
     const alreadyHasTorqueSop = hasButton((b) => {
       const t = norm(b.text);
@@ -251,7 +251,7 @@
     }
   }
 
-  // MEG: SOP under Megohmmeter Test Log (ONLY if not already present)
+  // MEG: SOP under Megohmmeter Test Log (only if not already present)
   const MEG_IDS = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
   if (MEG_IDS.has(id)) {
     const alreadyHasMegSop = hasButton((b) => {
