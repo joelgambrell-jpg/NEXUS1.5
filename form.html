@@ -1,22 +1,13 @@
-<!-- form.html (FULL DROP-IN)
-CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
-- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
-- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
-- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
-- Snap-on Import is Torque-only, AND:
-  - If config.js already created it, hide fallback AND force its href to torque/snapon_import.html
-  - If config.js did NOT create it, show fallback with torque/snapon_import.html
-- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
-Everything else preserved.
--->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
+
 <title>Form</title>
 
 <style>
@@ -92,14 +83,10 @@ h1{font-size:32px;font-weight:700;margin-top:0;}
 a.btn:empty{ display:none !important; }
 button.btn:empty{ display:none !important; }
 
-/* NOTE: left in place even though bottom media is removed (harmless) */
-.media{margin-top:20px;}
-.embed{width:100%;height:75vh;border:none;border-radius:12px;background:#111;}
-
+/* Header/Footer */
 .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
 .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
 .nx-header img{height: 54px;width: auto;max-width: 100%;object-fit: contain;}
-
 .nx-footer{
   margin-top: 40px;
   padding: 18px 12px;
@@ -117,7 +104,7 @@ button.btn:empty{ display:none !important; }
 /* SOP fallback hidden by default; shown only via JS and ONLY if config.js didn't already add one */
 #openSopBtn{ display:none; }
 
-/* Snap-on (Optional) fallback button behavior: torque-only */
+/* Snap-on legacy button hidden by default; only shown via JS if config.js didn't already add one */
 #snaponImportBtn{ display:none; }
 
 /* Equipment image */
@@ -195,11 +182,7 @@ button.btn:empty{ display:none !important; }
   text-align:center;
 }
 
-/* ===== ADDED: Force same font even if external CSS overrides ===== */
-body{ font-family: Arial, sans-serif !important; }
-.btn{ font-family: inherit !important; }
-
-/* ===== ADDED: Torque Supporting Documents dropdown (closed by default) ===== */
+/* ===== Torque Supporting Documents dropdown (closed by default) ===== */
 .nx-supporting-docs{ width:100%; }
 .nx-supporting-docs-toggle{
   width:100%;
@@ -228,17 +211,11 @@ body{ font-family: Arial, sans-serif !important; }
   display:none; /* CLOSED by default */
 }
 .nx-supporting-docs.open .nx-supporting-docs-menu{ display:block; }
-
-/* ===== Font standardization override (ADDED ONLY) ===== */
-body{font-family:Arial,Helvetica,sans-serif !important;}
-.btn,.nx-supporting-docs-toggle,button,select,input,textarea{font-family:inherit !important;}
 </style>
-
-<link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
-  <div class="nexus-page">
+<div class="nexus-page">
 
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
@@ -293,21 +270,12 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
   <div id="buttonsWrap" class="button-panel">
     <div id="buttons"></div>
 
-    <!-- #3: Procore (RIF only) -->
+    <!-- (legacy / conditional) -->
     <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
-
-    <!-- SOP FALLBACK (Meg only, shown only if config.js didn't already add SOP) -->
     <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
-
-    <!-- Snap-on ConnecTorq Import (Torque only, Optional) FALLBACK -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
-
-    <!-- #5: Leave alone -->
     <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
   </div>
-
-  <!-- Bottom/embedded media removed -->
-  <!-- <div id="media" class="media" style="display:none;"></div> -->
 </div>
 
 <!-- ===== Zoom Modal Markup ===== -->
@@ -342,16 +310,18 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
   if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
 
   function norm(s){ return String(s||"").trim().toLowerCase(); }
+
   function findBtnByText(text, excludeEl){
     const want = norm(text);
-    const wrap = document.getElementById("buttonsWrap") || document.body;
-    const btns = wrap.querySelectorAll("a.btn, button.btn");
+    const buttonsWrap = document.getElementById("buttonsWrap") || document.body;
+    const btns = buttonsWrap.querySelectorAll("a.btn, button.btn");
     for (const b of btns){
       if (excludeEl && b === excludeEl) continue;
       if (norm(b.textContent) === want) return b;
     }
     return null;
   }
+
   function ensureBtn(text, href, insertAfterText){
     const existing = findBtnByText(text);
     if (existing) return existing;
@@ -364,14 +334,12 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     a.textContent = text;
     a.href = href;
 
-    // keep same-tab for internal pages
     a.removeAttribute("target");
     a.removeAttribute("rel");
 
     if (insertAfterText){
       const after = findBtnByText(insertAfterText);
       if (after && after.parentElement){
-        // insert after "after"
         if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
         else after.parentElement.appendChild(a);
         return a;
@@ -381,27 +349,24 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     return a;
   }
 
-  /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
+  /* ===== SOP fallback (Meg only) — show only if config/app did NOT already add SOP ===== */
   (function(){
     const sopFallback = document.getElementById("openSopBtn");
     if (!sopFallback) return;
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
-    // default hidden
     sopFallback.style.display = "none";
     sopFallback.onclick = null;
 
     if (!megIds.has(id)) return;
 
-    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
     const existingSop = findBtnByText("Megohmmeter SOP", sopFallback);
     if (existingSop){
       sopFallback.style.display = "none";
       return;
     }
 
-    // Otherwise show fallback SOP
     const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
     sopFallback.style.display = "block";
     sopFallback.setAttribute("href", href);
@@ -409,63 +374,30 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     sopFallback.removeAttribute("rel");
   })();
 
-  /* ===== Fluke Import: Meg ONLY, ensure present (auto-add if missing) ===== */
+  /* ===== Snap-on legacy button (Torque only) — show only if config/app did NOT already add it ===== */
   (function(){
-    const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-    if (!megIds.has(id)) return;
+    const snaponBtn = document.getElementById("snaponImportBtn");
+    if (!snaponBtn) return;
 
-    const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-    // If config.js already provides it, do nothing.
-    const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
-    if (existingFluke) return;
-
-    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
-    ensureBtn(
-      "Fluke Connect Import (Optional)",
-      flukeHref,
-      "Megohmmeter SOP"
-    ) || ensureBtn(
-      "Fluke Connect Import (Optional)",
-      flukeHref,
-      "Megohmmeter Test Log (Fillable)"
-    );
-  })();
-
-  /* ===== Snap-on ConnecTorq Import (Torque only) — FIX DUPLICATE + FORCE PATH ===== */
-  (function(){
-    const fallback = document.getElementById("snaponImportBtn");
-    if (!fallback) return;
-
-    // Default hidden
-    fallback.style.display = "none";
-    fallback.onclick = null;
+    snaponBtn.style.display = "none";
+    snaponBtn.onclick = null;
 
     if (id !== "torque") return;
 
-    // Correct canonical path (matches your repo: /torque/snapon_import.html)
-    const desiredHref = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-    // If config.js already created a button with same text, use it and hide fallback.
-    const existing = findBtnByText("Snap-on ConnecTorq Import (Optional)", fallback);
-    if (existing){
-      // Force it to correct href (fixes old layered links like torque/torque/...)
-      existing.setAttribute("href", desiredHref);
-      existing.removeAttribute("target");
-      existing.removeAttribute("rel");
-
-      fallback.style.display = "none";
+    const existingSnapon = findBtnByText("Snap-on ConnecTorq Import (Optional)", snaponBtn);
+    if (existingSnapon){
+      snaponBtn.style.display = "none";
       return;
     }
 
-    // Otherwise show fallback with correct href
-    fallback.style.display = "block";
-    fallback.setAttribute("href", desiredHref);
-    fallback.removeAttribute("target");
-    fallback.removeAttribute("rel");
+    const href = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+    snaponBtn.style.display = "block";
+    snaponBtn.setAttribute("href", href);
+    snaponBtn.removeAttribute("target");
+    snaponBtn.removeAttribute("rel");
   })();
 
-  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  /* ===== Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
   (function(){
     if (id !== "torque") return;
 
@@ -538,90 +470,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     });
   })();
 
-  // (3) ONLY repurpose #rifNoProcoreBtn to Procore
-  (function(){
-    const btn = document.getElementById("rifNoProcoreBtn");
-    if(!btn) return;
-
-    if (id !== "rif"){
-      btn.style.display = "none";
-      return;
-    }
-
-    function looksLikeUrl(v){
-      return typeof v === "string" && /^https?:\/\//i.test((v||"").trim());
-    }
-
-    function deepFindProcore(obj){
-      try{
-        if (!obj || typeof obj !== "object") return "";
-        for (const k in obj){
-          const v = obj[k];
-          if (typeof v === "string" && looksLikeUrl(v) && (/procore/i.test(k) || /procore/i.test(v))) return v.trim();
-          if (v && typeof v === "object"){
-            const found = deepFindProcore(v);
-            if (found) return found;
-          }
-        }
-      }catch(e){}
-      return "";
-    }
-
-    function getProcoreUrl(){
-      const qp = (qs.get("procore") || "").trim();
-      if (looksLikeUrl(qp)) return qp;
-
-      const keys = [
-        "nexus_procore_url",
-        "nx_procore_url",
-        "procore_url",
-        "procoreUrl",
-        "procore"
-      ];
-      for (const k of keys){
-        const v = (localStorage.getItem(k) || "").trim();
-        if (looksLikeUrl(v)) return v;
-      }
-
-      if (eq){
-        const raw = localStorage.getItem(`nexus_equipment_${eq}`);
-        if (raw){
-          try{
-            const rec = JSON.parse(raw);
-            const direct = (rec.procore || rec.procoreUrl || rec.procore_url || "").toString().trim();
-            if (looksLikeUrl(direct)) return direct;
-            const found = deepFindProcore(rec);
-            if (looksLikeUrl(found)) return found;
-          }catch(e){}
-        }
-      }
-
-      return "";
-    }
-
-    const procoreUrl = getProcoreUrl();
-
-    btn.style.display = "block";
-    btn.textContent = "RIF — Procore";
-
-    if (!procoreUrl){
-      btn.href = "#";
-      btn.removeAttribute("target");
-      btn.removeAttribute("rel");
-      btn.onclick = function(e){
-        e.preventDefault();
-        alert("Procore link not set in Setup yet.");
-        return false;
-      };
-      return;
-    }
-
-    btn.href = procoreUrl;
-    btn.target = "_blank";
-    btn.rel = "noopener";
-    btn.onclick = null;
-  })();
-
   function patchLinks(){
     document.querySelectorAll('a[href]').forEach(a => {
       try{
@@ -634,7 +482,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
         if (eq) url.searchParams.set("eq", eq);
         if (rif) url.searchParams.set("rif", rif);
 
-        a.setAttribute("href", url.pathname + url.search + url.hash);
+        a.setAttribute("href", url.pathname.replace(/^\//,"") + url.search + url.hash);
       }catch(e){}
     });
   }
@@ -772,62 +620,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
-<script>
-/* Hide any blank pill/button that gets injected (covers whitespace, nbsp, etc.) */
-(function(){
-  function isTrulyBlankButton(el){
-    if (!el) return false;
 
-    const isButtonish =
-      el.matches('a,button,div,span') &&
-      (
-        el.classList.contains('btn') ||
-        el.getAttribute('role') === 'button' ||
-        el.tagName === 'BUTTON'
-      );
-
-    if (!isButtonish) return false;
-    if (el.querySelector('img,svg,canvas,video')) return false;
-
-    const aria = (el.getAttribute('aria-label') || '').trim();
-    const title = (el.getAttribute('title') || '').trim();
-    if (aria || title) return false;
-
-    const text = (el.textContent || '')
-      .replace(/\u00A0/g, ' ')
-      .replace(/\u200B/g, '')
-      .trim();
-
-    return text.length === 0;
-  }
-
-  function hideBlanks(root){
-    const scope = root || document;
-    const candidates = scope.querySelectorAll('a,button,div,span');
-    candidates.forEach(el => {
-      if (isTrulyBlankButton(el)){
-        el.style.display = 'none';
-        el.style.pointerEvents = 'none';
-      }
-    });
-  }
-
-  hideBlanks(document);
-
-  const obs = new MutationObserver((mutations) => {
-    for (const m of mutations){
-      m.addedNodes && m.addedNodes.forEach(n => {
-        if (n.nodeType === 1){
-          hideBlanks(n);
-        }
-      });
-    }
-  });
-
-  obs.observe(document.body, { childList:true, subtree:true });
-})();
-</script>
-
-  </div>
+</div>
 </body>
 </html>
