@@ -186,6 +186,22 @@
   }
 
   // =========================
+  // NEW: Resolve special href tokens (keeps config.js clean & per-equipment)
+  // =========================
+  function resolveHref(href){
+    if (!href) return href;
+
+    // Pre-FOD → use per-equipment Procore URL saved on equipment page
+    if (href === "NEXUS_PROCORE_PREFOD") {
+      const key = `nexus_${eq || "NO_EQ"}_prefod_procore_url`;
+      const saved = (localStorage.getItem(key) || "").trim();
+      return saved || "https://login.procore.com/?cookies_enabled=true";
+    }
+
+    return href;
+  }
+
+  // =========================
   // IMPORTANT: Kill the legacy SOP button entirely.
   // We render SOP as a normal .btn entry so it matches styling.
   // =========================
@@ -273,7 +289,9 @@
     const a = document.createElement("a");
     a.className = "btn";
     a.textContent = b.text || "Open";
-    a.href = withEq(b.href || "#");
+
+    // NOTE: Only change here is resolveHref(...) before withEq(...)
+    a.href = withEq(resolveHref(b.href) || "#");
 
     if (b.newTab || /^https?:\/\//i.test(a.href)) {
       a.target = "_blank";
