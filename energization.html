@@ -488,8 +488,14 @@
 
       // Lock overlay actions
       if (signNoBtn) signNoBtn.addEventListener("click", function(){
-        // keep locked; just close keyboard / keep overlay
+        // FIX: Not yet should return to Equipment page (preserve eq param)
         try{ signNameInput && signNameInput.blur(); }catch(e){}
+        try{
+          const target = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
+          location.href = target;
+        }catch(e){
+          location.href = "equipment.html";
+        }
       });
 
       if (signYesBtn) signYesBtn.addEventListener("click", function(){
