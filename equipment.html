@@ -74,6 +74,50 @@
   .progress-fill{ height:100%; width:0%; background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%); border-radius:999px; transition: width .25s ease; }
   .progress-hint{ margin-top:10px; font-size:12px; font-weight:800; opacity:.9; }
 
+  /* ===== ADD: Torque Photo block ===== */
+  .torque-photo-block{
+    margin: 8px 0 14px;
+    padding: 14px 14px 12px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
+  }
+  .torque-photo-title{
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-size:13px;
+    opacity:.95;
+    margin:0 0 10px;
+  }
+  .torque-photo-status{
+    margin-top:8px;
+    font-size:12px;
+    font-weight:900;
+    opacity:.9;
+    line-height:1.35;
+  }
+  #nexusTorquePhotoPreview{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:240px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+  }
+  .torque-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .mini-btn{
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.35);
+    background: rgba(0,0,0,0.20);
+    color:#fff;
+  }
+
   #energizationWrap{ position:relative; margin: 14px 0 6px; display:flex; justify-content:center; align-items:center; padding:10px 0; }
   #energizationBtn{ width:min(520px, 100%); font-size:18px; padding:14px 16px; position:relative; z-index:2; }
   #energizationBtn.unlocked{
@@ -203,7 +247,7 @@
   .procore-hidden{ display:none!important; }
 
   @media print{
-    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid { display:none !important; }
+    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid, .torque-photo-block { display:none !important; }
     body{ background:#fff !important; color:#000 !important; }
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
@@ -244,6 +288,17 @@
   <div class="card">
     <h1>Equipment Page</h1>
     <div class="eq" id="eqLabel"></div>
+
+    <!-- ADD: Torque Photo upload (saved per-equipment, displayed on Torque page) -->
+    <div class="torque-photo-block" id="torquePhotoBlock">
+      <div class="torque-photo-title">Torque Photo</div>
+      <input id="nexusTorquePhotoInput" type="file" accept="image/*" capture="environment" />
+      <img id="nexusTorquePhotoPreview" alt="Torque photo preview" />
+      <div id="nexusTorquePhotoStatus" class="torque-photo-status"></div>
+      <div class="torque-photo-actions">
+        <button id="nexusTorquePhotoClearBtn" class="mini-btn" type="button">Clear Torque Photo</button>
+      </div>
+    </div>
 
     <div class="progress-wrap">
       <div class="progress-label">
@@ -528,6 +583,90 @@
     }
   }
 
+  // ===== ADD: Torque Photo save/load (localStorage key: nexus_${eq}_torque_photo) =====
+  const torqueInput = document.getElementById("nexusTorquePhotoInput");
+  const torquePreview = document.getElementById("nexusTorquePhotoPreview");
+  const torqueStatus = document.getElementById("nexusTorquePhotoStatus");
+  const torqueClearBtn = document.getElementById("nexusTorquePhotoClearBtn");
+
+  function torqueKey(){ return `nexus_${eq || "NO_EQ"}_torque_photo`; }
+
+  function setTorqueStatus(msg){
+    if (!torqueStatus) return;
+    torqueStatus.textContent = msg || "";
+  }
+
+  function showTorque(url){
+    if (!torquePreview) return;
+    if (!url) return;
+    torquePreview.src = url;
+    torquePreview.style.display = "block";
+  }
+
+  function hideTorque(){
+    if (!torquePreview) return;
+    torquePreview.removeAttribute("src");
+    torquePreview.style.display = "none";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function loadTorquePhoto(){
+    if (!eq){
+      hideTorque();
+      setTorqueStatus("Missing equipment ID — cannot save torque photo.");
+      return;
+    }
+    const saved = localStorage.getItem(torqueKey());
+    if (saved){
+      showTorque(saved);
+      setTorqueStatus("Loaded saved torque photo for this equipment (this device).");
+    } else {
+      hideTorque();
+      setTorqueStatus("No torque photo saved yet for this equipment.");
+    }
+  }
+
+  if (torqueInput){
+    torqueInput.addEventListener("change", async (e) => {
+      if (!eq){
+        alert("Missing equipment ID. Open this page with ?eq=TR-001");
+        torqueInput.value = "";
+        return;
+      }
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      setTorqueStatus("Saving torque photo…");
+      try{
+        const dataUrl = await fileToDataUrl(file);
+        localStorage.setItem(torqueKey(), dataUrl);
+        showTorque(dataUrl);
+        setTorqueStatus("Saved. This will display on the Torque page for the same ?eq= value.");
+      }catch(err){
+        console.warn("Torque photo save failed:", err);
+        setTorqueStatus("Save failed (browser blocked file read).");
+      }
+    });
+  }
+
+  if (torqueClearBtn){
+    torqueClearBtn.addEventListener("click", () => {
+      if (!eq) return;
+      localStorage.removeItem(torqueKey());
+      if (torqueInput) torqueInput.value = "";
+      hideTorque();
+      setTorqueStatus("Cleared torque photo for this equipment (this device).");
+    });
+  }
+
   // ===== Goal + Countdown (same as your original) =====
   const goalDateEl = document.getElementById("goalDate");
   const notifyEmailsEl = document.getElementById("notifyEmails");
@@ -654,10 +793,11 @@
   refresh();
   loadGoalFromLocal();
   startCountdown();
+  loadTorquePhoto();
 
-  window.addEventListener("focus", () => { refresh(); renderCountdown(); });
-  window.addEventListener("pageshow", () => { refresh(); renderCountdown(); });
-  window.addEventListener("storage", () => { refresh(); renderCountdown(); });
+  window.addEventListener("focus", () => { refresh(); renderCountdown(); loadTorquePhoto(); });
+  window.addEventListener("pageshow", () => { refresh(); renderCountdown(); loadTorquePhoto(); });
+  window.addEventListener("storage", () => { refresh(); renderCountdown(); loadTorquePhoto(); });
 
   // Firestore listeners unchanged
   let fbStepsUnsub = null;
