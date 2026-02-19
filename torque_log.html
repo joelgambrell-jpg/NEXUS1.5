@@ -41,6 +41,52 @@
   .hint{opacity:.9;font-weight:800;font-size:13px;line-height:1.35;margin-top:8px}
   @media (max-width:760px){.top{flex-direction:column;align-items:stretch}}
 
+  /* ===== ADD: Torque Photo display (saved on equipment page) ===== */
+  .torque-photo-block{
+    margin-top:18px;
+    padding:16px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.20);
+  }
+  .torque-photo-title{
+    margin:0 0 10px;
+    font-weight:900;
+    letter-spacing:.02em;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .torque-photo-sub{
+    font-weight:800;
+    font-size:12px;
+    opacity:.9;
+  }
+  #nxTorquePhotoImg{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:280px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(0,0,0,0.12);
+  }
+  #nxTorquePhotoEmpty{
+    margin-top:10px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:800;
+    font-size:12px;
+    opacity:.92;
+    line-height:1.35;
+  }
+
   /* ===== ADDED: Torque section lock (unlocked by Tilt Test 2-person sign-off) ===== */
   .nx-torque-lock-wrap{ position:relative; }
   .nx-torque-lock-wrap.nx-locked{ filter: grayscale(1) opacity(0.55); pointer-events:none; }
@@ -80,7 +126,7 @@
   .nx-pillbadge.bad{ border-color:rgba(255,59,59,0.55); background:rgba(255,59,59,0.10); }
   @media (max-width:760px){ .nx-signoff-grid{ grid-template-columns:1fr; } }
 
-#stepCompleteBtn{display:none !important;}
+  #stepCompleteBtn{display:none !important;}
 </style>
 
 <style>
@@ -147,6 +193,16 @@
       </div>
       <div class="hint">Save persists locally now and includes Firebase hook placeholders. Export opens an email draft (PDF export should be generated server-side in Firebase later).</div>
     </div>
+  </div>
+
+  <!-- ADD: Torque Photo display -->
+  <div class="torque-photo-block" id="nxTorquePhotoBlock">
+    <div class="torque-photo-title">
+      <span>Torque Photo</span>
+      <span class="torque-photo-sub" id="nxTorquePhotoSub">Saved per equipment</span>
+    </div>
+    <img id="nxTorquePhotoImg" alt="Torque photo" />
+    <div id="nxTorquePhotoEmpty">No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).</div>
   </div>
 
   <div class="section">
@@ -284,7 +340,7 @@
 
   const backBtn=document.getElementById("backBtn");
   backBtn.textContent="Back to Equipment";
-const stepBtn=document.getElementById("stepCompleteBtn");
+  const stepBtn=document.getElementById("stepCompleteBtn");
   if(stepBtn){ stepBtn.style.display="none"; }
 
   function stepKey(id){return `nexus_${eq||"NO_EQ"}_step_${id}`;}
@@ -417,6 +473,49 @@ const stepBtn=document.getElementById("stepCompleteBtn");
   }
 
   /* ==========================================================
+     ADDED: Torque Photo loader (reads localStorage nexus_${eq}_torque_photo)
+     ========================================================== */
+  (function(){
+    const img = document.getElementById("nxTorquePhotoImg");
+    const empty = document.getElementById("nxTorquePhotoEmpty");
+    const sub = document.getElementById("nxTorquePhotoSub");
+
+    function torquePhotoKey(){
+      return `nexus_${eq || "NO_EQ"}_torque_photo`;
+    }
+
+    function loadTorquePhoto(){
+      if (!img || !empty) return;
+
+      if (!eq){
+        img.style.display = "none";
+        empty.style.display = "block";
+        empty.textContent = "Missing equipment ID (eq) — cannot load torque photo.";
+        if (sub) sub.textContent = "Missing eq";
+        return;
+      }
+
+      const dataUrl = localStorage.getItem(torquePhotoKey());
+      if (dataUrl){
+        img.src = dataUrl;
+        img.style.display = "block";
+        empty.style.display = "none";
+        if (sub) sub.textContent = "Loaded from this device storage";
+      } else {
+        img.style.display = "none";
+        empty.style.display = "block";
+        empty.textContent = "No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).";
+        if (sub) sub.textContent = "Not found";
+      }
+    }
+
+    loadTorquePhoto();
+    window.addEventListener("focus", loadTorquePhoto);
+    window.addEventListener("pageshow", loadTorquePhoto);
+    window.addEventListener("storage", loadTorquePhoto);
+  })();
+
+  /* ==========================================================
      ADDED: Tilt Test 2-person sign-off gate (No role requirement)
      - Locks Torque Notes + Torque Application Entries until satisfied
      - Two distinct signer names
@@ -491,7 +590,7 @@ const stepBtn=document.getElementById("stepCompleteBtn");
       const s1ok = !!(s1 && String(s1.name||"").trim());
       const s2ok = !!(s2 && String(s2.name||"").trim());
       // distinct signer names
-            const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
+      const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
       const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
       const distinct = n1 && n2 && n1 != n2;
       return s1ok && s2ok && distinct;
@@ -616,14 +715,10 @@ const stepBtn=document.getElementById("stepCompleteBtn");
         }
       });
 
-      // Clear is Superintendent+ (and recorded)
       if (clearBtn){
-        const ok = true;
         clearBtn.disabled = false;
         clearBtn.style.opacity = "";
       }
-
-      // Sign buttons always enabled, but role captured at sign time.
     }
 
     function sign(slot){
@@ -632,12 +727,6 @@ const stepBtn=document.getElementById("stepCompleteBtn");
       if (!card) return;
       const name = String((card.querySelector(".nx-sign-name") || {}).value || "").trim();
       if (!name){ alert("Signer name is required."); return; }
-
-      // Slot #2 must be Foreman+ at sign time
-      if (Number(slot) === 1 && !true){
-        alert("Foreman+ role required for the Foreman+ sign-off.");
-        return;
-      }
 
       const state = readState();
       const arr = Array.isArray(state.signoffs) ? state.signoffs : [];
@@ -655,11 +744,6 @@ const stepBtn=document.getElementById("stepCompleteBtn");
 
     if (clearBtn){
       clearBtn.addEventListener("click", function(){
-        if (!true){
-          alert("No role requirement to clear sign-offs.");
-          render();
-          return;
-        }
         const state = readState();
         const prev = Array.isArray(state.signoffs) ? state.signoffs : [];
         if (!prev.length){
@@ -691,7 +775,6 @@ const stepBtn=document.getElementById("stepCompleteBtn");
       });
     }
 
-    // Role change hooks (supports both the banner selector and any NEXUS event)
     window.addEventListener("nexus:rolechange", render);
     try{
       var roleSel = document.getElementById("nxRoleSelect");
@@ -699,6 +782,7 @@ const stepBtn=document.getElementById("stepCompleteBtn");
     }catch(e){}
     render();
   })();
+
   // Notes section
   const notesUnit=document.getElementById('notesUnit');
   const notesTorque=document.getElementById('notesTorque');
