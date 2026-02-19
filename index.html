@@ -1,6 +1,6 @@
 <!-- index.html (FULL DROP-IN) — Launcher page with Equipment Image upload (GitHub/localStorage)
      ADD: Phenolic fields (color code dropdown + FED FROM + FEEDS + Phenolic Equip ID)
-     Stored under meta.phenolic in nexus_meta_${eq}
+     ADD: Torque Photo upload (per-equipment) -> localStorage key: nexus_${eq}_torque_photo
 -->
 <!doctype html>
 <html lang="en">
@@ -175,6 +175,18 @@
     color:#fff;
   }
 
+  /* ===== Torque Photo block (same UI style) ===== */
+  #nexusTorquePhotoPreview{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+  }
+
   /* ===== Phenolic section ===== */
   .section-divider{
     margin:18px 0 10px;
@@ -238,6 +250,17 @@
           <div id="nexusEquipImageStatus" class="img-status"></div>
           <div class="img-actions">
             <button id="nexusEquipImageClearBtn" class="mini-btn" type="button">Clear Image</button>
+          </div>
+        </div>
+
+        <!-- ADD: Torque Photo Upload (per-equipment) -->
+        <div class="img-block">
+          <label for="nexusTorquePhotoInput">Torque Photo</label>
+          <input id="nexusTorquePhotoInput" type="file" accept="image/*" capture="environment" />
+          <img id="nexusTorquePhotoPreview" alt="Torque photo preview" />
+          <div id="nexusTorquePhotoStatus" class="img-status"></div>
+          <div class="img-actions">
+            <button id="nexusTorquePhotoClearBtn" class="mini-btn" type="button">Clear Torque Photo</button>
           </div>
         </div>
 
@@ -456,9 +479,11 @@
   eqInput.addEventListener("change", ()=>{
     loadMetaIntoFields(getEq());
     loadPreviewForCurrentEq();
+    loadTorquePreviewForCurrentEq();
   });
   eqInput.addEventListener("input", ()=>{
     loadPreviewForCurrentEq();
+    loadTorquePreviewForCurrentEq();
   });
 
   // buttons
@@ -575,12 +600,73 @@
     setStatus("Image set from Firebase (and cached locally).");
   };
 
-  // init: if URL has eq, set it; load meta + image
+  // ===== Torque Photo (per-equipment localStorage key nexus_${eq}_torque_photo) =====
+  const torqueInput = document.getElementById("nexusTorquePhotoInput");
+  const torquePreview = document.getElementById("nexusTorquePhotoPreview");
+  const torqueStatus = document.getElementById("nexusTorquePhotoStatus");
+  const torqueClearBtn = document.getElementById("nexusTorquePhotoClearBtn");
+
+  function torqueKey(eq){ return `nexus_${eq}_torque_photo`; }
+
+  function setTorqueStatus(msg){ torqueStatus.textContent = msg || ""; }
+
+  function showTorque(url){
+    if(!url) return;
+    torquePreview.src = url;
+    torquePreview.style.display = "block";
+  }
+
+  function hideTorque(){
+    torquePreview.removeAttribute("src");
+    torquePreview.style.display = "none";
+  }
+
+  function loadTorquePreviewForCurrentEq(){
+    const eq = getEq();
+    if(!eq){
+      hideTorque();
+      setTorqueStatus("Enter Equipment ID to save a torque photo.");
+      return;
+    }
+    const saved = localStorage.getItem(torqueKey(eq));
+    if(saved){
+      showTorque(saved);
+      setTorqueStatus("Loaded saved torque photo for this equipment (this device).");
+    } else {
+      hideTorque();
+      setTorqueStatus("No torque photo saved yet for this equipment.");
+    }
+  }
+
+  torqueInput.addEventListener("change", async (e)=>{
+    const eq = getEq();
+    if(!eq){ alert("Enter Equipment ID first."); torqueInput.value=""; return; }
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    setTorqueStatus("Saving torque photo…");
+    const dataUrl = await fileToDataUrl(file);
+    localStorage.setItem(torqueKey(eq), dataUrl);
+    showTorque(dataUrl);
+    setTorqueStatus("Saved. This will display on torque_log.html for the same ?eq= value.");
+  });
+
+  torqueClearBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return;
+    localStorage.removeItem(torqueKey(eq));
+    torqueInput.value = "";
+    hideTorque();
+    setTorqueStatus("Cleared torque photo for this equipment (this device).");
+  });
+
+  // init: if URL has eq, set it; load meta + images
   if (incomingEq){
     eqInput.value = incomingEq;
   }
   loadMetaIntoFields(getEq());
   loadPreviewForCurrentEq();
+  loadTorquePreviewForCurrentEq();
 })();
 </script>
 
