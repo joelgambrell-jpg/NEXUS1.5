@@ -70,9 +70,9 @@
     display:none;
     margin-top:10px;
     width:100%;
-    height:520px;              /* larger box */
-    max-height:70vh;           /* responsive cap */
-    object-fit:contain;        /* IMPORTANT: shows whole picture */
+    height:520px;
+    max-height:70vh;
+    object-fit:contain;
     object-position:center;
     border-radius:12px;
     box-shadow:0 10px 22px rgba(0,0,0,.28);
@@ -99,11 +99,11 @@
     position:fixed;
     inset:0;
     display:none;
-    align-items:center;         /* true vertical center */
-    justify-content:center;     /* true horizontal center */
+    align-items:center;
+    justify-content:center;
     background:rgba(0,0,0,0.84);
     z-index:9999;
-    padding:0;                  /* prevents “low” positioning */
+    padding:0;
   }
   #nxImgLightbox.nx-open{ display:flex; }
 
@@ -169,9 +169,9 @@
     border:1px solid rgba(255,255,255,0.14);
     background:rgba(0,0,0,0.22);
     box-shadow:0 22px 80px rgba(0,0,0,0.65);
-    overflow:hidden;            /* pan inside */
+    overflow:hidden;
     position:relative;
-    touch-action:none;          /* allow pointer pan/zoom */
+    touch-action:none;
   }
 
   #nxImgLightbox img{
@@ -180,8 +180,8 @@
     top:50%;
     transform: translate(-50%, -50%) scale(1);
     transform-origin: center center;
-    max-width:none;             /* needed for zoom */
-    max-height:none;            /* needed for zoom */
+    max-width:none;
+    max-height:none;
     user-select:none;
     -webkit-user-drag:none;
     cursor: grab;
@@ -608,6 +608,10 @@
 
   /* ==========================================================
      ADDED: Torque Photo loader + Lightbox (Zoom + Pan)
+     FIXES:
+       - Move lightbox to document.body on open (prevents page jump)
+       - Use focus({preventScroll:true}) where available
+       - Real zoom controls + mouse wheel zoom + drag pan
      ========================================================== */
   (function(){
     const img = document.getElementById("nxTorquePhotoImg");
@@ -623,6 +627,26 @@
     const btnFit = document.getElementById("nxImgFit");
     const btnReset = document.getElementById("nxImgReset");
     const readout = document.getElementById("nxImgZoomRead");
+
+    // Remember original DOM position (so file structure stays the same)
+    const lbOriginalParent = lb ? lb.parentNode : null;
+    const lbNextSibling = lb ? lb.nextSibling : null;
+
+    function moveLightboxToBody(){
+      if (!lb) return;
+      if (lb.parentNode !== document.body){
+        document.body.appendChild(lb);
+      }
+    }
+    function restoreLightbox(){
+      if (!lb || !lbOriginalParent) return;
+      if (lb.parentNode === lbOriginalParent) return;
+      if (lbNextSibling && lbNextSibling.parentNode === lbOriginalParent){
+        lbOriginalParent.insertBefore(lb, lbNextSibling);
+      } else {
+        lbOriginalParent.appendChild(lb);
+      }
+    }
 
     let scale = 1;
     let tx = 0;
@@ -653,7 +677,6 @@
     }
 
     function fitView(){
-      // Fit image inside canvas at scale that fully fits (contain), then allow further zoom.
       if (!canvas || !zoomImg || !zoomImg.naturalWidth || !zoomImg.naturalHeight) { resetView(); return; }
 
       const cw = canvas.clientWidth;
@@ -671,16 +694,20 @@
     function openLightbox(){
       if (!lb || !zoomImg || !img || !img.src) return;
 
-      zoomImg.src = img.src;
+      // KEY FIX: move overlay to body so opening does NOT scroll the page
+      moveLightboxToBody();
 
+      zoomImg.src = img.src;
       lb.classList.add("nx-open");
       lb.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
 
-      // Wait one frame so layout is correct; then fit.
+      // Wait for layout, then fit
       requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ fitView(); }); });
 
-      try{ closeBtn && closeBtn.focus(); }catch(e){}
+      // Focus without scroll jump
+      try{ closeBtn && closeBtn.focus({ preventScroll:true }); }
+      catch(e){ try{ closeBtn && closeBtn.focus(); }catch(_){ } }
     }
 
     function closeLightbox(){
@@ -689,7 +716,13 @@
       lb.setAttribute("aria-hidden","true");
       document.body.style.overflow = "";
       dragging = false;
-      try{ img && img.focus(); }catch(e){}
+
+      // Put lightbox back where it was in the markup (keeps your file structure intact)
+      restoreLightbox();
+
+      // Return focus without scroll jump
+      try{ img && img.focus({ preventScroll:true }); }
+      catch(e){ try{ img && img.focus(); }catch(_){ } }
     }
 
     function zoomAt(delta, clientX, clientY){
@@ -702,8 +735,6 @@
       const prev = scale;
       const next = clamp(prev * (delta > 0 ? 1.12 : 0.89), 0.05, 8);
 
-      // Keep the point under cursor roughly stable:
-      // tx,ty are pixel offsets at current scale; adjust based on scale ratio.
       const ratio = next / prev;
       tx = (tx - cx) * ratio + cx;
       ty = (ty - cy) * ratio + cy;
@@ -720,12 +751,6 @@
     }
 
     if (closeBtn) closeBtn.addEventListener("click", closeLightbox);
-
-    if (lb){
-      lb.addEventListener("click", (e)=>{
-        if (e.target === lb) closeLightbox(); // click outside stage
-      });
-    }
 
     window.addEventListener("keydown", (e)=>{
       if (!lb || !lb.classList.contains("nx-open")) return;
@@ -834,21 +859,16 @@
     const ROLE_ORDER = ["viewer","tech","foreman","superintendent","admin"];
     function roleIndex(r){ return 999; }
     function getRole(){
-      // Prefer the on-page role selector value (exists before nexus-core loads)
       try{
         var sel = document.getElementById("nxRoleSelect");
         if (sel && sel.value) return String(sel.value).toLowerCase();
       }catch(e){}
-
-      // Then prefer NEXUS role getter (after nexus-core loads)
       try{
         if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
           var r = window.NEXUS.getRole();
           if (r) return String(r).toLowerCase();
         }
       }catch(e){}
-
-      // Finally fall back to common localStorage keys
       try{
         var keys = ["nexus_userRole","nexus_role","nx_role","nexusRole","role"];
         for (var i=0;i<keys.length;i++){
@@ -862,9 +882,6 @@
 
     function signKey(){ return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`; }
 
-    // Backward compatible storage:
-    // - older versions stored an Array in this key
-    // - new version stores an Object: { signoffs: [], clearLog: [] }
     function readState(){
       try{
         const raw = localStorage.getItem(signKey());
@@ -889,23 +906,18 @@
     }
     function readSignoffs(){ return readState().signoffs || []; }
 
-    // Requirements per approval:
-    // - Slot #1: "Title 1" sign-off (any role)
-    // - Slot #2: "Foreman+" sign-off (role rules removed)
     function requirementsMet(arr){
       const a = Array.isArray(arr) ? arr : [];
       const s1 = a[0] || null;
       const s2 = a[1] || null;
       const s1ok = !!(s1 && String(s1.name||"").trim());
       const s2ok = !!(s2 && String(s2.name||"").trim());
-      // distinct signer names
       const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
       const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
       const distinct = n1 && n2 && n1 != n2;
       return s1ok && s2ok && distinct;
     }
 
-    // Wrap ONLY the torque portion (Notes + Entries) so Tilt Test remains interactive.
     function findSectionByTitle(titleText){
       const want = String(titleText||"").trim().toLowerCase();
       const secs = Array.from(document.querySelectorAll(".section"));
@@ -921,13 +933,12 @@
     const entriesSec = findSectionByTitle("Torque Application Entries");
     const tiltSec = findSectionByTitle("Tilt Test (Go / No Go)");
 
-    if (!notesSec || !entriesSec || !tiltSec) return; // fail-safe: do nothing
+    if (!notesSec || !entriesSec || !tiltSec) return;
 
     const wrap = document.createElement("div");
     wrap.className = "nx-torque-lock-wrap";
     wrap.id = "nxTorqueLockWrap";
 
-    // Insert wrapper where notes section currently is.
     const parent = notesSec.parentNode;
     parent.insertBefore(wrap, notesSec);
     wrap.appendChild(notesSec);
@@ -943,7 +954,6 @@
     `;
     wrap.appendChild(overlay);
 
-    // Build sign-off UI inside the Tilt Test section
     const signUi = document.createElement("div");
     signUi.id = "nxTiltSignoffs";
     signUi.innerHTML = `
@@ -973,7 +983,6 @@
       </div>
     `;
 
-    // Styles (scoped; additive)
     const style = document.createElement("style");
     style.textContent = `
       .nx-signoff-wrap{ margin-top:14px; padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); }
@@ -1010,7 +1019,6 @@
         statusEl.classList.toggle("bad", !met);
       }
 
-      // Fill each slot UI from stored record if present
       const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
       cards.forEach((card, idx)=>{
         const rec = arr[idx] || null;
@@ -1105,8 +1113,6 @@
     };
     localStorage.setItem(dataKey(), JSON.stringify(payload));
     localStorage.setItem(tiltKey(), JSON.stringify(payload.tilt));
-    // Firebase hook placeholder:
-    // window.nexusFirebase?.saveTorqueLog?.(eq, payload);
   }
 
   function loadLocal(){
