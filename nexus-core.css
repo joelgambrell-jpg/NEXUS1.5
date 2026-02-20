@@ -209,3 +209,92 @@ body.nx-bg .nexus-page{
   background: rgba(0,0,0,0.06);
   border-radius: 12px;
 }
+/* === FORCE FULL-VIEW IMAGE PREVIEWS (NO CROP) — DROP-IN OVERRIDE === */
+/* Put this at the VERY BOTTOM of nexus-core.css */
+
+/* Case A: torque photo is an <img> inside common preview containers */
+#torquePhotoPreview img,
+#nxTorquePhotoPreview img,
+#nxTorquePhoto img,
+#torque_photo img,
+#torque-photo img,
+#torquePhoto img,
+#torquePhotoBox img,
+#torquePhotoWrap img,
+#torquePhotoContainer img,
+#nxTorquePhotoBox img,
+#nxTorquePhotoWrap img,
+#nxTorquePhotoContainer img,
+.torque-photo img,
+.torquePhoto img,
+.torque-photo-preview img,
+.torquePhotoPreview img,
+.photo-box img,
+.image-box img,
+.preview img,
+.upload-preview img,
+.uploadPreview img,
+.nx-photo img,
+.nx-image img,
+.nx-media img,
+.nx-upload img,
+.nx-preview img{
+  display:block !important;
+  width:100% !important;
+  height:520px !important;        /* BIGGER BOX */
+  max-height:70vh !important;     /* responsive cap */
+  object-fit:contain !important;  /* IMPORTANT: SHOW WHOLE IMAGE */
+  object-position:center !important;
+  border-radius:12px !important;
+  background: rgba(0,0,0,0.06) !important;
+}
+
+/* Make sure the wrapper can grow and isn’t clipping weirdly */
+#torquePhotoPreview,
+#nxTorquePhotoPreview,
+#nxTorquePhoto,
+#torque_photo,
+#torque-photo,
+#torquePhoto,
+#torquePhotoBox,
+#torquePhotoWrap,
+#torquePhotoContainer,
+#nxTorquePhotoBox,
+#nxTorquePhotoWrap,
+#nxTorquePhotoContainer,
+.torque-photo,
+.torquePhoto,
+.torque-photo-preview,
+.torquePhotoPreview,
+.photo-box,
+.image-box,
+.preview,
+.upload-preview,
+.uploadPreview,
+.nx-photo,
+.nx-image,
+.nx-media,
+.nx-upload,
+.nx-preview{
+  overflow: visible !important;
+}
+
+/* Case B: torque photo is rendered as a DIV with background-image */
+#torquePhotoPreview,
+#nxTorquePhotoPreview,
+#nxTorquePhoto,
+#torque_photo,
+#torque-photo,
+#torquePhoto,
+#torquePhotoBox,
+#torquePhotoWrap,
+#torquePhotoContainer,
+.torque-photo,
+.torquePhoto,
+.torque-photo-preview,
+.torquePhotoPreview{
+  background-size: contain !important;   /* IMPORTANT: SHOW WHOLE IMAGE */
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  min-height: 520px !important;         /* BIGGER BOX */
+}
