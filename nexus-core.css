@@ -174,3 +174,38 @@ body.nx-bg .nexus-page{
   margin-right: auto;
 }
 .nx-muted{ color: var(--nx-muted); }
+
+/* === Torque Photo Preview: show FULL image (no crop) + larger box === */
+/* Safe: only affects the torque photo preview if it's using the stored key/id/class naming. */
+#torquePhotoPreview,
+#nxTorquePhotoPreview,
+#nxTorquePhoto,
+.nx-torque-photo-preview,
+.nx-torque-photo,
+.torque-photo-preview,
+.torquePhotoPreview{
+  width: 100%;
+  max-width: 1100px;
+  margin: 10px auto 0;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: rgba(255,255,255,0.70);
+  padding: 10px;
+}
+
+#torquePhotoPreview img,
+#nxTorquePhotoPreview img,
+#nxTorquePhoto img,
+.nx-torque-photo-preview img,
+.nx-torque-photo img,
+.torque-photo-preview img,
+.torquePhotoPreview img{
+  display: block;
+  width: 100%;
+  height: 420px;            /* larger box */
+  max-height: 60vh;         /* stays reasonable on tall screens */
+  object-fit: contain;      /* IMPORTANT: shows whole picture */
+  object-position: center;  /* centers letterboxing */
+  background: rgba(0,0,0,0.06);
+  border-radius: 12px;
+}
