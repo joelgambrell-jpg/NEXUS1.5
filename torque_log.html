@@ -65,7 +65,7 @@
     opacity:.9;
   }
 
-  /* ===== FIX: Torque Photo larger + show WHOLE image (no crop) ===== */
+  /* ===== FIX: Torque Photo larger + show WHOLE image (no crop) + clickable ===== */
   #nxTorquePhotoImg{
     display:none;
     margin-top:10px;
@@ -78,7 +78,9 @@
     box-shadow:0 10px 22px rgba(0,0,0,.28);
     border:1px solid rgba(255,255,255,0.18);
     background:rgba(0,0,0,0.12);
+    cursor: zoom-in;
   }
+  #nxTorquePhotoImg:focus{ outline: 3px solid rgba(0,194,255,0.35); outline-offset: 2px; }
 
   #nxTorquePhotoEmpty{
     margin-top:10px;
@@ -90,6 +92,59 @@
     font-size:12px;
     opacity:.92;
     line-height:1.35;
+  }
+
+  /* ===== Image Lightbox (Magnify) ===== */
+  #nxImgLightbox{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,0.82);
+    z-index:9999;
+    padding:18px;
+  }
+  #nxImgLightbox.nx-open{ display:flex; }
+  #nxImgLightbox .nx-inner{
+    width:min(1200px, 100%);
+    max-height: calc(100vh - 36px);
+    position:relative;
+  }
+  #nxImgLightbox img{
+    width:100%;
+    height:auto;
+    max-height: calc(100vh - 96px);
+    object-fit:contain;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:0 22px 80px rgba(0,0,0,0.65);
+    background:rgba(0,0,0,0.25);
+  }
+  #nxImgLightbox .nx-close{
+    position:absolute;
+    top:-10px;
+    right:-10px;
+    width:44px;
+    height:44px;
+    border-radius:999px;
+    border:2px solid rgba(255,255,255,0.35);
+    background:rgba(0,0,0,0.55);
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+  }
+  #nxImgLightbox .nx-close:hover{ background:rgba(0,0,0,0.70); }
+  #nxImgLightbox .nx-hint{
+    margin-top:10px;
+    text-align:center;
+    font-weight:800;
+    font-size:12px;
+    opacity:.88;
   }
 
   /* ===== ADDED: Torque section lock (unlocked by Tilt Test 2-person sign-off) ===== */
@@ -206,8 +261,17 @@
       <span>Torque Photo</span>
       <span class="torque-photo-sub" id="nxTorquePhotoSub">Saved per equipment</span>
     </div>
-    <img id="nxTorquePhotoImg" alt="Torque photo" />
+    <img id="nxTorquePhotoImg" alt="Torque photo" tabindex="0" />
     <div id="nxTorquePhotoEmpty">No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).</div>
+  </div>
+
+  <!-- Lightbox (Magnify) -->
+  <div id="nxImgLightbox" aria-hidden="true">
+    <div class="nx-inner">
+      <div class="nx-close" id="nxImgClose" title="Close (Esc)">✕</div>
+      <img id="nxImgZoom" alt="Torque photo zoomed" />
+      <div class="nx-hint">Click outside or press Esc to close</div>
+    </div>
   </div>
 
   <div class="section">
@@ -478,16 +542,52 @@
   }
 
   /* ==========================================================
-     ADDED: Torque Photo loader (reads localStorage nexus_${eq}_torque_photo)
+     ADDED: Torque Photo loader + Lightbox opener
      ========================================================== */
   (function(){
     const img = document.getElementById("nxTorquePhotoImg");
     const empty = document.getElementById("nxTorquePhotoEmpty");
     const sub = document.getElementById("nxTorquePhotoSub");
 
+    const lb = document.getElementById("nxImgLightbox");
+    const zoom = document.getElementById("nxImgZoom");
+    const closeBtn = document.getElementById("nxImgClose");
+
     function torquePhotoKey(){
       return `nexus_${eq || "NO_EQ"}_torque_photo`;
     }
+
+    function openLightbox(){
+      if (!lb || !zoom || !img || !img.src) return;
+      zoom.src = img.src;
+      lb.classList.add("nx-open");
+      lb.setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+      try{ closeBtn && closeBtn.focus(); }catch(e){}
+    }
+    function closeLightbox(){
+      if (!lb) return;
+      lb.classList.remove("nx-open");
+      lb.setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+      try{ img && img.focus(); }catch(e){}
+    }
+
+    if (img){
+      img.addEventListener("click", openLightbox);
+      img.addEventListener("keydown", (e)=>{
+        if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightbox(); }
+      });
+    }
+    if (closeBtn) closeBtn.addEventListener("click", closeLightbox);
+    if (lb){
+      lb.addEventListener("click", (e)=>{
+        if (e.target === lb) closeLightbox(); // click outside image
+      });
+    }
+    window.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape") closeLightbox();
+    });
 
     function loadTorquePhoto(){
       if (!img || !empty) return;
@@ -505,7 +605,7 @@
         img.src = dataUrl;
         img.style.display = "block";
         empty.style.display = "none";
-        if (sub) sub.textContent = "Loaded from this device storage";
+        if (sub) sub.textContent = "Click image to magnify";
       } else {
         img.style.display = "none";
         empty.style.display = "block";
@@ -852,7 +952,6 @@
   };
 })();
 </script>
-
 
 <footer class="nx-footer">
   © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
