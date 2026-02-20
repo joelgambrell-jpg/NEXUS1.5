@@ -94,53 +94,102 @@
     line-height:1.35;
   }
 
-  /* ===== Image Lightbox (Magnify) ===== */
+  /* ===== Image Lightbox (Magnify + Zoom + Pan) ===== */
   #nxImgLightbox{
     position:fixed;
     inset:0;
     display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,0.82);
+    align-items:center;         /* true vertical center */
+    justify-content:center;     /* true horizontal center */
+    background:rgba(0,0,0,0.84);
     z-index:9999;
-    padding:18px;
+    padding:0;                  /* prevents “low” positioning */
   }
   #nxImgLightbox.nx-open{ display:flex; }
-  #nxImgLightbox .nx-inner{
-    width:min(1200px, 100%);
-    max-height: calc(100vh - 36px);
-    position:relative;
-  }
-  #nxImgLightbox img{
+
+  #nxImgLightbox .nx-stage{
     width:100%;
-    height:auto;
-    max-height: calc(100vh - 96px);
-    object-fit:contain;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.18);
-    box-shadow:0 22px 80px rgba(0,0,0,0.65);
-    background:rgba(0,0,0,0.25);
-  }
-  #nxImgLightbox .nx-close{
-    position:absolute;
-    top:-10px;
-    right:-10px;
-    width:44px;
-    height:44px;
-    border-radius:999px;
-    border:2px solid rgba(255,255,255,0.35);
-    background:rgba(0,0,0,0.55);
-    color:#fff;
-    font-weight:900;
-    cursor:pointer;
+    height:100%;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
-    user-select:none;
+    padding:18px;
+    gap:12px;
   }
-  #nxImgLightbox .nx-close:hover{ background:rgba(0,0,0,0.70); }
+
+  #nxImgLightbox .nx-toolbar{
+    width:min(1200px, calc(100% - 10px));
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:999px;
+    padding:10px 12px;
+    backdrop-filter: blur(6px);
+  }
+
+  #nxImgLightbox .nx-tools{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  #nxImgLightbox .nx-toolbtn{
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    padding:10px 12px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    user-select:none;
+    line-height:1;
+  }
+  #nxImgLightbox .nx-toolbtn:hover{ background:rgba(0,0,0,0.62); }
+  #nxImgLightbox .nx-zoomread{
+    font-weight:900;
+    font-size:12px;
+    opacity:.92;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08);
+  }
+
+  #nxImgLightbox .nx-canvas{
+    width:min(1200px, 100%);
+    height: calc(100vh - 120px);
+    max-height: 78vh;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:rgba(0,0,0,0.22);
+    box-shadow:0 22px 80px rgba(0,0,0,0.65);
+    overflow:hidden;            /* pan inside */
+    position:relative;
+    touch-action:none;          /* allow pointer pan/zoom */
+  }
+
+  #nxImgLightbox img{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center center;
+    max-width:none;             /* needed for zoom */
+    max-height:none;            /* needed for zoom */
+    user-select:none;
+    -webkit-user-drag:none;
+    cursor: grab;
+  }
+  #nxImgLightbox img:active{ cursor: grabbing; }
+
   #nxImgLightbox .nx-hint{
-    margin-top:10px;
+    width:min(1200px, calc(100% - 10px));
     text-align:center;
     font-weight:800;
     font-size:12px;
@@ -184,7 +233,10 @@
   .nx-pillbadge{ display:inline-flex; align-items:center; justify-content:center; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.20); background:rgba(0,0,0,0.18); font-weight:900; font-size:12px; }
   .nx-pillbadge.ok{ border-color:rgba(0,255,102,0.55); background:rgba(0,255,102,0.12); }
   .nx-pillbadge.bad{ border-color:rgba(255,59,59,0.55); background:rgba(255,59,59,0.10); }
-  @media (max-width:760px){ .nx-signoff-grid{ grid-template-columns:1fr; } }
+  @media (max-width:760px){
+    .nx-signoff-grid{ grid-template-columns:1fr; }
+    #nxImgLightbox .nx-canvas{ height: calc(100vh - 150px); max-height: 72vh; }
+  }
 
   #stepCompleteBtn{display:none !important;}
 </style>
@@ -265,12 +317,25 @@
     <div id="nxTorquePhotoEmpty">No torque photo saved for this equipment yet. Add it on the Equipment page (Torque Photo upload).</div>
   </div>
 
-  <!-- Lightbox (Magnify) -->
+  <!-- Lightbox (Magnify + Zoom + Pan) -->
   <div id="nxImgLightbox" aria-hidden="true">
-    <div class="nx-inner">
-      <div class="nx-close" id="nxImgClose" title="Close (Esc)">✕</div>
-      <img id="nxImgZoom" alt="Torque photo zoomed" />
-      <div class="nx-hint">Click outside or press Esc to close</div>
+    <div class="nx-stage">
+      <div class="nx-toolbar">
+        <div class="nx-tools">
+          <button class="nx-toolbtn" id="nxImgZoomOut" type="button" title="Zoom out">−</button>
+          <button class="nx-toolbtn" id="nxImgZoomIn" type="button" title="Zoom in">+</button>
+          <button class="nx-toolbtn" id="nxImgFit" type="button" title="Fit to screen">Fit</button>
+          <button class="nx-toolbtn" id="nxImgReset" type="button" title="Reset (100%)">100%</button>
+          <span class="nx-zoomread" id="nxImgZoomRead">100%</span>
+        </div>
+        <button class="nx-toolbtn" id="nxImgClose" type="button" title="Close (Esc)">Close ✕</button>
+      </div>
+
+      <div class="nx-canvas" id="nxImgCanvas">
+        <img id="nxImgZoom" alt="Torque photo zoomed" />
+      </div>
+
+      <div class="nx-hint">Scroll wheel to zoom • Drag to pan • Esc to close</div>
     </div>
   </div>
 
@@ -542,7 +607,7 @@
   }
 
   /* ==========================================================
-     ADDED: Torque Photo loader + Lightbox opener
+     ADDED: Torque Photo loader + Lightbox (Zoom + Pan)
      ========================================================== */
   (function(){
     const img = document.getElementById("nxTorquePhotoImg");
@@ -550,27 +615,101 @@
     const sub = document.getElementById("nxTorquePhotoSub");
 
     const lb = document.getElementById("nxImgLightbox");
-    const zoom = document.getElementById("nxImgZoom");
+    const canvas = document.getElementById("nxImgCanvas");
+    const zoomImg = document.getElementById("nxImgZoom");
     const closeBtn = document.getElementById("nxImgClose");
+    const btnIn = document.getElementById("nxImgZoomIn");
+    const btnOut = document.getElementById("nxImgZoomOut");
+    const btnFit = document.getElementById("nxImgFit");
+    const btnReset = document.getElementById("nxImgReset");
+    const readout = document.getElementById("nxImgZoomRead");
+
+    let scale = 1;
+    let tx = 0;
+    let ty = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startTX = 0;
+    let startTY = 0;
 
     function torquePhotoKey(){
       return `nexus_${eq || "NO_EQ"}_torque_photo`;
     }
 
+    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+    function applyTransform(){
+      if (!zoomImg) return;
+      zoomImg.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale})`;
+      if (readout) readout.textContent = `${Math.round(scale*100)}%`;
+    }
+
+    function resetView(){
+      scale = 1;
+      tx = 0;
+      ty = 0;
+      applyTransform();
+    }
+
+    function fitView(){
+      // Fit image inside canvas at scale that fully fits (contain), then allow further zoom.
+      if (!canvas || !zoomImg || !zoomImg.naturalWidth || !zoomImg.naturalHeight) { resetView(); return; }
+
+      const cw = canvas.clientWidth;
+      const ch = canvas.clientHeight;
+      const iw = zoomImg.naturalWidth;
+      const ih = zoomImg.naturalHeight;
+
+      const s = Math.min(cw / iw, ch / ih);
+      scale = clamp(s, 0.05, 6);
+      tx = 0;
+      ty = 0;
+      applyTransform();
+    }
+
     function openLightbox(){
-      if (!lb || !zoom || !img || !img.src) return;
-      zoom.src = img.src;
+      if (!lb || !zoomImg || !img || !img.src) return;
+
+      zoomImg.src = img.src;
+
       lb.classList.add("nx-open");
       lb.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
+
+      // Wait one frame so layout is correct; then fit.
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ fitView(); }); });
+
       try{ closeBtn && closeBtn.focus(); }catch(e){}
     }
+
     function closeLightbox(){
       if (!lb) return;
       lb.classList.remove("nx-open");
       lb.setAttribute("aria-hidden","true");
       document.body.style.overflow = "";
+      dragging = false;
       try{ img && img.focus(); }catch(e){}
+    }
+
+    function zoomAt(delta, clientX, clientY){
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const cx = clientX - rect.left - rect.width/2;
+      const cy = clientY - rect.top - rect.height/2;
+
+      const prev = scale;
+      const next = clamp(prev * (delta > 0 ? 1.12 : 0.89), 0.05, 8);
+
+      // Keep the point under cursor roughly stable:
+      // tx,ty are pixel offsets at current scale; adjust based on scale ratio.
+      const ratio = next / prev;
+      tx = (tx - cx) * ratio + cx;
+      ty = (ty - cy) * ratio + cy;
+
+      scale = next;
+      applyTransform();
     }
 
     if (img){
@@ -579,15 +718,80 @@
         if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightbox(); }
       });
     }
+
     if (closeBtn) closeBtn.addEventListener("click", closeLightbox);
+
     if (lb){
       lb.addEventListener("click", (e)=>{
-        if (e.target === lb) closeLightbox(); // click outside image
+        if (e.target === lb) closeLightbox(); // click outside stage
       });
     }
+
     window.addEventListener("keydown", (e)=>{
+      if (!lb || !lb.classList.contains("nx-open")) return;
       if (e.key === "Escape") closeLightbox();
     });
+
+    if (btnIn) btnIn.addEventListener("click", ()=>{
+      if (!canvas) return;
+      const r = canvas.getBoundingClientRect();
+      zoomAt(+1, r.left + r.width/2, r.top + r.height/2);
+    });
+    if (btnOut) btnOut.addEventListener("click", ()=>{
+      if (!canvas) return;
+      const r = canvas.getBoundingClientRect();
+      zoomAt(-1, r.left + r.width/2, r.top + r.height/2);
+    });
+    if (btnFit) btnFit.addEventListener("click", fitView);
+    if (btnReset) btnReset.addEventListener("click", resetView);
+
+    // Wheel zoom
+    if (canvas){
+      canvas.addEventListener("wheel", (e)=>{
+        if (!lb || !lb.classList.contains("nx-open")) return;
+        e.preventDefault();
+        zoomAt(e.deltaY < 0 ? +1 : -1, e.clientX, e.clientY);
+      }, { passive:false });
+    }
+
+    // Drag pan (pointer)
+    function onPointerDown(e){
+      if (!lb || !lb.classList.contains("nx-open")) return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTX = tx;
+      startTY = ty;
+      try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    function onPointerMove(e){
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      tx = startTX + dx;
+      ty = startTY + dy;
+      applyTransform();
+    }
+    function onPointerUp(e){
+      dragging = false;
+      try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+    }
+
+    if (canvas){
+      canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerup", onPointerUp);
+      canvas.addEventListener("pointercancel", onPointerUp);
+      canvas.addEventListener("pointerleave", onPointerUp);
+    }
+
+    // When image loads into lightbox, fit it
+    if (zoomImg){
+      zoomImg.addEventListener("load", ()=>{
+        if (lb && lb.classList.contains("nx-open")) fitView();
+      });
+      zoomImg.addEventListener("dragstart", (e)=>e.preventDefault());
+    }
 
     function loadTorquePhoto(){
       if (!img || !empty) return;
