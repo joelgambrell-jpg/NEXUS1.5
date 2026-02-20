@@ -64,17 +64,22 @@
     font-size:12px;
     opacity:.9;
   }
+
+  /* ===== FIX: Torque Photo larger + show WHOLE image (no crop) ===== */
   #nxTorquePhotoImg{
     display:none;
     margin-top:10px;
     width:100%;
-    max-height:280px;
-    object-fit:cover;
+    height:520px;              /* larger box */
+    max-height:70vh;           /* responsive cap */
+    object-fit:contain;        /* IMPORTANT: shows whole picture */
+    object-position:center;
     border-radius:12px;
     box-shadow:0 10px 22px rgba(0,0,0,.28);
     border:1px solid rgba(255,255,255,0.18);
     background:rgba(0,0,0,0.12);
   }
+
   #nxTorquePhotoEmpty{
     margin-top:10px;
     padding:12px 12px;
@@ -432,7 +437,7 @@
     if(!rows || rows.length===0) rowsEl.appendChild(mkRow({}));
   }
 
-  addRowBtn.addEventListener('click',()=>rowsEl.appendChild(mkRow({}))); 
+  addRowBtn.addEventListener('click',()=>rowsEl.appendChild(mkRow({})));
   clearRowsBtn.addEventListener('click',()=>{ if(confirm('Clear all rows?')) setRows([]); });
 
   // Tilt test matrix (Go / No Go)
@@ -541,7 +546,7 @@
 
       // Finally fall back to common localStorage keys
       try{
-        var keys = ["nexus_userRole","nexus_role","nx_role","nexusRole","role"]; 
+        var keys = ["nexus_userRole","nexus_role","nx_role","nexusRole","role"];
         for (var i=0;i<keys.length;i++){
           var v = (localStorage.getItem(keys[i]) || "").trim();
           if (v) return v.toLowerCase();
