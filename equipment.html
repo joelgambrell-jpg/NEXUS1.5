@@ -77,24 +77,25 @@
       0 0 0 2px rgba(0,229,255,0.18) inset,
       0 0 22px rgba(0,229,255,0.30);
   }
-/* CCS — Default RED */
-#constructionBtn.btn.ref{
-  color:#ffd6d6;
-  border-color: rgba(255, 59, 59, 0.95);
-  background: rgba(36, 0, 0, 0.70);
-  box-shadow:
-;
-}
 
-/* CCS — Turn GREEN when complete */
-#constructionBtn.btn.ref.complete{
-  color:#001b10;
-  background:#2dff9b;
-  border-color:#2dff9b;
-  box-shadow:
-    0 0 0 2px rgba(45,255,155,0.25) inset,
-    0 0 24px rgba(45,255,155,0.45);
-}
+  /* CCS — Default RED (clean / not cloudy) */
+  #constructionBtn.btn.ref{
+    color:#ffe3e3;
+    border-color: rgba(255, 59, 59, 0.95);
+    background: rgba(58, 0, 0, 0.88);
+    box-shadow: none;
+  }
+
+  /* CCS — Turn GREEN when complete */
+  #constructionBtn.btn.ref.complete{
+    color:#001b10;
+    background:#2dff9b;
+    border-color:#2dff9b;
+    box-shadow:
+      0 0 0 2px rgba(45,255,155,0.25) inset,
+      0 0 24px rgba(45,255,155,0.45);
+  }
+
   .progress-wrap{
     margin: 12px 0 18px;
     padding: 14px 14px 12px;
@@ -222,7 +223,7 @@
   }
   .goal-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
   .goal-btn{
-    padding:10px 14px; border-radius:999px; font-weight:900; cursor:pointer
+    padding:10px 14px; border-radius:999px; font-weight:900; cursor:pointer;
     border:2px solid rgba(255,255,255,0.35); background: rgba(0,0,0,0.20); color:#fff;
   }
   .goal-btn.secondary{ opacity:.9; }
@@ -377,10 +378,10 @@
     <div class="grid" id="stepsGrid">
       <a class="btn" id="rifBtn">Receipt Inspection Form</a>
 
-      <!-- FIX: Phenolic Display beside RIF (stays parked) -->
+      <!-- Phenolic Display beside RIF (stays parked) -->
       <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
 
-      <!-- This button will be dynamically moved beside the next step as completion advances -->
+      <!-- CCS will be dynamically moved beside the next step as completion advances -->
       <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
 
       <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
@@ -447,6 +448,9 @@
     return `${page}${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
+
+  /* NEW: CCS signed-off flag key */
+  function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
 
   const MEG_LINE_STEP = "megohmmeter_line";
   const MEG_LOAD_STEP = "megohmmeter_load";
@@ -537,11 +541,26 @@
       return ok;
     });
 
+    /* NEW: Phenolic completion (functional Step Complete) */
+    const phenBtnEl = document.getElementById("phenolicBtn");
+    if (phenBtnEl){
+      const phenOk = (localStorage.getItem(stepKey("phenolic")) === "1");
+      phenBtnEl.classList.toggle("complete", phenOk);
+    }
+
+    /* NEW: CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
+    const ccsEl = document.getElementById("constructionBtn");
+    if (ccsEl){
+      const ccsOk =
+        (localStorage.getItem(ccsSignedKey()) === "1") ||
+        (localStorage.getItem(stepKey("ccs")) === "1");
+      ccsEl.classList.toggle("complete", ccsOk);
+    }
+
     let nextIdx = 0;
     while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
 
     const gridEl = document.getElementById("stepsGrid");
-    const ccsEl = document.getElementById("constructionBtn");
     if (gridEl && ccsEl){
       const nextStepBtnId = (nextIdx < taskSteps.length) ? taskSteps[nextIdx].btn : null;
       const nextStepEl = nextStepBtnId ? document.getElementById(nextStepBtnId) : null;
@@ -707,6 +726,7 @@
   window.addEventListener("pageshow", () => { refresh(); renderCountdown(); });
   window.addEventListener("storage", () => { refresh(); renderCountdown(); });
 
+  // Firestore listeners (expanded to include phenolic + ccs)
   let fbStepsUnsub = null;
 
   async function startFirestoreStepsListener(){
@@ -723,6 +743,10 @@
       knownStepIds.add(MEG_LINE_STEP);
       knownStepIds.add(MEG_LOAD_STEP);
 
+      // NEW: allow Firestore-driven completion for these
+      knownStepIds.add("phenolic");
+      knownStepIds.add("ccs");
+
       fbStepsUnsub = onSnapshot(stepsCol, (snap) => {
         snap.forEach(docSnap => {
           const stepId = docSnap.id;
@@ -731,6 +755,12 @@
           const data = docSnap.data() || {};
           if (data.done) localStorage.setItem(stepKey(stepId), "1");
           else localStorage.removeItem(stepKey(stepId));
+
+          // NEW: mirror ccs done -> signed-off flag so CSS/logic stays consistent
+          if (stepId === "ccs"){
+            if (data.done) localStorage.setItem(ccsSignedKey(), "1");
+            else localStorage.removeItem(ccsSignedKey());
+          }
         });
 
         refresh();
