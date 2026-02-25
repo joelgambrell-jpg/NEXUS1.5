@@ -339,22 +339,7 @@
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Torque Notes &amp; Units</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <label style="font-weight:900">Units</label>
-        <select id="notesUnit">
-          <option value="ft-lbs">ft-lbs</option>
-          <option value="in-lbs">in-lbs</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-weight:900">Torque Value</label>
-        <input id="notesTorque" type="number" step="any" placeholder="Enter torque value" />
-      </div>
-    </div>
-  </div>
+  <!-- REMOVED: Torque Notes & Units (red-circle section) -->
 
   <div class="section">
     <div class="section-title">Torque Application Entries</div>
@@ -563,11 +548,19 @@
   function setRows(rows){
     rowsEl.innerHTML='';
     (rows||[]).forEach(r=>rowsEl.appendChild(mkRow(r)));
-    if(!rows || rows.length===0) rowsEl.appendChild(mkRow({}));
+
+    // REQUIRED: default 5 open lines (green-circle behavior)
+    if(!rows || rows.length===0){
+      for(let i=0;i<5;i++) rowsEl.appendChild(mkRow({}));
+    }
   }
 
   addRowBtn.addEventListener('click',()=>rowsEl.appendChild(mkRow({})));
-  clearRowsBtn.addEventListener('click',()=>{ if(confirm('Clear all rows?')) setRows([]); });
+
+  // REQUIRED: Clear should return to 5 blank rows (not 0/1)
+  clearRowsBtn.addEventListener('click',()=>{
+    if(confirm('Clear all rows?')) setRows([]);
+  });
 
   // Tilt test matrix (Go / No Go)
   function tiltKey(){return `nexus_${eq||"NO_EQ"}_torque_tilt_v2`;}
@@ -944,19 +937,18 @@
       return null;
     }
 
-    const notesSec = findSectionByTitle("Torque Notes & Units");
+    // UPDATED: only lock the entries section (notes section removed)
     const entriesSec = findSectionByTitle("Torque Application Entries");
     const tiltSec = findSectionByTitle("Tilt Test (Go / No Go)");
 
-    if (!notesSec || !entriesSec || !tiltSec) return;
+    if (!entriesSec || !tiltSec) return;
 
     const wrap = document.createElement("div");
     wrap.className = "nx-torque-lock-wrap";
     wrap.id = "nxTorqueLockWrap";
 
-    const parent = notesSec.parentNode;
-    parent.insertBefore(wrap, notesSec);
-    wrap.appendChild(notesSec);
+    const parent = entriesSec.parentNode;
+    parent.insertBefore(wrap, entriesSec);
     wrap.appendChild(entriesSec);
 
     const overlay = document.createElement("div");
@@ -964,7 +956,7 @@
     overlay.innerHTML = `
       <div class="card">
         <p class="q">Torque section locked</p>
-        <p class="sub">All Tilt Test checks must be GO and Tilt Test sign-offs must be completed to unlock Torque Notes &amp; Entries.</p>
+        <p class="sub">All Tilt Test checks must be GO and Tilt Test sign-offs must be completed to unlock Torque Entries.</p>
       </div>
     `;
     wrap.appendChild(overlay);
@@ -1130,14 +1122,9 @@
     render();
   })();
 
-  // Notes section
-  const notesUnit=document.getElementById('notesUnit');
-  const notesTorque=document.getElementById('notesTorque');
-
   function saveLocal(){
     const payload={
       meta:{eq, updatedAt: new Date().toISOString()},
-      notes:{unit:notesUnit.value, torque:notesTorque.value},
       rows: readRows(),
       tilt: readTilt(),
     };
@@ -1151,8 +1138,8 @@
       const raw=localStorage.getItem(dataKey());
       if(raw){
         const p=JSON.parse(raw);
-        notesUnit.value=p?.notes?.unit||'ft-lbs';
-        notesTorque.value=p?.notes?.torque||'';
+
+        // Backward compatibility: ignore any legacy notes fields
         setRows(p?.rows||[]);
         setTilt(p?.tilt||{});
         return;
