@@ -261,6 +261,298 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
+
+  /* ===========================================================
+     Intracompany Observations (Procore-feel) — NEW
+     =========================================================== */
+  .obs-wrap{ margin-top:14px; padding: 14px; border-radius: 18px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.20); }
+  .obs-top{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.18);
+  }
+  .obs-title{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-weight:900; letter-spacing:0.02em;
+  }
+  .obs-title .obs-h{ font-size:16px; }
+  .obs-chips{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .obs-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.22);
+    font-weight:900; font-size:12px;
+  }
+  .obs-chip b{ font-size:12px; }
+  .obs-chip .n{
+    min-width:22px; height:22px; padding:0 7px;
+    border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.18);
+    font-weight:900;
+  }
+  .obs-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .obs-btn{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.22);
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+    display:inline-flex; align-items:center; gap:10px;
+  }
+  .obs-btn.primary{
+    border:2px solid rgba(0,229,255,0.85);
+    background: rgba(10,15,36,0.90);
+    color:#7be6ff;
+    box-shadow:
+      0 0 0 2px rgba(0,229,255,0.12) inset,
+      0 0 14px rgba(0,229,255,0.18);
+  }
+  .obs-btn:disabled{ opacity:.6; cursor:not-allowed; }
+  .obs-tabs{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;
+  }
+  .obs-tab{
+    padding:10px 12px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.18);
+    color:#fff; font-weight:900; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .obs-tab.active{
+    border-color: rgba(0,229,255,0.85);
+    box-shadow: 0 0 0 2px rgba(0,229,255,0.10) inset;
+  }
+  .obs-search{
+    margin-top:10px;
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .obs-search input{
+    flex:1; min-width:240px;
+    padding:12px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.92);
+    color:#111; font-weight:900;
+    outline:none;
+  }
+  .obs-list{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+  .obs-empty{
+    padding:14px; border-radius:14px;
+    border:1px dashed rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.16);
+    font-weight:900;
+    opacity:.92;
+  }
+  .obs-card{
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,0.20);
+    background: rgba(0,0,0,0.20);
+    overflow:hidden;
+  }
+  .obs-card-top{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    padding:12px 12px 10px;
+  }
+  .obs-card-left{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .obs-meta{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; border-radius:999px;
+    font-weight:900; font-size:12px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.22);
+  }
+  .pill.status-open{ border-color: rgba(255,184,0,0.85); }
+  .pill.status-closed{ border-color: rgba(45,255,155,0.75); }
+  .pill.status-review{ border-color: rgba(0,229,255,0.75); }
+  .pill.status-accepted{ border-color: rgba(255,255,255,0.32); }
+  .pill.pri-low{ opacity:.9; }
+  .pill.pri-med{ border-color: rgba(255,184,0,0.7); }
+  .pill.pri-high{ border-color: rgba(255,59,59,0.8); }
+  .pill.pri-critical{ border-color: rgba(255,59,59,0.95); box-shadow: 0 0 0 2px rgba(255,59,59,0.14) inset; }
+  .obs-titleline{
+    font-weight:900;
+    font-size:15px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .obs-subline{
+    font-weight:800;
+    font-size:12px;
+    opacity:.92;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .obs-card-right{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .obs-mini{
+    padding:8px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.18);
+    color:#fff; font-weight:900; cursor:pointer;
+  }
+  .obs-mini.primary{
+    border-color: rgba(0,229,255,0.85);
+    color:#7be6ff;
+    background: rgba(10,15,36,0.86);
+  }
+  .obs-card-body{
+    padding:0 12px 12px;
+  }
+  .obs-desc{
+    font-weight:800;
+    opacity:.95;
+    font-size:13px;
+    line-height:1.35;
+    margin-top:8px;
+    display:-webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow:hidden;
+  }
+  .obs-photos{
+    margin-top:10px;
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .obs-photos img{
+    width:92px; height:92px; object-fit:cover;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.20);
+    cursor:pointer;
+  }
+
+  /* Drawer (pop-out) */
+  .obs-overlay{
+    position:fixed; inset:0;
+    background: rgba(0,0,0,0.62);
+    backdrop-filter: blur(6px);
+    z-index: 9998;
+    display:none;
+  }
+  .obs-drawer{
+    position:fixed;
+    top:0; right:0;
+    height:100vh;
+    width:min(540px, 92vw);
+    background: rgba(18,18,18,0.92);
+    border-left: 1px solid rgba(255,255,255,0.18);
+    box-shadow: -18px 0 60px rgba(0,0,0,0.45);
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform .22s ease;
+    display:flex;
+    flex-direction:column;
+  }
+  .obs-overlay.show{ display:block; }
+  .obs-drawer.show{ transform: translateX(0%); }
+  .obs-dh{
+    padding:14px 14px 12px;
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+  }
+  .obs-dh-left{ min-width:0; }
+  .obs-dh-title{ font-weight:900; font-size:16px; margin:0 0 6px; }
+  .obs-dh-sub{ font-weight:800; opacity:.9; font-size:12px; }
+  .obs-dh-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .obs-x{
+    padding:10px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.22);
+    color:#fff; font-weight:900; cursor:pointer;
+  }
+  .obs-x.primary{
+    border-color: rgba(0,229,255,0.85);
+    color:#7be6ff;
+    background: rgba(10,15,36,0.86);
+  }
+  .obs-x.danger{
+    border-color: rgba(255,59,59,0.85);
+    color:#ffe3e3;
+    background: rgba(58,0,0,0.60);
+  }
+  .obs-db{
+    padding:14px;
+    overflow:auto;
+    flex:1;
+  }
+  .obs-form-row{ margin-bottom:12px; }
+  .obs-form-row label{
+    display:block;
+    font-weight:900;
+    font-size:12px;
+    opacity:.95;
+    margin:0 0 6px;
+  }
+  .obs-in, .obs-sel, .obs-ta{
+    width:100%;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.92);
+    color:#111;
+    font-weight:900;
+    outline:none;
+    font-size:14px;
+  }
+  .obs-ta{ min-height:120px; resize:vertical; }
+  .obs-form-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+  }
+  @media (max-width: 520px){
+    .obs-form-grid{ grid-template-columns: 1fr; }
+  }
+  .obs-help{
+    font-weight:800;
+    font-size:12px;
+    opacity:.9;
+    margin-top:8px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,0.14);
+  }
+  .obs-attach{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .obs-attach input[type="file"]{ color:#fff; font-weight:900; }
+  .obs-thumbrow{ margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; }
+  .obs-thumbrow .t{
+    width:86px; height:86px; border-radius:12px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.20);
+    background: rgba(0,0,0,0.22);
+    position:relative;
+  }
+  .obs-thumbrow img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .obs-thumbrow button{
+    position:absolute; top:6px; right:6px;
+    padding:6px 8px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.55);
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  /* Image lightbox */
+  .obs-img-overlay{
+    position:fixed; inset:0;
+    background: rgba(0,0,0,0.78);
+    z-index: 10000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 18px;
+  }
+  .obs-img-overlay.show{ display:flex; }
+  .obs-img-overlay img{
+    max-width: 96vw;
+    max-height: 92vh;
+    border-radius: 14px;
+    border:1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 18px 70px rgba(0,0,0,0.55);
+  }
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -375,11 +667,38 @@
         <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Energization</a>
       </div>
 
-      <div class="bubble exports-full">
-        <div class="bubble-title">Exports</div>
-        <div class="bubble-grid">
-          <a class="btn" id="packageExportBtn" href="#">Export Package (Print/PDF)</a>
+      <!-- ===========================================================
+           Intracompany Observations (replaces old Exports slot) — NEW
+           =========================================================== -->
+      <div class="obs-wrap" id="obsWrap">
+        <div class="obs-top">
+          <div class="obs-title">
+            <div class="obs-h">Intracompany Observations</div>
+            <div class="obs-chips" aria-label="Observation counts">
+              <span class="obs-chip" title="Open observations">
+                <b>Open</b> <span class="n" id="obsOpenCount">0</span>
+              </span>
+              <span class="obs-chip" title="Closed observations">
+                <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
+              </span>
+            </div>
+          </div>
+          <div class="obs-actions">
+            <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
+          </div>
         </div>
+
+        <div class="obs-tabs" role="tablist" aria-label="Observation filters">
+          <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
+          <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
+          <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
+        </div>
+
+        <div class="obs-search">
+          <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
+        </div>
+
+        <div class="obs-list" id="obsList"></div>
       </div>
     </div>
 
@@ -400,6 +719,14 @@
       <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
     </div>
 
+    <!-- NEW: Export Package moved BELOW other buttons -->
+    <div class="bubble exports-full" id="exportsBubble">
+      <div class="bubble-title">Exports</div>
+      <div class="bubble-grid">
+        <a class="btn" id="packageExportBtn" href="#">Export Package (Print/PDF)</a>
+      </div>
+    </div>
+
     <!-- Reference buttons (neon blue) -->
     <div class="bubble">
       <div class="bubble-title">Reference &amp; Check Sheets</div>
@@ -409,6 +736,119 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Observation Drawer (pop-out) — NEW -->
+<div class="obs-overlay" id="obsOverlay" aria-hidden="true"></div>
+<div class="obs-drawer" id="obsDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Observation editor">
+  <div class="obs-dh">
+    <div class="obs-dh-left">
+      <div class="obs-dh-title" id="obsDrawerTitle">Create Observation</div>
+      <div class="obs-dh-sub" id="obsDrawerSub">Equipment: <span id="obsDrawerEq">(none)</span> • Role: <span id="obsDrawerRole">Tech</span></div>
+    </div>
+    <div class="obs-dh-actions">
+      <button class="obs-x" id="obsCancelBtn" type="button">Cancel</button>
+      <button class="obs-x primary" id="obsSaveBtn" type="button">Save</button>
+      <button class="obs-x danger" id="obsDeleteBtn" type="button" style="display:none;">Delete</button>
+    </div>
+  </div>
+
+  <div class="obs-db">
+    <div class="obs-form-row">
+      <label for="obsTitle">Title (required)</label>
+      <input class="obs-in" id="obsTitle" type="text" placeholder="Example: Lug hardware mismatch on Phase B" />
+    </div>
+
+    <div class="obs-form-grid">
+      <div class="obs-form-row">
+        <label for="obsType">Type</label>
+        <select class="obs-sel" id="obsType">
+          <option value="Mechanical">Mechanical</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Documentation">Documentation</option>
+          <option value="Safety">Safety</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="obs-form-row">
+        <label for="obsPriority">Priority</label>
+        <select class="obs-sel" id="obsPriority">
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="obs-form-grid">
+      <div class="obs-form-row">
+        <label for="obsStatus">Status</label>
+        <select class="obs-sel" id="obsStatus">
+          <option value="Open">Open</option>
+          <option value="Under Review">Under Review</option>
+          <option value="Closed">Closed</option>
+          <option value="Accepted As-Is">Accepted As-Is</option>
+        </select>
+      </div>
+
+      <div class="obs-form-row">
+        <label for="obsRelatedStep">Related Step (optional)</label>
+        <select class="obs-sel" id="obsRelatedStep">
+          <option value="">(None)</option>
+          <option value="RIF">RIF</option>
+          <option value="Phenolic">Phenolic</option>
+          <option value="CCS">Construction Check Sheet</option>
+          <option value="Meg">Megohmmeter</option>
+          <option value="Torque">Torque</option>
+          <option value="L2">L2</option>
+          <option value="Pre-FOD">Pre-FOD</option>
+          <option value="FPV Photo">FPV Photo</option>
+          <option value="Energization">Energization</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="obs-form-grid">
+      <div class="obs-form-row">
+        <label for="obsAssignee">Assigned To (optional)</label>
+        <input class="obs-in" id="obsAssignee" type="text" placeholder="Foreman / Tech name" />
+      </div>
+
+      <div class="obs-form-row">
+        <label for="obsDue">Due Date (optional)</label>
+        <input class="obs-in" id="obsDue" type="date" />
+      </div>
+    </div>
+
+    <div class="obs-form-row">
+      <label for="obsDescription">Description (required)</label>
+      <textarea class="obs-ta" id="obsDescription" placeholder="Write the observation details. Include where, what, and why it matters."></textarea>
+    </div>
+
+    <div class="obs-form-row">
+      <label>Photos (optional)</label>
+      <div class="obs-attach">
+        <input id="obsPhotoInput" type="file" accept="image/*" multiple />
+        <span style="font-weight:900; opacity:.92; font-size:12px;">(Photos are stored per equipment in local storage for now.)</span>
+      </div>
+      <div class="obs-thumbrow" id="obsThumbRow"></div>
+    </div>
+
+    <div class="obs-help" id="obsHelp">
+      Notes:
+      <ul style="margin:8px 0 0 18px; padding:0;">
+        <li>Tech can create observations. Foreman+ can close/accept and delete.</li>
+        <li>Open/Closed counts update instantly and are tied to this Equipment ID.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Image Lightbox — NEW -->
+<div class="obs-img-overlay" id="obsImgOverlay" aria-hidden="true">
+  <img id="obsImgLarge" src="" alt="Observation photo" />
 </div>
 
 <script>
@@ -722,13 +1162,668 @@
     });
   }
 
+  /* ===========================================================
+     Intracompany Observations logic — NEW
+     =========================================================== */
+
+  function obsKey(){ return `nexus_${eq || "NO_EQ"}_observations`; }
+
+  function safeParse(raw, fallback){
+    try{ return JSON.parse(raw); }catch(e){ return fallback; }
+  }
+
+  function nowISO(){ return new Date().toISOString(); }
+
+  function uuid(){
+    // RFC4122-ish (good enough for local)
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
+      const r = (Math.random()*16)|0, v = c==="x" ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  }
+
+  function getRole(){
+    // Try common role keys used across NEXUS-like pages
+    const candidates = [
+      localStorage.getItem("nexus_role"),
+      localStorage.getItem("nx_role"),
+      localStorage.getItem("nexus_user_role"),
+      localStorage.getItem(`nexus_${eq || "NO_EQ"}_role`),
+      (window.NEXUS_ROLE || ""),
+      (window.NEXUS?.role || ""),
+      (window.NEXUS_CORE?.role || "")
+    ].map(v => (v || "").toString().trim()).filter(Boolean);
+
+    const r = (candidates[0] || "tech").toLowerCase();
+    // normalize
+    if (r.includes("admin")) return "admin";
+    if (r.includes("foreman")) return "foreman";
+    if (r.includes("super")) return "foreman";
+    if (r.includes("lead")) return "foreman";
+    return "tech";
+  }
+
+  function isForemanPlus(role){
+    return role === "foreman" || role === "admin";
+  }
+
+  function getUserTag(){
+    const candidates = [
+      localStorage.getItem("nexus_user"),
+      localStorage.getItem("nx_user"),
+      localStorage.getItem("nexus_username"),
+      localStorage.getItem("nexus_display_name"),
+      localStorage.getItem("nexus_initials"),
+      (window.NEXUS_USER || ""),
+      (window.NEXUS?.user || "")
+    ].map(v => (v || "").toString().trim()).filter(Boolean);
+    return candidates[0] || (getRole() === "tech" ? "Tech" : "Foreman");
+  }
+
+  function loadObservations(){
+    const raw = localStorage.getItem(obsKey());
+    const data = safeParse(raw, null);
+    if (data && Array.isArray(data.items)) return data;
+    // legacy / empty
+    return { items: [] };
+  }
+
+  function saveObservations(data){
+    localStorage.setItem(obsKey(), JSON.stringify(data));
+  }
+
+  function statusBucket(status){
+    const s = (status || "").toLowerCase();
+    if (s === "closed") return "closed";
+    if (s === "accepted as-is" || s === "accepted") return "closed";
+    if (s === "under review" || s === "review") return "open";
+    return "open";
+  }
+
+  function pillClassForStatus(status){
+    const s = (status || "").toLowerCase();
+    if (s === "closed") return "status-closed";
+    if (s === "accepted as-is" || s === "accepted") return "status-accepted";
+    if (s === "under review" || s === "review") return "status-review";
+    return "status-open";
+  }
+
+  function pillClassForPriority(p){
+    const s = (p || "").toLowerCase();
+    if (s === "critical") return "pri-critical";
+    if (s === "high") return "pri-high";
+    if (s === "medium") return "pri-med";
+    return "pri-low";
+  }
+
+  const obsOpenCountEl = document.getElementById("obsOpenCount");
+  const obsClosedCountEl = document.getElementById("obsClosedCount");
+  const obsListEl = document.getElementById("obsList");
+  const obsSearchEl = document.getElementById("obsSearch");
+
+  const obsTabOpen = document.getElementById("obsTabOpen");
+  const obsTabClosed = document.getElementById("obsTabClosed");
+  const obsTabAll = document.getElementById("obsTabAll");
+  const obsCreateBtn = document.getElementById("obsCreateBtn");
+
+  const obsOverlay = document.getElementById("obsOverlay");
+  const obsDrawer = document.getElementById("obsDrawer");
+  const obsDrawerTitle = document.getElementById("obsDrawerTitle");
+  const obsDrawerSub = document.getElementById("obsDrawerSub");
+  const obsDrawerEq = document.getElementById("obsDrawerEq");
+  const obsDrawerRole = document.getElementById("obsDrawerRole");
+
+  const obsCancelBtn = document.getElementById("obsCancelBtn");
+  const obsSaveBtn = document.getElementById("obsSaveBtn");
+  const obsDeleteBtn = document.getElementById("obsDeleteBtn");
+
+  const obsTitleIn = document.getElementById("obsTitle");
+  const obsTypeSel = document.getElementById("obsType");
+  const obsPrioritySel = document.getElementById("obsPriority");
+  const obsStatusSel = document.getElementById("obsStatus");
+  const obsRelatedStepSel = document.getElementById("obsRelatedStep");
+  const obsAssigneeIn = document.getElementById("obsAssignee");
+  const obsDueIn = document.getElementById("obsDue");
+  const obsDescTa = document.getElementById("obsDescription");
+  const obsPhotoInput = document.getElementById("obsPhotoInput");
+  const obsThumbRow = document.getElementById("obsThumbRow");
+
+  const obsImgOverlay = document.getElementById("obsImgOverlay");
+  const obsImgLarge = document.getElementById("obsImgLarge");
+
+  let obsFilter = "open";
+  let obsEditingId = null;
+  let obsPhotosDraft = []; // array of {id, dataUrl}
+
+  function setActiveTab(filter){
+    obsFilter = filter;
+    [obsTabOpen, obsTabClosed, obsTabAll].forEach(t => t && t.classList.remove("active"));
+    if (filter === "open") obsTabOpen && obsTabOpen.classList.add("active");
+    else if (filter === "closed") obsTabClosed && obsTabClosed.classList.add("active");
+    else obsTabAll && obsTabAll.classList.add("active");
+    renderObservations();
+  }
+
+  function computeCounts(items){
+    let open = 0, closed = 0;
+    items.forEach(it => {
+      if (statusBucket(it.status) === "closed") closed++;
+      else open++;
+    });
+    return { open, closed };
+  }
+
+  function fmtWhen(iso){
+    try{
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleString();
+    }catch(e){ return ""; }
+  }
+
+  function cardSummaryLine(it){
+    const by = it.createdBy || "Unknown";
+    const when = fmtWhen(it.createdAt);
+    const step = (it.relatedStep || "").trim();
+    const extra = step ? ` • Step: ${step}` : "";
+    return `Created by ${by}${when ? " • " + when : ""}${extra}`;
+  }
+
+  function matchesSearch(it, q){
+    if (!q) return true;
+    const s = q.toLowerCase();
+    const hay = [
+      it.title, it.description, it.type, it.priority, it.status, it.relatedStep, it.assignee, it.createdBy
+    ].map(v => (v || "").toString().toLowerCase()).join(" | ");
+    return hay.indexOf(s) !== -1;
+  }
+
+  function canEdit(it, role, userTag){
+    if (isForemanPlus(role)) return true;
+    // tech: edit only own & only while open-ish
+    const mine = (it.createdBy || "") === userTag;
+    const openish = statusBucket(it.status) === "open";
+    return mine && openish;
+  }
+
+  function canDelete(it, role, userTag){
+    if (isForemanPlus(role)) return true;
+    // tech: no delete by default
+    return false;
+  }
+
+  function canChangeStatus(role){
+    // Procore feel: tech creates; foreman+ closes/accepts
+    return isForemanPlus(role);
+  }
+
+  function openDrawer(mode, it){
+    const role = getRole();
+    const userTag = getUserTag();
+
+    obsEditingId = it ? it.id : null;
+    obsDrawerEq.textContent = eq || "(none)";
+    obsDrawerRole.textContent = isForemanPlus(role) ? "Foreman+" : "Tech";
+
+    if (mode === "create"){
+      obsDrawerTitle.textContent = "Create Observation";
+      obsDeleteBtn.style.display = "none";
+      obsTitleIn.value = "";
+      obsTypeSel.value = "Mechanical";
+      obsPrioritySel.value = "Low";
+      obsStatusSel.value = "Open";
+      obsRelatedStepSel.value = "";
+      obsAssigneeIn.value = "";
+      obsDueIn.value = "";
+      obsDescTa.value = "";
+      obsPhotosDraft = [];
+      renderThumbs();
+    } else {
+      obsDrawerTitle.textContent = canEdit(it, role, userTag) ? "Edit Observation" : "View Observation";
+      obsDeleteBtn.style.display = canDelete(it, role, userTag) ? "inline-flex" : "none";
+      obsTitleIn.value = (it.title || "");
+      obsTypeSel.value = (it.type || "Other");
+      obsPrioritySel.value = (it.priority || "Low");
+      obsStatusSel.value = (it.status || "Open");
+      obsRelatedStepSel.value = (it.relatedStep || "");
+      obsAssigneeIn.value = (it.assignee || "");
+      obsDueIn.value = (it.dueDate || "");
+      obsDescTa.value = (it.description || "");
+      obsPhotosDraft = Array.isArray(it.photos) ? it.photos.slice() : [];
+      renderThumbs();
+    }
+
+    // Field permissions
+    const editable = (mode === "create") ? true : (it ? canEdit(it, role, userTag) : false);
+    const statusEditable = canChangeStatus(role);
+
+    obsTitleIn.disabled = !editable;
+    obsTypeSel.disabled = !editable;
+    obsPrioritySel.disabled = !editable;
+    obsRelatedStepSel.disabled = !editable;
+    obsAssigneeIn.disabled = !editable;
+    obsDueIn.disabled = !editable;
+    obsDescTa.disabled = !editable;
+    obsPhotoInput.disabled = !editable;
+
+    // Status: foreman+ only
+    obsStatusSel.disabled = !statusEditable;
+
+    obsSaveBtn.disabled = !(editable || statusEditable);
+
+    obsOverlay.classList.add("show");
+    obsDrawer.classList.add("show");
+    obsOverlay.setAttribute("aria-hidden", "false");
+    obsDrawer.setAttribute("aria-hidden", "false");
+
+    // Focus
+    setTimeout(() => { try{ obsTitleIn.focus(); }catch(e){} }, 80);
+  }
+
+  function closeDrawer(){
+    obsOverlay.classList.remove("show");
+    obsDrawer.classList.remove("show");
+    obsOverlay.setAttribute("aria-hidden", "true");
+    obsDrawer.setAttribute("aria-hidden", "true");
+    obsEditingId = null;
+    // reset file input
+    if (obsPhotoInput) obsPhotoInput.value = "";
+  }
+
+  function renderThumbs(){
+    if (!obsThumbRow) return;
+    obsThumbRow.innerHTML = "";
+    const role = getRole();
+    const userTag = getUserTag();
+
+    const data = loadObservations();
+    const it = obsEditingId ? data.items.find(x => x.id === obsEditingId) : null;
+    const editable = !it ? true : canEdit(it, role, userTag);
+
+    (obsPhotosDraft || []).forEach((p) => {
+      const wrap = document.createElement("div");
+      wrap.className = "t";
+      const img = document.createElement("img");
+      img.src = p.dataUrl || "";
+      img.alt = "Photo";
+      img.addEventListener("click", () => showImage(p.dataUrl || ""));
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "×";
+      del.title = "Remove photo";
+      del.style.display = editable ? "inline-flex" : "none";
+      del.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        obsPhotosDraft = (obsPhotosDraft || []).filter(x => x.id !== p.id);
+        renderThumbs();
+      });
+      wrap.appendChild(img);
+      wrap.appendChild(del);
+      obsThumbRow.appendChild(wrap);
+    });
+  }
+
+  function showImage(src){
+    if (!obsImgOverlay || !obsImgLarge) return;
+    obsImgLarge.src = src || "";
+    obsImgOverlay.classList.add("show");
+    obsImgOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function hideImage(){
+    if (!obsImgOverlay || !obsImgLarge) return;
+    obsImgOverlay.classList.remove("show");
+    obsImgOverlay.setAttribute("aria-hidden", "true");
+    obsImgLarge.src = "";
+  }
+
+  function renderObservations(){
+    const data = loadObservations();
+    const items = Array.isArray(data.items) ? data.items.slice() : [];
+    // Sort newest first
+    items.sort((a,b) => {
+      const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return tb - ta;
+    });
+
+    const counts = computeCounts(items);
+    if (obsOpenCountEl) obsOpenCountEl.textContent = String(counts.open);
+    if (obsClosedCountEl) obsClosedCountEl.textContent = String(counts.closed);
+
+    const q = (obsSearchEl?.value || "").trim();
+    const filtered = items.filter(it => {
+      if (!matchesSearch(it, q)) return false;
+      if (obsFilter === "all") return true;
+      if (obsFilter === "open") return statusBucket(it.status) === "open";
+      if (obsFilter === "closed") return statusBucket(it.status) === "closed";
+      return true;
+    });
+
+    if (!obsListEl) return;
+    obsListEl.innerHTML = "";
+
+    if (!filtered.length){
+      const d = document.createElement("div");
+      d.className = "obs-empty";
+      d.textContent = obsFilter === "closed"
+        ? "No closed observations for this equipment."
+        : (obsFilter === "all" ? "No observations for this equipment yet." : "No open observations for this equipment.");
+      obsListEl.appendChild(d);
+      return;
+    }
+
+    const role = getRole();
+    const userTag = getUserTag();
+
+    filtered.forEach(it => {
+      const card = document.createElement("div");
+      card.className = "obs-card";
+
+      const top = document.createElement("div");
+      top.className = "obs-card-top";
+
+      const left = document.createElement("div");
+      left.className = "obs-card-left";
+
+      const metaRow = document.createElement("div");
+      metaRow.className = "obs-meta";
+
+      const st = document.createElement("span");
+      st.className = `pill ${pillClassForStatus(it.status)}`;
+      st.textContent = it.status || "Open";
+
+      const pr = document.createElement("span");
+      pr.className = `pill ${pillClassForPriority(it.priority)}`;
+      pr.textContent = (it.priority || "Low");
+
+      const ty = document.createElement("span");
+      ty.className = "pill";
+      ty.textContent = (it.type || "Other");
+
+      metaRow.appendChild(st);
+      metaRow.appendChild(pr);
+      metaRow.appendChild(ty);
+
+      const title = document.createElement("div");
+      title.className = "obs-titleline";
+      title.textContent = (it.title || "(Untitled)");
+
+      const sub = document.createElement("div");
+      sub.className = "obs-subline";
+      sub.textContent = cardSummaryLine(it);
+
+      left.appendChild(metaRow);
+      left.appendChild(title);
+      left.appendChild(sub);
+
+      const right = document.createElement("div");
+      right.className = "obs-card-right";
+
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "obs-mini primary";
+      viewBtn.textContent = canEdit(it, role, userTag) ? "Open / Edit" : "Open";
+      viewBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        openDrawer("edit", it);
+      });
+
+      right.appendChild(viewBtn);
+
+      top.appendChild(left);
+      top.appendChild(right);
+
+      const body = document.createElement("div");
+      body.className = "obs-card-body";
+
+      const desc = document.createElement("div");
+      desc.className = "obs-desc";
+      desc.textContent = (it.description || "");
+
+      body.appendChild(desc);
+
+      if (Array.isArray(it.photos) && it.photos.length){
+        const photos = document.createElement("div");
+        photos.className = "obs-photos";
+        it.photos.slice(0,6).forEach(p => {
+          const img = document.createElement("img");
+          img.src = p.dataUrl || "";
+          img.alt = "Photo";
+          img.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            showImage(p.dataUrl || "");
+          });
+          photos.appendChild(img);
+        });
+        body.appendChild(photos);
+      }
+
+      card.appendChild(top);
+      card.appendChild(body);
+
+      card.addEventListener("click", () => openDrawer("edit", it));
+
+      obsListEl.appendChild(card);
+    });
+  }
+
+  function validateRequired(){
+    const title = (obsTitleIn?.value || "").trim();
+    const desc = (obsDescTa?.value || "").trim();
+    if (!title) return { ok:false, msg:"Title is required." };
+    if (!desc) return { ok:false, msg:"Description is required." };
+    return { ok:true };
+  }
+
+  function saveCurrentObservation(){
+    const role = getRole();
+    const userTag = getUserTag();
+
+    const data = loadObservations();
+    const items = Array.isArray(data.items) ? data.items : [];
+    const editing = obsEditingId ? items.find(x => x.id === obsEditingId) : null;
+
+    const statusVal = (obsStatusSel?.value || "Open").trim();
+    const typeVal = (obsTypeSel?.value || "Other").trim();
+    const priVal = (obsPrioritySel?.value || "Low").trim();
+
+    // If editing existing
+    if (editing){
+      const editable = canEdit(editing, role, userTag);
+      const statusEditable = canChangeStatus(role);
+
+      // Tech editing: can update fields if permitted; status changes only if foreman+
+      if (!editable && !statusEditable){
+        return { ok:false, msg:"You do not have permission to edit this observation." };
+      }
+
+      if (editable){
+        const v = validateRequired();
+        if (!v.ok) return v;
+
+        editing.title = (obsTitleIn?.value || "").trim();
+        editing.description = (obsDescTa?.value || "").trim();
+        editing.type = typeVal;
+        editing.priority = priVal;
+        editing.relatedStep = (obsRelatedStepSel?.value || "").trim();
+        editing.assignee = (obsAssigneeIn?.value || "").trim();
+        editing.dueDate = (obsDueIn?.value || "").trim();
+        editing.photos = (obsPhotosDraft || []).slice();
+      }
+
+      if (statusEditable){
+        editing.status = statusVal;
+        if (statusBucket(statusVal) === "closed"){
+          editing.closedAt = editing.closedAt || nowISO();
+          editing.closedBy = userTag;
+        } else {
+          editing.closedAt = null;
+          editing.closedBy = null;
+        }
+      }
+
+      editing.updatedAt = nowISO();
+      editing.updatedBy = userTag;
+
+      saveObservations({ items });
+      return { ok:true };
+    }
+
+    // Creating
+    const v = validateRequired();
+    if (!v.ok) return v;
+
+    const it = {
+      id: uuid(),
+      title: (obsTitleIn?.value || "").trim(),
+      description: (obsDescTa?.value || "").trim(),
+      type: typeVal,
+      priority: priVal,
+      status: "Open",
+      relatedStep: (obsRelatedStepSel?.value || "").trim(),
+      assignee: (obsAssigneeIn?.value || "").trim(),
+      dueDate: (obsDueIn?.value || "").trim(),
+      photos: (obsPhotosDraft || []).slice(),
+      createdAt: nowISO(),
+      createdBy: userTag,
+      updatedAt: nowISO(),
+      updatedBy: userTag,
+      closedAt: null,
+      closedBy: null
+    };
+
+    items.push(it);
+    saveObservations({ items });
+    return { ok:true };
+  }
+
+  function deleteCurrentObservation(){
+    const role = getRole();
+    const userTag = getUserTag();
+    if (!obsEditingId) return { ok:false, msg:"Nothing selected." };
+
+    const data = loadObservations();
+    const items = Array.isArray(data.items) ? data.items : [];
+    const it = items.find(x => x.id === obsEditingId);
+    if (!it) return { ok:false, msg:"Not found." };
+
+    if (!canDelete(it, role, userTag)){
+      return { ok:false, msg:"You do not have permission to delete this observation." };
+    }
+
+    const next = items.filter(x => x.id !== obsEditingId);
+    saveObservations({ items: next });
+    return { ok:true };
+  }
+
+  function toast(msg){
+    // lightweight: use alert to avoid injecting new global UI components
+    // (keeps this drop-in isolated)
+    alert(msg);
+  }
+
+  if (obsCreateBtn){
+    obsCreateBtn.addEventListener("click", () => openDrawer("create", null));
+  }
+
+  if (obsTabOpen) obsTabOpen.addEventListener("click", () => setActiveTab("open"));
+  if (obsTabClosed) obsTabClosed.addEventListener("click", () => setActiveTab("closed"));
+  if (obsTabAll) obsTabAll.addEventListener("click", () => setActiveTab("all"));
+
+  if (obsSearchEl){
+    obsSearchEl.addEventListener("input", () => renderObservations());
+  }
+
+  if (obsCancelBtn){
+    obsCancelBtn.addEventListener("click", () => closeDrawer());
+  }
+
+  if (obsOverlay){
+    obsOverlay.addEventListener("click", () => closeDrawer());
+  }
+
+  if (obsSaveBtn){
+    obsSaveBtn.addEventListener("click", () => {
+      const res = saveCurrentObservation();
+      if (!res.ok){
+        toast(res.msg || "Unable to save.");
+        return;
+      }
+      closeDrawer();
+      renderObservations();
+    });
+  }
+
+  if (obsDeleteBtn){
+    obsDeleteBtn.addEventListener("click", () => {
+      if (!confirm("Delete this observation? This cannot be undone.")) return;
+      const res = deleteCurrentObservation();
+      if (!res.ok){
+        toast(res.msg || "Unable to delete.");
+        return;
+      }
+      closeDrawer();
+      renderObservations();
+    });
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      try{
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.onerror = () => reject(new Error("read failed"));
+        r.readAsDataURL(file);
+      }catch(e){ reject(e); }
+    });
+  }
+
+  if (obsPhotoInput){
+    obsPhotoInput.addEventListener("change", async () => {
+      const role = getRole();
+      const userTag = getUserTag();
+      const data = loadObservations();
+      const it = obsEditingId ? data.items.find(x => x.id === obsEditingId) : null;
+      const editable = !it ? true : canEdit(it, role, userTag);
+      if (!editable) return;
+
+      const files = Array.from(obsPhotoInput.files || []);
+      if (!files.length) return;
+
+      for (const f of files){
+        try{
+          const dataUrl = await fileToDataUrl(f);
+          obsPhotosDraft.push({ id: uuid(), dataUrl });
+        }catch(e){}
+      }
+      obsPhotoInput.value = "";
+      renderThumbs();
+    });
+  }
+
+  if (obsImgOverlay){
+    obsImgOverlay.addEventListener("click", () => hideImage());
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if (obsImgOverlay && obsImgOverlay.classList.contains("show")) { hideImage(); return; }
+      if (obsDrawer && obsDrawer.classList.contains("show")) { closeDrawer(); return; }
+    }
+  });
+
+  // render counts/list initially
+  renderObservations();
+
+  // ===== Existing init calls =====
   refresh();
   loadGoalFromLocal();
   startCountdown();
 
-  window.addEventListener("focus", () => { refresh(); renderCountdown(); });
-  window.addEventListener("pageshow", () => { refresh(); renderCountdown(); });
-  window.addEventListener("storage", () => { refresh(); renderCountdown(); });
+  window.addEventListener("focus", () => { refresh(); renderCountdown(); renderObservations(); });
+  window.addEventListener("pageshow", () => { refresh(); renderCountdown(); renderObservations(); });
+  window.addEventListener("storage", () => { refresh(); renderCountdown(); renderObservations(); });
 
   // Firestore listeners (expanded to include phenolic + ccs)
   let fbStepsUnsub = null;
