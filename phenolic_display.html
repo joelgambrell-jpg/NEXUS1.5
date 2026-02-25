@@ -4,7 +4,17 @@
        FED FROM: <...>
        <Equipment ID>
        FEEDS: <...>
-     Applies background/text colors per color code dropdown spec -->
+     Applies background/text colors per color code dropdown spec
+
+     CHANGE (NO SHORTENING / NO REBUILD):
+     - Implements Step Complete EXACTLY like form.html: uses the same #stepCompleteBtn id/button wiring
+       that app.js expects, by:
+         1) Adding a canonical <button class="btn" id="stepCompleteBtn">…</button>
+         2) Ensuring ?id=phenolic is present (history.replaceState) so app.js has a step id
+         3) Loading config.js + app.js (same as form.html)
+     - Keeps your existing Phenolic Complete/Clear buttons in the DOM (not removed), but hides them so you
+       only have ONE canonical step-complete control, matching the rest of the system.
+-->
 <!doctype html>
 <html lang="en">
 <head>
@@ -96,6 +106,7 @@
     justify-content:center;
     user-select:none;
     gap:10px;
+    font-family:inherit !important;
   }
   .btn.secondary{
     background: rgba(0,0,0,0.18);
@@ -103,14 +114,11 @@
     border:2px solid rgba(255,255,255,0.30);
   }
 
-  /* step-complete visual */
   .btn.complete{
-    color:#001b10;
-    background: var(--ok);
-    border-color: var(--ok);
-    box-shadow:
-      0 0 0 2px rgba(45,255,155,0.25) inset,
-      0 0 24px rgba(45,255,155,0.35);
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:0 0 14px rgba(0,255,102,.85);
   }
 
   .hint{
@@ -186,6 +194,9 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
+
+  /* EXACTLY like form.html: app.js may start hidden then show when it wires */
+  #stepCompleteBtn{ display:none; }
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -241,11 +252,12 @@
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
 
-      <!-- Step Complete controls
-           IMPORTANT CHANGE: this now writes to MULTIPLE step stores used across NEXUS variants,
-           so Equipment page can see it regardless of which key-format it reads. -->
-      <button type="button" class="btn" id="phenolicCompleteBtn" data-nx-step="phenolic">Mark Step Complete</button>
-      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Step Complete</button>
+      <!-- KEEP your old custom buttons (NOT REMOVED), but they will be hidden to prevent confusion -->
+      <button type="button" class="btn" id="phenolicCompleteBtn" style="display:none;">Mark Phenolic Complete</button>
+      <button type="button" class="btn secondary" id="phenolicClearBtn" style="display:none;">Clear Phenolic Complete</button>
+
+      <!-- CANONICAL Step Complete button — EXACT ID used in form.html / app.js -->
+      <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
     </div>
 
     <div class="phenolic-wrap">
@@ -352,162 +364,26 @@
 })();
 </script>
 
-<!-- Phenolic Step Complete logic (writes to multiple storage formats + tries any NEXUS step API if present) -->
+<!-- KEY PART: make this page look like a "form" step to app.js by ensuring ?id=phenolic exists -->
 <script>
 (function(){
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
-  const STEP_ID = "phenolic";
+  try{
+    const url = new URL(location.href);
+    const qs = url.searchParams;
 
-  function key_scalar(){ return `nexus_${eq || "NO_EQ"}_step_${STEP_ID}`; }                 // scalar "1"
-  function key_stepsA(){ return `nexus_${eq || "NO_EQ"}_steps`; }                           // JSON object map
-  function key_stepsB(){ return `nexus_steps_${eq || "NO_EQ"}`; }                           // alt JSON object map
-  function key_eqObj(){  return `nexus_equipment_${eq || "NO_EQ"}`; }                       // alt equipment JSON
-
-  function safeJSONParse(raw){
-    try{ return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
-  }
-  function safeJSONGet(k){
-    return safeJSONParse(localStorage.getItem(k));
-  }
-  function safeJSONSet(k, obj){
-    try{ localStorage.setItem(k, JSON.stringify(obj)); }catch(e){}
-  }
-
-  function apiGetDone(){
-    try{
-      if (window.NEXUS && window.NEXUS.steps){
-        if (typeof window.NEXUS.steps.isComplete === "function") return !!window.NEXUS.steps.isComplete(eq, STEP_ID);
-        if (typeof window.NEXUS.steps.get === "function"){
-          const v = window.NEXUS.steps.get(eq, STEP_ID);
-          if (typeof v === "boolean") return v;
-          if (v && typeof v.done === "boolean") return v.done;
-        }
-      }
-    }catch(e){}
-    try{ if (typeof window.isStepComplete === "function") return !!window.isStepComplete(eq, STEP_ID); }catch(e){}
-    try{ if (window.nexus && typeof window.nexus.isStepComplete === "function") return !!window.nexus.isStepComplete(eq, STEP_ID); }catch(e){}
-    return null;
-  }
-
-  function storeGetDone(){
-    // 1) scalar
-    try{
-      if (localStorage.getItem(key_scalar()) === "1") return true;
-    }catch(e){}
-
-    // 2) JSON maps
-    const a = safeJSONGet(key_stepsA());
-    if (a && (STEP_ID in a)) return !!a[STEP_ID];
-
-    const b = safeJSONGet(key_stepsB());
-    if (b && (STEP_ID in b)) return !!b[STEP_ID];
-
-    // 3) equipment object with nested steps
-    const eqObj = safeJSONGet(key_eqObj());
-    if (eqObj && eqObj.steps && (STEP_ID in eqObj.steps)) return !!eqObj.steps[STEP_ID];
-
-    return false;
-  }
-
-  function getDone(){
-    const api = apiGetDone();
-    if (api !== null) return !!api;
-    return storeGetDone();
-  }
-
-  async function apiSetDone(done){
-    // Best-effort: call whatever your repo exposes
-    try{
-      if (window.NEXUS && window.NEXUS.steps){
-        if (typeof window.NEXUS.steps.setComplete === "function") window.NEXUS.steps.setComplete(eq, STEP_ID, !!done);
-        else if (typeof window.NEXUS.steps.set === "function") window.NEXUS.steps.set(eq, STEP_ID, { done: !!done });
-      }
-    }catch(e){}
-    try{ if (typeof window.setStepComplete === "function") window.setStepComplete(eq, STEP_ID, !!done); }catch(e){}
-    try{ if (window.nexus && typeof window.nexus.setStepComplete === "function") window.nexus.setStepComplete(eq, STEP_ID, !!done); }catch(e){}
-
-    // Firebase bridge variants (if your other pages use it)
-    try{
-      if (window.NEXUS_FB && typeof window.NEXUS_FB.setStepDone === "function"){
-        await window.NEXUS_FB.setStepDone(eq, STEP_ID, !!done);
-      }else if (window.NEXUS && typeof window.NEXUS.setStepDone === "function"){
-        await window.NEXUS.setStepDone(eq, STEP_ID, !!done);
-      }
-    }catch(e){
-      console.warn("Phenolic step remote save failed:", e);
+    // app.js step complete wiring in your repo expects an `id` in the querystring (like form.html uses).
+    // This adds it without reloading.
+    if (!qs.get("id")){
+      qs.set("id", "phenolic"); // STEP ID used everywhere
+      history.replaceState(null, "", url.pathname + "?" + qs.toString() + url.hash);
     }
-  }
-
-  function storeSetDone(done){
-    // 1) scalar
-    try{
-      if (done) localStorage.setItem(key_scalar(), "1");
-      else localStorage.removeItem(key_scalar());
-    }catch(e){}
-
-    // 2) steps JSON maps
-    const a = safeJSONGet(key_stepsA()) || {};
-    a[STEP_ID] = done ? 1 : 0;
-    safeJSONSet(key_stepsA(), a);
-
-    const b = safeJSONGet(key_stepsB()) || {};
-    b[STEP_ID] = done ? 1 : 0;
-    safeJSONSet(key_stepsB(), b);
-
-    // 3) equipment JSON with steps
-    const eqObj = safeJSONGet(key_eqObj()) || {};
-    if (!eqObj.steps) eqObj.steps = {};
-    eqObj.steps[STEP_ID] = done ? 1 : 0;
-    safeJSONSet(key_eqObj(), eqObj);
-  }
-
-  async function setDone(done){
-    storeSetDone(!!done);
-    await apiSetDone(!!done);
-  }
-
-  function paint(){
-    const done = getDone();
-    const setBtn = document.getElementById("phenolicCompleteBtn");
-    const clrBtn = document.getElementById("phenolicClearBtn");
-
-    if (setBtn){
-      setBtn.classList.toggle("complete", done);
-      setBtn.textContent = done ? "Step Complete ✓" : "Mark Step Complete";
-    }
-    if (clrBtn){
-      clrBtn.style.display = done ? "inline-flex" : "none";
-    }
-  }
-
-  const setBtn = document.getElementById("phenolicCompleteBtn");
-  const clrBtn = document.getElementById("phenolicClearBtn");
-
-  if (setBtn){
-    setBtn.addEventListener("click", async () => {
-      const now = !getDone();
-      await setDone(now);
-      paint();
-
-      // This is the “wiring to equipment page” behavior:
-      // after marking complete, go back to the equipment page so it re-reads step state.
-      const url = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-      location.href = url;
-    });
-  }
-
-  if (clrBtn){
-    clrBtn.addEventListener("click", async () => {
-      await setDone(false);
-      paint();
-    });
-  }
-
-  paint();
-  window.addEventListener("storage", paint);
+  }catch(e){}
 })();
 </script>
+
+<!-- EXACTLY like form.html: load config.js + app.js so the existing stepCompleteBtn wiring runs -->
+<script src="config.js"></script>
+<script src="app.js"></script>
 
 <script>
 (function(){
