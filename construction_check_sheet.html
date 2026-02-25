@@ -7,8 +7,8 @@
 
   <!-- Your site core -->
   <link rel="stylesheet" href="nexus-core.css" />
-    <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<script defer src="nexus-core.js"></script>
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+  <script defer src="nexus-core.js"></script>
   <script defer src="nexus-firebase-bridge.js"></script>
 
   <style>
@@ -648,6 +648,28 @@
     function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
 
     /***************
+     * CCS Completion flag (Equipment page reads this)
+     ***************/
+    function ccsSignedKey(){
+      return `nexus_${state.eq || "NO_EQ"}_ccs_signed_off`;
+    }
+    function ccsStepKey(){
+      // Equipment page ALSO checks stepKey("ccs") as a fallback. This sets that too.
+      return `nexus_${state.eq || "NO_EQ"}_step_ccs`;
+    }
+    function setCcsCompleteFlag(isComplete){
+      try{
+        if(isComplete){
+          localStorage.setItem(ccsSignedKey(), "1");
+          localStorage.setItem(ccsStepKey(), "1");
+        } else {
+          localStorage.removeItem(ccsSignedKey());
+          localStorage.removeItem(ccsStepKey());
+        }
+      }catch(e){}
+    }
+
+    /***************
      * Permissions
      ***************/
     function canEditRowButtons(){
@@ -1121,7 +1143,10 @@
       };
     }
 
-    function markDirty(){}
+    // IMPORTANT: markDirty now clears CCS completion so Equipment button won’t stay green after edits.
+    function markDirty(){
+      setCcsCompleteFlag(false);
+    }
 
     async function tryFirebaseLoad(key){
       const fb = window.nexusFirebase || window.NEXUS_FIREBASE || window.nexusFirebaseBridge || window.NEXUS || null;
@@ -1275,6 +1300,7 @@
 
       const ok = validate();
       if(!ok){
+        setCcsCompleteFlag(false);
         setLoadState("bad","Missing required");
         return;
       }
@@ -1285,6 +1311,10 @@
       localStorage.setItem(localKey(state.docKey), JSON.stringify(data));
 
       const fbOk = await tryFirebaseSave(state.docKey, data);
+
+      // IMPORTANT: only set CCS complete when FULL signoff validates AND save succeeds locally (and optionally Firebase).
+      setCcsCompleteFlag(true);
+
       setLoadState("ok", fbOk ? "Saved" : "Saved (local)");
     }
 
@@ -1425,7 +1455,10 @@
       $("exportXlsBtn").addEventListener("click", exportExcel);
 
       ["finalConsName","finalQcxName","finalDate","finalNotes"].forEach(id=>{
-        $(id).addEventListener("input", (e)=>{ e.target.classList.add("changed"); });
+        $(id).addEventListener("input", (e)=>{
+          e.target.classList.add("changed");
+          markDirty();
+        });
       });
       $("finalNotes").addEventListener("input", (e)=> autoGrow(e.target));
       setTimeout(()=>autoGrow($("finalNotes")),0);
