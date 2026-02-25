@@ -25,6 +25,7 @@
     --btn-bg:#0a0f24;
     --btn-txt:#3ecbff;
     --accent:#00c2ff;
+    --ok:#2dff9b;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
@@ -100,6 +101,16 @@
     background: rgba(0,0,0,0.18);
     color:#fff;
     border:2px solid rgba(255,255,255,0.30);
+  }
+
+  /* NEW: step-complete visual */
+  .btn.complete{
+    color:#001b10;
+    background: var(--ok);
+    border-color: var(--ok);
+    box-shadow:
+      0 0 0 2px rgba(45,255,155,0.25) inset,
+      0 0 24px rgba(45,255,155,0.35);
   }
 
   .hint{
@@ -229,6 +240,10 @@
     <div class="btnrow" style="display:flex;gap:10px;flex-wrap:wrap;">
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
+
+      <!-- NEW: Phenolic Step Complete controls -->
+      <button type="button" class="btn" id="phenolicCompleteBtn">Mark Phenolic Complete</button>
+      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Phenolic Complete</button>
     </div>
 
     <div class="phenolic-wrap">
@@ -332,6 +347,67 @@
     if (line2) line2.textContent = "(missing ?eq=)";
     if (line3) line3.textContent = "FEEDS: (missing ?eq=)";
   }
+})();
+</script>
+
+<!-- NEW: Phenolic Step Complete logic -->
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  const STEP_ID = "phenolic";
+
+  function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
+
+  async function setStepFirestore(done){
+    try{
+      if (!eq || !window.NEXUS_FB?.db) return;
+      const { db, auth } = window.NEXUS_FB;
+
+      const { doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eq, "steps", STEP_ID);
+      await setDoc(ref, {
+        done: !!done,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth?.currentUser?.uid || null
+      }, { merge:true });
+    }catch(e){
+      console.warn("Phenolic step Firestore save failed:", e);
+    }
+  }
+
+  function paint(){
+    const done = localStorage.getItem(stepKey(STEP_ID)) === "1";
+    const setBtn = document.getElementById("phenolicCompleteBtn");
+    if (setBtn){
+      setBtn.classList.toggle("complete", done);
+      setBtn.textContent = done ? "Phenolic Complete ✓" : "Mark Phenolic Complete";
+    }
+  }
+
+  const setBtn = document.getElementById("phenolicCompleteBtn");
+  const clrBtn = document.getElementById("phenolicClearBtn");
+
+  if (setBtn){
+    setBtn.addEventListener("click", async () => {
+      localStorage.setItem(stepKey(STEP_ID), "1");
+      paint();
+      await setStepFirestore(true);
+    });
+  }
+
+  if (clrBtn){
+    clrBtn.addEventListener("click", async () => {
+      localStorage.removeItem(stepKey(STEP_ID));
+      paint();
+      await setStepFirestore(false);
+    });
+  }
+
+  paint();
+  window.addEventListener("storage", paint);
 })();
 </script>
 
