@@ -224,6 +224,52 @@
   function stepKey(stepId){return `nexus_${eq||'NO_EQ'}_step_${stepId}`;}
   function isDone(stepId){return localStorage.getItem(stepKey(stepId))==='1';}
 
+  /* ===== HYBRID (C) COMPLETION SUPPORT =====
+     COMPLETE = toggle(true) AND valid(true)
+     - toggle key: nexus_${eq}_${step}_toggle
+     - valid  key: nexus_${eq}_${step}_valid
+     - complete key (derived): nexus_${eq}_${step}_complete
+     This page will prefer *_complete if present; otherwise it falls back to legacy heuristics.
+  */
+  function boolFromStorage(raw){
+    if(raw == null) return null;
+    const s = String(raw).trim().toLowerCase();
+    if(s === 'true' || s === '1' || s === 'yes' || s === 'y' || s === 'on') return true;
+    if(s === 'false' || s === '0' || s === 'no' || s === 'n' || s === 'off') return false;
+    return null;
+  }
+  function hybridKey(step, kind){
+    // kind: toggle|valid|complete
+    return `nexus_${eq||'NO_EQ'}_${step}_${kind}`;
+  }
+  function readHybrid(step){
+    const cRaw = localStorage.getItem(hybridKey(step,'complete'));
+    const tRaw = localStorage.getItem(hybridKey(step,'toggle'));
+    const vRaw = localStorage.getItem(hybridKey(step,'valid'));
+    const c = boolFromStorage(cRaw);
+    const t = boolFromStorage(tRaw);
+    const v = boolFromStorage(vRaw);
+
+    // If any hybrid keys exist, we consider hybrid "enabled" for this step.
+    const hasAnyHybridKey = (cRaw != null) || (tRaw != null) || (vRaw != null);
+
+    // Prefer explicit derived key if present.
+    if(c !== null) return { enabled:true, complete:c, toggle:t, valid:v };
+
+    // If hybrid keys exist but derived key isn't written yet, derive it safely.
+    if(hasAnyHybridKey){
+      return { enabled:true, complete: (t === true && v === true), toggle:t, valid:v };
+    }
+
+    // Not using hybrid for this step yet.
+    return { enabled:false, complete:null, toggle:null, valid:null };
+  }
+  function resolveComplete(step, legacyOk){
+    const h = readHybrid(step);
+    if(h.enabled) return !!h.complete;
+    return !!legacyOk;
+  }
+
   function safe(v){
     const s = (v==null?'':String(v));
     return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -773,7 +819,6 @@
     const fpvNotes = localStorage.getItem(`nexus_${eq||'NO_EQ'}_fpv_photo_notes`) || "";
     const fpvLink  = eq ? `fpv_photo_capture.html?eq=${encodeURIComponent(eq)}` : "fpv_photo_capture.html";
     const fpvHasData = (fpvPhoto && fpvPhoto.startsWith("data:image/"));
-    const fpvComplete = isDone("fpv_photo") || fpvHasData;
 
     const equipRows = (equipMeg && (equipMeg.rows || equipMeg.equipRows)) ? (equipMeg.rows || equipMeg.equipRows) : [];
     const equipMegHasData =
@@ -794,11 +839,33 @@
     const prefodDoc = prefodLatest ? prefodLatest.doc : null;
     const prefodLink = eq ? `form.html?id=prefod&eq=${encodeURIComponent(eq)}` : 'form.html?id=prefod';
 
-    const rifComplete = isDone('rif') || !!rifDoc;
-    const l2Complete = isDone('l2') || !!l2Doc;
+    /* ===== LEGACY HEURISTICS (fallback only) ===== */
+    const rifLegacyOk = isDone('rif') || !!rifDoc;
+    const l2LegacyOk = isDone('l2') || !!l2Doc;
 
-    const prefodHasData = !!prefodDoc;
-    const prefodComplete = isDone('prefod') || prefodHasData;
+    const prefodLegacyOk = isDone('prefod') || !!prefodDoc;
+
+    const fpvLegacyOk = isDone("fpv_photo") || fpvHasData;
+
+    const megLegacyOk = isDone('meg');
+    const torqueLegacyOk = isDone('torque');
+
+    // Equipment Meg was previously "has any data"; keep as legacy fallback ONLY.
+    const equipMegLegacyOk = equipMegHasData;
+
+    /* ===== HYBRID (C) COMPLETE RESOLUTION =====
+       Uses nexus_${eq}_${step}_complete if present, else falls back to legacy.
+       Step IDs here should match what your validators write.
+       Recommended step names:
+         rif, l2, meg, equip_meg, torque, fpv, prefod
+    */
+    const rifComplete = resolveComplete('rif', rifLegacyOk);
+    const l2Complete = resolveComplete('l2', l2LegacyOk);
+    const megComplete = resolveComplete('meg', megLegacyOk);
+    const equipMegComplete = resolveComplete('equip_meg', equipMegLegacyOk);
+    const torqueComplete = resolveComplete('torque', torqueLegacyOk);
+    const fpvComplete = resolveComplete('fpv', fpvLegacyOk);
+    const prefodComplete = resolveComplete('prefod', prefodLegacyOk);
 
     /* ===== CORRECT PATHS (YOUR CURRENT REPO): Snap-on Import/Embed live in /torque ===== */
     const snaponImportLink = nexusUrl(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`);
@@ -831,9 +898,9 @@
       <h3>Completion Summary</h3>
       ${renderStatusLine('RIF (No-Procore)', rifComplete, rifNoProcoreLink)}
       ${renderStatusLine('L2 (No-Procore)', l2Complete, l2NoProcoreLink)}
-      ${renderStatusLine('Megohmmeter (Line/Load)', isDone('meg'), megLink)}
-      ${renderStatusLine('Equipment Meg (If Applicable)', equipMegHasData, equipMegLink)}
-      ${renderStatusLine('Torque', isDone('torque'), torqueLink)}
+      ${renderStatusLine('Megohmmeter (Line/Load)', megComplete, megLink)}
+      ${renderStatusLine('Equipment Meg (If Applicable)', equipMegComplete, equipMegLink)}
+      ${renderStatusLine('Torque', torqueComplete, torqueLink)}
       ${renderStatusLine('Snap-on ConnecTorq Torque (Optional Import)', snaponComplete, snaponImportLink)}
       ${renderStatusLine('FPV Photo', fpvComplete, fpvLink)}
       ${renderStatusLine('Pre-FOD', prefodComplete, prefodLink)}
