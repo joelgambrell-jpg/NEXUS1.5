@@ -78,7 +78,8 @@
       0 0 22px rgba(0,229,255,0.30);
   }
 
-  /#constructionBtn.btn.ref{
+  /* FIXED: selector typo so CCS default yellow actually applies */
+  #constructionBtn.btn.ref{
   color:#111;                               /* dark text for contrast */
   border-color: rgba(255, 212, 0, 0.95);     /* yellow border */
   background: rgba(255, 212, 0, 0.90);       /* solid yellow */
@@ -540,14 +541,16 @@
       return ok;
     });
 
-    /* NEW: Phenolic completion (functional Step Complete) */
+    /* Phenolic completion (counts in progress) */
     const phenBtnEl = document.getElementById("phenolicBtn");
+    let phenOk = false;
     if (phenBtnEl){
-      const phenOk = (localStorage.getItem(stepKey("phenolic")) === "1");
+      phenOk = (localStorage.getItem(stepKey("phenolic")) === "1");
       phenBtnEl.classList.toggle("complete", phenOk);
     }
+    if (phenOk) done++;
 
-    /* NEW: CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
+    /* CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
     const ccsEl = document.getElementById("constructionBtn");
     if (ccsEl){
       const ccsOk =
@@ -566,11 +569,13 @@
       insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
-    const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
+    /* Progress totals now include Phenolic as +1 */
+    const totalSteps = taskSteps.length + 1;
+    const pct = totalSteps ? Math.round((done / totalSteps) * 100) : 0;
 
     if (fill) fill.style.width = `${pct}%`;
     if (txt)  txt.textContent = `Progress: ${pct}%`;
-    if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
+    if (cnt)  cnt.textContent = `${done}/${totalSteps}`;
 
     if (eBtn){
       if (pct >= 100){
@@ -742,7 +747,7 @@
       knownStepIds.add(MEG_LINE_STEP);
       knownStepIds.add(MEG_LOAD_STEP);
 
-      // NEW: allow Firestore-driven completion for these
+      // allow Firestore-driven completion for these
       knownStepIds.add("phenolic");
       knownStepIds.add("ccs");
 
@@ -755,7 +760,7 @@
           if (data.done) localStorage.setItem(stepKey(stepId), "1");
           else localStorage.removeItem(stepKey(stepId));
 
-          // NEW: mirror ccs done -> signed-off flag so CSS/logic stays consistent
+          // mirror ccs done -> signed-off flag so CSS/logic stays consistent
           if (stepId === "ccs"){
             if (data.done) localStorage.setItem(ccsSignedKey(), "1");
             else localStorage.removeItem(ccsSignedKey());
