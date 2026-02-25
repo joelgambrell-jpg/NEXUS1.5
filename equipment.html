@@ -89,9 +89,9 @@
 
   /* CCS default (clean yellow) */
   #constructionBtn.btn.ref{
-    color:#111;                               /* dark text for contrast */
-    border-color: rgba(255, 212, 0, 0.95);     /* yellow border */
-    background: rgba(255, 212, 0, 0.90);       /* solid yellow */
+    color:#111;
+    border-color: rgba(255, 212, 0, 0.95);
+    background: rgba(255, 212, 0, 0.90);
     box-shadow: none;
   }
 
@@ -246,8 +246,35 @@
 
   .procore-hidden{ display:none!important; }
 
+  /* ===========================================================
+     NEW: Page-level split (Observations OUTSIDE the card)
+     =========================================================== */
+  .nx-page-split{
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 14px;
+    align-items:start;
+  }
+  @media (max-width: 1100px){
+    .nx-page-split{ grid-template-columns: 1fr; }
+  }
+
+  /* Right-side panel container (outside card) */
+  .nx-right-panel{
+    background: rgba(0,0,0,0.30);
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 18px;
+    padding: 14px;
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 16px;
+  }
+  @media (max-width: 1100px){
+    .nx-right-panel{ position: static; top:auto; }
+  }
+
   @media print{
-    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid, .nx-split { display:none !important; }
+    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid, .nx-right-panel, .obs-overlay, .obs-drawer, .obs-img-overlay { display:none !important; }
     body{ background:#fff !important; color:#000 !important; }
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
@@ -264,24 +291,7 @@
   }
 
   /* ===========================================================
-     NEW: Desktop split layout (Observations right side)
-     =========================================================== */
-  .nx-split{
-    margin-top: 12px;
-    display:grid;
-    grid-template-columns: minmax(0, 1fr) 420px;
-    gap: 12px;
-    align-items:start;
-  }
-  .nx-leftcol{ min-width:0; }
-  .nx-rightcol{ min-width:0; }
-  @media (max-width: 1020px){
-    .nx-split{ grid-template-columns: 1fr; }
-    .nx-rightcol{ order:-1; } /* keep observations above steps on smaller screens */
-  }
-
-  /* ===========================================================
-     Intracompany Observations (Procore-feel) — NEW
+     Intracompany Observations (Procore-feel)
      =========================================================== */
   .obs-wrap{ padding: 14px; border-radius: 18px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.20); }
   .obs-top{
@@ -417,9 +427,7 @@
     color:#7be6ff;
     background: rgba(10,15,36,0.86);
   }
-  .obs-card-body{
-    padding:0 12px 12px;
-  }
+  .obs-card-body{ padding:0 12px 12px; }
   .obs-desc{
     font-weight:800;
     opacity:.95;
@@ -594,116 +602,109 @@
 </div>
 
 <div class="page-wrap">
-  <div class="card">
-    <h1>Equipment Page</h1>
-    <div class="eq" id="eqLabel"></div>
 
-    <div class="progress-wrap">
-      <div class="progress-label">
-        <div id="progressText">Progress: 0%</div>
-        <div id="progressCount">0/0</div>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="progress-hint">
-        Progress updates when each form is marked complete (use the “Complete” toggle on each task page).
-      </div>
-    </div>
+  <!-- PAGE SPLIT: left card, right observations OUTSIDE card -->
+  <div class="nx-page-split">
 
-    <div class="goal-card" id="goalCard">
-      <div class="goal-top">
-        <div style="min-width:260px;flex:1;">
-          <div class="goal-title">Energization Goal</div>
-          <div class="countdown">
-            <div class="countdown-big" id="countdownBig">No goal set</div>
-            <div class="countdown-sub" id="countdownSub"></div>
+    <!-- LEFT: main equipment card -->
+    <div class="nx-left-col">
+      <div class="card">
+        <h1>Equipment Page</h1>
+        <div class="eq" id="eqLabel"></div>
+
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <div id="progressText">Progress: 0%</div>
+            <div id="progressCount">0/0</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-hint">
+            Progress updates when each form is marked complete (use the “Complete” toggle on each task page).
           </div>
         </div>
 
-        <details class="goal-details" id="goalDetails">
-          <summary id="goalSummary">Edit Goal</summary>
+        <div class="goal-card" id="goalCard">
+          <div class="goal-top">
+            <div style="min-width:260px;flex:1;">
+              <div class="goal-title">Energization Goal</div>
+              <div class="countdown">
+                <div class="countdown-big" id="countdownBig">No goal set</div>
+                <div class="countdown-sub" id="countdownSub"></div>
+              </div>
+            </div>
 
-          <div class="goal-row">
-            <label class="goal-label" for="goalDate">Goal Date &amp; Time</label>
-            <input class="goal-input" id="goalDate" type="datetime-local" />
+            <details class="goal-details" id="goalDetails">
+              <summary id="goalSummary">Edit Goal</summary>
+
+              <div class="goal-row">
+                <label class="goal-label" for="goalDate">Goal Date &amp; Time</label>
+                <input class="goal-input" id="goalDate" type="datetime-local" />
+              </div>
+
+              <div class="goal-row">
+                <label class="goal-label" for="notifyEmails">Notify Emails (comma-separated)</label>
+                <input class="goal-input" id="notifyEmails" type="text" placeholder="foreman@company.com, pm@company.com" />
+              </div>
+
+              <div class="goal-actions">
+                <button class="goal-btn" id="saveGoalBtn" type="button">Save Goal</button>
+                <button class="goal-btn secondary" id="clearGoalBtn" type="button">Clear</button>
+              </div>
+            </details>
           </div>
+        </div>
 
-          <div class="goal-row">
-            <label class="goal-label" for="notifyEmails">Notify Emails (comma-separated)</label>
-            <input class="goal-input" id="notifyEmails" type="text" placeholder="foreman@company.com, pm@company.com" />
+        <div id="energizationWrap">
+          <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">Energization</a>
+          <div class="arcfx" aria-hidden="true">
+            <span class="arc bolt1">
+              <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
+                <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
+                <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
+              </svg>
+            </span>
+            <span class="arc bolt2">
+              <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
+                <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
+                <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
+              </svg>
+            </span>
+            <span class="arc bolt3">
+              <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
+                <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
+                <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
+                <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
+              </svg>
+            </span>
+
+            <span class="spark s1"></span>
+            <span class="spark s2"></span>
+            <span class="spark s3"></span>
+            <span class="spark s4"></span>
+            <span class="spark s5"></span>
+            <span class="spark s6"></span>
           </div>
+        </div>
 
-          <div class="goal-actions">
-            <button class="goal-btn" id="saveGoalBtn" type="button">Save Goal</button>
-            <button class="goal-btn secondary" id="clearGoalBtn" type="button">Clear</button>
+        <div class="section-grid">
+          <div class="procore-hidden" aria-hidden="true">
+            <a class="btn secondary locked" id="procoreConstructionBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Construction</a>
+            <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Energization</a>
           </div>
-        </details>
-      </div>
-    </div>
+        </div>
 
-    <div id="energizationWrap">
-      <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">Energization</a>
-      <div class="arcfx" aria-hidden="true">
-        <span class="arc bolt1">
-          <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
-            <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
-            <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
-          </svg>
-        </span>
-        <span class="arc bolt2">
-          <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
-            <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
-            <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
-          </svg>
-        </span>
-        <span class="arc bolt3">
-          <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
-            <path class="arc-glow" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-glow" d="M18 36 C14 30 10 26 8 18"></path>
-            <path class="arc-main" d="M6 72 C14 60 10 48 18 36 C26 24 22 14 34 10"></path>
-            <path class="arc-main" d="M18 36 C14 30 10 26 8 18"></path>
-          </svg>
-        </span>
-
-        <span class="spark s1"></span>
-        <span class="spark s2"></span>
-        <span class="spark s3"></span>
-        <span class="spark s4"></span>
-        <span class="spark s5"></span>
-        <span class="spark s6"></span>
-      </div>
-    </div>
-
-    <div class="section-grid">
-      <div class="procore-hidden" aria-hidden="true">
-        <a class="btn secondary locked" id="procoreConstructionBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Construction</a>
-        <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Energization</a>
-      </div>
-    </div>
-
-    <!-- ===========================================================
-         NEW: Split area (Observations right, workflow left)
-         =========================================================== -->
-    <div class="nx-split" id="nxSplit">
-
-      <!-- LEFT: steps + references + exports (exports moved BELOW references) -->
-      <div class="nx-leftcol">
-
-        <!-- Steps grid: Phenolic is parked beside RIF; CCS moves in order -->
+        <!-- Steps grid -->
         <div class="grid" id="stepsGrid">
           <a class="btn" id="rifBtn">Receipt Inspection Form</a>
-
-          <!-- Phenolic Display beside RIF (stays parked) -->
           <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
-
-          <!-- CCS will be dynamically moved beside the next step as completion advances -->
           <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
-
           <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
           <a class="btn" id="torqueBtn">Torque Application</a>
           <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
@@ -711,7 +712,7 @@
           <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
         </div>
 
-        <!-- Reference buttons (neon blue) -->
+        <!-- Reference -->
         <div class="bubble" id="referencesBubble">
           <div class="bubble-title">Reference &amp; Check Sheets</div>
           <div class="bubble-grid">
@@ -729,48 +730,47 @@
         </div>
 
       </div>
+    </div>
 
-      <!-- RIGHT: Intracompany Observations -->
-      <div class="nx-rightcol">
-
-        <div class="obs-wrap" id="obsWrap">
-          <div class="obs-top">
-            <div class="obs-title">
-              <div class="obs-h">Intracompany Observations</div>
-              <div class="obs-chips" aria-label="Observation counts">
-                <span class="obs-chip" title="Open observations">
-                  <b>Open</b> <span class="n" id="obsOpenCount">0</span>
-                </span>
-                <span class="obs-chip" title="Closed observations">
-                  <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
-                </span>
-              </div>
-            </div>
-            <div class="obs-actions">
-              <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
+    <!-- RIGHT: observations panel OUTSIDE card -->
+    <div class="nx-right-panel" id="obsPanel">
+      <div class="obs-wrap" id="obsWrap">
+        <div class="obs-top">
+          <div class="obs-title">
+            <div class="obs-h">Intracompany Observations</div>
+            <div class="obs-chips" aria-label="Observation counts">
+              <span class="obs-chip" title="Open observations">
+                <b>Open</b> <span class="n" id="obsOpenCount">0</span>
+              </span>
+              <span class="obs-chip" title="Closed observations">
+                <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
+              </span>
             </div>
           </div>
-
-          <div class="obs-tabs" role="tablist" aria-label="Observation filters">
-            <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
-            <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
-            <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
+          <div class="obs-actions">
+            <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
           </div>
-
-          <div class="obs-search">
-            <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
-          </div>
-
-          <div class="obs-list" id="obsList"></div>
         </div>
 
+        <div class="obs-tabs" role="tablist" aria-label="Observation filters">
+          <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
+          <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
+          <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
+        </div>
+
+        <div class="obs-search">
+          <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
+        </div>
+
+        <div class="obs-list" id="obsList"></div>
       </div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /nx-page-split -->
 
-<!-- Observation Drawer (pop-out) — NEW -->
+</div><!-- /page-wrap -->
+
+<!-- Observation Drawer (pop-out) -->
 <div class="obs-overlay" id="obsOverlay" aria-hidden="true"></div>
 <div class="obs-drawer" id="obsDrawer" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Observation editor">
   <div class="obs-dh">
@@ -878,7 +878,7 @@
   </div>
 </div>
 
-<!-- Image Lightbox — NEW -->
+<!-- Image Lightbox -->
 <div class="obs-img-overlay" id="obsImgOverlay" aria-hidden="true">
   <img id="obsImgLarge" src="" alt="Observation photo" />
 </div>
@@ -930,7 +930,6 @@
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
 
-  /* NEW: CCS signed-off flag key */
   function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
 
   const MEG_LINE_STEP = "megohmmeter_line";
@@ -942,7 +941,6 @@
     return legacy || (line && load);
   }
 
-  /* ✅ CHANGED: Phenolic is now a COUNTED task step (affects progress + CCS floating logic) */
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
     {id:"phenolic",btn:"phenolicBtn"},
@@ -964,15 +962,10 @@
 
     if (s.id === "phenolic"){
       el.href = directPage("phenolic_display.html");
-
       const label =
         (meta.phenolicLabel || meta.phenolicName || meta.phenolicTitle || "").toString().trim();
-
-      if (label){
-        el.textContent = `Phenolic: ${label}`;
-      } else {
-        el.textContent = "Phenolic Display";
-      }
+      if (label) el.textContent = `Phenolic: ${label}`;
+      else el.textContent = "Phenolic Display";
       return;
     }
 
@@ -1024,7 +1017,6 @@
       return ok;
     });
 
-    /* CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
     const ccsEl = document.getElementById("constructionBtn");
     if (ccsEl){
       const ccsOk =
@@ -1195,7 +1187,7 @@
   }
 
   /* ===========================================================
-     Intracompany Observations logic — NEW
+     Intracompany Observations logic
      =========================================================== */
 
   function obsKey(){ return `nexus_${eq || "NO_EQ"}_observations`; }
@@ -1826,7 +1818,7 @@
     }
   });
 
-  // render counts/list initially
+  // initial observations render
   renderObservations();
 
   refresh();
@@ -1837,7 +1829,7 @@
   window.addEventListener("pageshow", () => { refresh(); renderCountdown(); renderObservations(); });
   window.addEventListener("storage", () => { refresh(); renderCountdown(); renderObservations(); });
 
-  // Firestore listeners (expanded to include phenolic + ccs)
+  // Firestore listeners
   let fbStepsUnsub = null;
 
   async function startFirestoreStepsListener(){
@@ -1853,8 +1845,6 @@
       const knownStepIds = new Set(taskSteps.map(s => s.id));
       knownStepIds.add(MEG_LINE_STEP);
       knownStepIds.add(MEG_LOAD_STEP);
-
-      // allow Firestore-driven completion for these
       knownStepIds.add("ccs");
 
       fbStepsUnsub = onSnapshot(stepsCol, (snap) => {
@@ -1866,7 +1856,6 @@
           if (data.done) localStorage.setItem(stepKey(stepId), "1");
           else localStorage.removeItem(stepKey(stepId));
 
-          // mirror ccs done -> signed-off flag so CSS/logic stays consistent
           if (stepId === "ccs"){
             if (data.done) localStorage.setItem(ccsSignedKey(), "1");
             else localStorage.removeItem(ccsSignedKey());
