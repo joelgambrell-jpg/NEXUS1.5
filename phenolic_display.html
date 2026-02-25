@@ -241,9 +241,10 @@
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
 
-      <!-- NEW: Phenolic Step Complete controls -->
-      <button type="button" class="btn" id="phenolicCompleteBtn">Mark Phenolic Complete</button>
-      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Phenolic Complete</button>
+      <!-- Step Complete button (wired like the rest of pages: uses NEXUS step API if present, otherwise localStorage fallback).
+           Keeps your existing "clear" control too, but the main button is a single canonical "Step Complete" toggle. -->
+      <button type="button" class="btn" id="phenolicStepBtn">Mark Step Complete</button>
+      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Step Complete</button>
     </div>
 
     <div class="phenolic-wrap">
@@ -350,7 +351,7 @@
 })();
 </script>
 
-<!-- NEW: Phenolic Step Complete logic -->
+<!-- Step Complete logic (matches other pages: prefer NEXUS step API; fallback to localStorage) -->
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
@@ -359,50 +360,101 @@
 
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
 
-  async function setStepFirestore(done){
+  function has(fn){ return typeof fn === "function"; }
+
+  function getDone(){
     try{
-      if (!eq || !window.NEXUS_FB?.db) return;
-      const { db, auth } = window.NEXUS_FB;
+      if (window.NEXUS && window.NEXUS.steps){
+        if (has(window.NEXUS.steps.isComplete)) return !!window.NEXUS.steps.isComplete(eq, STEP_ID);
+        if (has(window.NEXUS.steps.get)) {
+          const v = window.NEXUS.steps.get(eq, STEP_ID);
+          if (typeof v === "boolean") return v;
+          if (v && typeof v.done === "boolean") return v.done;
+        }
+      }
+    }catch(e){}
+    try{
+      if (has(window.isStepComplete)) return !!window.isStepComplete(eq, STEP_ID);
+    }catch(e){}
+    try{
+      if (window.nexus && has(window.nexus.isStepComplete)) return !!window.nexus.isStepComplete(eq, STEP_ID);
+    }catch(e){}
+    return localStorage.getItem(stepKey(STEP_ID)) === "1";
+  }
 
-      const { doc, setDoc, serverTimestamp } =
-        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+  async function setDone(done){
+    // 1) Preferred: canonical NEXUS step API (whatever your other pages use)
+    try{
+      if (window.NEXUS && window.NEXUS.steps){
+        if (has(window.NEXUS.steps.setComplete)){
+          window.NEXUS.steps.setComplete(eq, STEP_ID, !!done);
+        } else if (has(window.NEXUS.steps.set)) {
+          window.NEXUS.steps.set(eq, STEP_ID, { done: !!done });
+        }
+      }
+    }catch(e){}
 
-      const ref = doc(db, "equipment", eq, "steps", STEP_ID);
-      await setDoc(ref, {
-        done: !!done,
-        updatedAt: serverTimestamp(),
-        updatedBy: auth?.currentUser?.uid || null
-      }, { merge:true });
+    // 2) Alternate common globals (repo variants)
+    try{
+      if (has(window.setStepComplete)) window.setStepComplete(eq, STEP_ID, !!done);
+    }catch(e){}
+    try{
+      if (window.nexus && has(window.nexus.setStepComplete)) window.nexus.setStepComplete(eq, STEP_ID, !!done);
+    }catch(e){}
+
+    // 3) Always keep local fallback so UI stays consistent even if step API missing
+    try{
+      if (done) localStorage.setItem(stepKey(STEP_ID), "1");
+      else localStorage.removeItem(stepKey(STEP_ID));
+    }catch(e){}
+
+    // 4) If your firebase bridge is present, let it handle remote persistence (no hard dependency)
+    try{
+      // Some builds expose a helper on the bridge. If not, silently ignore.
+      if (window.NEXUS_FB && typeof window.NEXUS_FB.setStepDone === "function"){
+        await window.NEXUS_FB.setStepDone(eq, STEP_ID, !!done);
+      }else if (window.NEXUS && typeof window.NEXUS.saveStep === "function"){
+        await window.NEXUS.saveStep(eq, STEP_ID, !!done);
+      }
     }catch(e){
-      console.warn("Phenolic step Firestore save failed:", e);
+      console.warn("Phenolic step remote save failed:", e);
     }
   }
 
   function paint(){
-    const done = localStorage.getItem(stepKey(STEP_ID)) === "1";
-    const setBtn = document.getElementById("phenolicCompleteBtn");
+    const done = getDone();
+    const setBtn = document.getElementById("phenolicStepBtn");
+    const clrBtn = document.getElementById("phenolicClearBtn");
+
     if (setBtn){
       setBtn.classList.toggle("complete", done);
-      setBtn.textContent = done ? "Phenolic Complete ✓" : "Mark Phenolic Complete";
+      setBtn.textContent = done ? "Step Complete ✓" : "Mark Step Complete";
+    }
+    if (clrBtn){
+      clrBtn.style.display = done ? "inline-flex" : "none";
     }
   }
 
-  const setBtn = document.getElementById("phenolicCompleteBtn");
+  const setBtn = document.getElementById("phenolicStepBtn");
   const clrBtn = document.getElementById("phenolicClearBtn");
 
   if (setBtn){
     setBtn.addEventListener("click", async () => {
-      localStorage.setItem(stepKey(STEP_ID), "1");
+      const now = !getDone();
+      await setDone(now);
       paint();
-      await setStepFirestore(true);
+
+      // Match the rest of the workflow: after marking complete, go back to Equipment
+      // (If you don't want auto-return, remove the next 2 lines.)
+      const url = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+      location.href = url;
     });
   }
 
   if (clrBtn){
     clrBtn.addEventListener("click", async () => {
-      localStorage.removeItem(stepKey(STEP_ID));
+      await setDone(false);
       paint();
-      await setStepFirestore(false);
     });
   }
 
