@@ -103,7 +103,7 @@
     border:2px solid rgba(255,255,255,0.30);
   }
 
-  /* NEW: step-complete visual */
+  /* step-complete visual */
   .btn.complete{
     color:#001b10;
     background: var(--ok);
@@ -241,9 +241,10 @@
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
 
-      <!-- Step Complete button (wired like the rest of pages: uses NEXUS step API if present, otherwise localStorage fallback).
-           Keeps your existing "clear" control too, but the main button is a single canonical "Step Complete" toggle. -->
-      <button type="button" class="btn" id="phenolicStepBtn">Mark Step Complete</button>
+      <!-- Step Complete controls
+           IMPORTANT CHANGE: this now writes to MULTIPLE step stores used across NEXUS variants,
+           so Equipment page can see it regardless of which key-format it reads. -->
+      <button type="button" class="btn" id="phenolicCompleteBtn" data-nx-step="phenolic">Mark Step Complete</button>
       <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Step Complete</button>
     </div>
 
@@ -351,79 +352,124 @@
 })();
 </script>
 
-<!-- Step Complete logic (matches other pages: prefer NEXUS step API; fallback to localStorage) -->
+<!-- Phenolic Step Complete logic (writes to multiple storage formats + tries any NEXUS step API if present) -->
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
   const STEP_ID = "phenolic";
 
-  function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
+  function key_scalar(){ return `nexus_${eq || "NO_EQ"}_step_${STEP_ID}`; }                 // scalar "1"
+  function key_stepsA(){ return `nexus_${eq || "NO_EQ"}_steps`; }                           // JSON object map
+  function key_stepsB(){ return `nexus_steps_${eq || "NO_EQ"}`; }                           // alt JSON object map
+  function key_eqObj(){  return `nexus_equipment_${eq || "NO_EQ"}`; }                       // alt equipment JSON
 
-  function has(fn){ return typeof fn === "function"; }
+  function safeJSONParse(raw){
+    try{ return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  }
+  function safeJSONGet(k){
+    return safeJSONParse(localStorage.getItem(k));
+  }
+  function safeJSONSet(k, obj){
+    try{ localStorage.setItem(k, JSON.stringify(obj)); }catch(e){}
+  }
 
-  function getDone(){
+  function apiGetDone(){
     try{
       if (window.NEXUS && window.NEXUS.steps){
-        if (has(window.NEXUS.steps.isComplete)) return !!window.NEXUS.steps.isComplete(eq, STEP_ID);
-        if (has(window.NEXUS.steps.get)) {
+        if (typeof window.NEXUS.steps.isComplete === "function") return !!window.NEXUS.steps.isComplete(eq, STEP_ID);
+        if (typeof window.NEXUS.steps.get === "function"){
           const v = window.NEXUS.steps.get(eq, STEP_ID);
           if (typeof v === "boolean") return v;
           if (v && typeof v.done === "boolean") return v.done;
         }
       }
     }catch(e){}
-    try{
-      if (has(window.isStepComplete)) return !!window.isStepComplete(eq, STEP_ID);
-    }catch(e){}
-    try{
-      if (window.nexus && has(window.nexus.isStepComplete)) return !!window.nexus.isStepComplete(eq, STEP_ID);
-    }catch(e){}
-    return localStorage.getItem(stepKey(STEP_ID)) === "1";
+    try{ if (typeof window.isStepComplete === "function") return !!window.isStepComplete(eq, STEP_ID); }catch(e){}
+    try{ if (window.nexus && typeof window.nexus.isStepComplete === "function") return !!window.nexus.isStepComplete(eq, STEP_ID); }catch(e){}
+    return null;
   }
 
-  async function setDone(done){
-    // 1) Preferred: canonical NEXUS step API (whatever your other pages use)
+  function storeGetDone(){
+    // 1) scalar
+    try{
+      if (localStorage.getItem(key_scalar()) === "1") return true;
+    }catch(e){}
+
+    // 2) JSON maps
+    const a = safeJSONGet(key_stepsA());
+    if (a && (STEP_ID in a)) return !!a[STEP_ID];
+
+    const b = safeJSONGet(key_stepsB());
+    if (b && (STEP_ID in b)) return !!b[STEP_ID];
+
+    // 3) equipment object with nested steps
+    const eqObj = safeJSONGet(key_eqObj());
+    if (eqObj && eqObj.steps && (STEP_ID in eqObj.steps)) return !!eqObj.steps[STEP_ID];
+
+    return false;
+  }
+
+  function getDone(){
+    const api = apiGetDone();
+    if (api !== null) return !!api;
+    return storeGetDone();
+  }
+
+  async function apiSetDone(done){
+    // Best-effort: call whatever your repo exposes
     try{
       if (window.NEXUS && window.NEXUS.steps){
-        if (has(window.NEXUS.steps.setComplete)){
-          window.NEXUS.steps.setComplete(eq, STEP_ID, !!done);
-        } else if (has(window.NEXUS.steps.set)) {
-          window.NEXUS.steps.set(eq, STEP_ID, { done: !!done });
-        }
+        if (typeof window.NEXUS.steps.setComplete === "function") window.NEXUS.steps.setComplete(eq, STEP_ID, !!done);
+        else if (typeof window.NEXUS.steps.set === "function") window.NEXUS.steps.set(eq, STEP_ID, { done: !!done });
       }
     }catch(e){}
+    try{ if (typeof window.setStepComplete === "function") window.setStepComplete(eq, STEP_ID, !!done); }catch(e){}
+    try{ if (window.nexus && typeof window.nexus.setStepComplete === "function") window.nexus.setStepComplete(eq, STEP_ID, !!done); }catch(e){}
 
-    // 2) Alternate common globals (repo variants)
+    // Firebase bridge variants (if your other pages use it)
     try{
-      if (has(window.setStepComplete)) window.setStepComplete(eq, STEP_ID, !!done);
-    }catch(e){}
-    try{
-      if (window.nexus && has(window.nexus.setStepComplete)) window.nexus.setStepComplete(eq, STEP_ID, !!done);
-    }catch(e){}
-
-    // 3) Always keep local fallback so UI stays consistent even if step API missing
-    try{
-      if (done) localStorage.setItem(stepKey(STEP_ID), "1");
-      else localStorage.removeItem(stepKey(STEP_ID));
-    }catch(e){}
-
-    // 4) If your firebase bridge is present, let it handle remote persistence (no hard dependency)
-    try{
-      // Some builds expose a helper on the bridge. If not, silently ignore.
       if (window.NEXUS_FB && typeof window.NEXUS_FB.setStepDone === "function"){
         await window.NEXUS_FB.setStepDone(eq, STEP_ID, !!done);
-      }else if (window.NEXUS && typeof window.NEXUS.saveStep === "function"){
-        await window.NEXUS.saveStep(eq, STEP_ID, !!done);
+      }else if (window.NEXUS && typeof window.NEXUS.setStepDone === "function"){
+        await window.NEXUS.setStepDone(eq, STEP_ID, !!done);
       }
     }catch(e){
       console.warn("Phenolic step remote save failed:", e);
     }
   }
 
+  function storeSetDone(done){
+    // 1) scalar
+    try{
+      if (done) localStorage.setItem(key_scalar(), "1");
+      else localStorage.removeItem(key_scalar());
+    }catch(e){}
+
+    // 2) steps JSON maps
+    const a = safeJSONGet(key_stepsA()) || {};
+    a[STEP_ID] = done ? 1 : 0;
+    safeJSONSet(key_stepsA(), a);
+
+    const b = safeJSONGet(key_stepsB()) || {};
+    b[STEP_ID] = done ? 1 : 0;
+    safeJSONSet(key_stepsB(), b);
+
+    // 3) equipment JSON with steps
+    const eqObj = safeJSONGet(key_eqObj()) || {};
+    if (!eqObj.steps) eqObj.steps = {};
+    eqObj.steps[STEP_ID] = done ? 1 : 0;
+    safeJSONSet(key_eqObj(), eqObj);
+  }
+
+  async function setDone(done){
+    storeSetDone(!!done);
+    await apiSetDone(!!done);
+  }
+
   function paint(){
     const done = getDone();
-    const setBtn = document.getElementById("phenolicStepBtn");
+    const setBtn = document.getElementById("phenolicCompleteBtn");
     const clrBtn = document.getElementById("phenolicClearBtn");
 
     if (setBtn){
@@ -435,7 +481,7 @@
     }
   }
 
-  const setBtn = document.getElementById("phenolicStepBtn");
+  const setBtn = document.getElementById("phenolicCompleteBtn");
   const clrBtn = document.getElementById("phenolicClearBtn");
 
   if (setBtn){
@@ -444,8 +490,8 @@
       await setDone(now);
       paint();
 
-      // Match the rest of the workflow: after marking complete, go back to Equipment
-      // (If you don't want auto-return, remove the next 2 lines.)
+      // This is the “wiring to equipment page” behavior:
+      // after marking complete, go back to the equipment page so it re-reads step state.
       const url = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
       location.href = url;
     });
