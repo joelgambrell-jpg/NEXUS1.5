@@ -574,6 +574,15 @@
 
   const TILT_KEYS = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
 
+  // NEW: broadcast tilt changes so lock gate can re-evaluate immediately
+  function nxFireTiltChanged(){
+    try{
+      window.dispatchEvent(new CustomEvent("nexus:tiltchange", { detail:{ eq:eq || "NO_EQ" } }));
+    }catch(e){
+      try{ window.dispatchEvent(new Event("nexus:tiltchange")); }catch(_){}
+    }
+  }
+
   function mkGoNoGoCell(td, value){
     td.innerHTML = `
       <div class="go-wrap">
@@ -585,6 +594,7 @@
     function apply(v){
       pills.forEach(p=>p.classList.toggle('on', p.getAttribute('data-v')===v));
       td.setAttribute('data-result', v||'');
+      nxFireTiltChanged(); // NEW: re-check lock rules on every selection
     }
     pills.forEach(p=>p.addEventListener('click',()=>apply(p.getAttribute('data-v'))));
     apply(value);
@@ -595,6 +605,7 @@
       const k = td.getAttribute('data-tilt');
       mkGoNoGoCell(td, (obj && obj[k]) ? obj[k] : '');
     });
+    nxFireTiltChanged(); // NEW: after programmatic load, re-check lock rules
   }
 
   function readTilt(){
@@ -906,6 +917,21 @@
     }
     function readSignoffs(){ return readState().signoffs || []; }
 
+    // NEW: Tilt must be ALL GO (no blanks, no NO GO) to unlock, in addition to sign-offs
+    const TILT_REQUIRED = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
+    function tiltAllGo(){
+      try{
+        if (typeof readTilt !== "function") return false;
+        const t = readTilt();
+        for (var i=0;i<TILT_REQUIRED.length;i++){
+          var k = TILT_REQUIRED[i];
+          if (!t || t[k] !== "GO") return false;
+        }
+        return true;
+      }catch(e){}
+      return false;
+    }
+
     function requirementsMet(arr){
       const a = Array.isArray(arr) ? arr : [];
       const s1 = a[0] || null;
@@ -915,7 +941,9 @@
       const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
       const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
       const distinct = n1 && n2 && n1 != n2;
-      return s1ok && s2ok && distinct;
+
+      // CHANGED: require tiltAllGo() as well (sign-off cannot override NO GO / blank)
+      return s1ok && s2ok && distinct && tiltAllGo();
     }
 
     function findSectionByTitle(titleText){
@@ -949,7 +977,7 @@
     overlay.innerHTML = `
       <div class="card">
         <p class="q">Torque section locked</p>
-        <p class="sub">Complete Tilt Test sign-offs (Title 1 + Foreman+) to unlock Torque Notes &amp; Entries.</p>
+        <p class="sub">All Tilt Test checks must be GO and Tilt Test sign-offs must be completed to unlock Torque Notes &amp; Entries.</p>
       </div>
     `;
     wrap.appendChild(overlay);
@@ -959,7 +987,7 @@
     signUi.innerHTML = `
       <div class="nx-signoff-wrap">
         <div class="nx-signoff-title">Tilt Test Sign-Off (2-person)</div>
-        <div class="nx-signoff-sub">Requires two distinct signers. Sign-Off #2 must be Foreman or higher.</div>
+        <div class="nx-signoff-sub">Requires two distinct signers. Sign-offs do NOT override NO GO (all checks must be GO).</div>
 
         <div class="nx-sign-grid">
           <div class="nx-sign-card" data-slot="0">
@@ -1014,9 +1042,16 @@
       overlay.style.display = met ? "none" : "block";
 
       if (statusEl){
-        statusEl.textContent = met ? "Unlocked" : "Locked";
-        statusEl.classList.toggle("ok", met);
-        statusEl.classList.toggle("bad", !met);
+        if (met){
+          statusEl.textContent = "Unlocked";
+          statusEl.classList.add("ok");
+          statusEl.classList.remove("bad");
+        } else {
+          const tiltOk = tiltAllGo();
+          statusEl.textContent = tiltOk ? "Locked (sign-offs incomplete)" : "Locked (Tilt must be ALL GO)";
+          statusEl.classList.remove("ok");
+          statusEl.classList.add("bad");
+        }
       }
 
       const cards = Array.from(document.querySelectorAll("#nxTiltSignoffs .nx-sign-card"));
@@ -1092,6 +1127,9 @@
       });
     }
 
+    // NEW: when tilt selections change, re-evaluate lock immediately
+    window.addEventListener("nexus:tiltchange", render);
+
     window.addEventListener("nexus:rolechange", render);
     try{
       var roleSel = document.getElementById("nxRoleSelect");
@@ -1113,6 +1151,7 @@
     };
     localStorage.setItem(dataKey(), JSON.stringify(payload));
     localStorage.setItem(tiltKey(), JSON.stringify(payload.tilt));
+    nxFireTiltChanged(); // NEW: keep lock state accurate after save (optional but safe)
   }
 
   function loadLocal(){
