@@ -18,6 +18,7 @@
     --btn-txt:#3ecbff;
     --accent:#00c2ff;
     --ok:#2dff9b;
+    --neon:#00e5ff;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
@@ -61,6 +62,34 @@
   .btn.secondary{ background: rgba(0,0,0,0.22); color:#fff; border:2px solid rgba(255,255,255,0.35); }
   .btn.locked{ opacity:.6; pointer-events:none; }
   .btn.complete{ border-color: rgba(45,255,155,0.8); box-shadow: 0 0 0 2px rgba(45,255,155,0.15) inset; }
+
+  /* ============================
+     NEW: Step vs Reference styling
+     - Steps are green-outline by default
+     - References are neon-blue to differentiate
+     ============================ */
+  .btn.step{
+    border-color: rgba(45,255,155,0.70);
+    box-shadow: 0 0 0 2px rgba(45,255,155,0.10) inset;
+  }
+  .btn.step.complete{
+    border-color: rgba(45,255,155,0.95);
+    box-shadow: 0 0 0 2px rgba(45,255,155,0.20) inset, 0 0 18px rgba(45,255,155,0.20);
+  }
+
+  .btn.ref{
+    color: #7be6ff;
+    border-color: rgba(0,229,255,0.95);
+    background: rgba(10,15,36,0.90);
+    box-shadow:
+      0 0 0 2px rgba(0,229,255,0.14) inset,
+      0 0 14px rgba(0,229,255,0.22);
+  }
+  .btn.ref:hover{
+    box-shadow:
+      0 0 0 2px rgba(0,229,255,0.18) inset,
+      0 0 22px rgba(0,229,255,0.30);
+  }
 
   .progress-wrap{
     margin: 12px 0 18px;
@@ -340,22 +369,31 @@
       </div>
     </div>
 
+    <!-- ============================
+         STEPS (green) - in order + CCS inserted as step 2
+         ============================ -->
     <div class="grid">
-      <a class="btn" id="rifBtn">Receipt Inspection Form</a>
-      <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
-      <a class="btn" id="torqueBtn">Torque Application</a>
-      <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
-      <a class="btn" id="prefodBtn">Pre- Foreign Object and Debris</a>
-      <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
+      <a class="btn step" id="rifBtn">Receipt Inspection Form</a>
+      <a class="btn step" id="constructionBtn">Construction Check Sheet</a>
+      <a class="btn step" id="lvtBtn">Megohmmeter Testing</a>
+
+      <a class="btn step" id="torqueBtn">Torque Application</a>
+      <a class="btn step" id="l2Btn">L2 Installation Verification Form</a>
+      <a class="btn step" id="prefodBtn">Pre- Foreign Object and Debris</a>
+
+      <a class="btn step" id="finishedPhotoBtn">Finished Product Verification Photo</a>
     </div>
 
+    <!-- ============================
+         REFERENCES (neon blue)
+         (CCS moved to steps grid above, so it isn't duplicated here)
+         ============================ -->
     <div class="bubble">
       <div class="bubble-title">Reference &amp; Check Sheets</div>
       <div class="bubble-grid">
-        <a class="btn" id="constructionBtn">Construction Check Sheet</a>
-        <a class="btn" id="phenolicBtn">Phenolic Display</a>
-        <a class="btn" id="transformerBtn">Diagram Image</a>
-        <a class="btn" id="supportingBtn">Supporting Documents</a>
+        <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
+        <a class="btn ref" id="transformerBtn">Diagram Image</a>
+        <a class="btn ref" id="supportingBtn">Supporting Documents</a>
       </div>
     </div>
   </div>
@@ -489,6 +527,8 @@
   function refresh(){
     let done = 0;
 
+    let rifOk = false;
+
     taskSteps.forEach(s=>{
       const el = document.getElementById(s.btn);
 
@@ -496,9 +536,20 @@
         ? megIsComplete()
         : (localStorage.getItem(stepKey(s.id)) === "1");
 
+      if (s.id === "rif") rifOk = !!ok;
+
       if (el) el.classList.toggle("complete", ok);
       if (ok) done++;
     });
+
+    /* ============================
+       NEW: Construction Check Sheet lights green once Step 1 (RIF) is complete,
+       since it is referenced between steps.
+       (Does NOT affect progress math.)
+       ============================ */
+    if (constructionBtn){
+      constructionBtn.classList.toggle("complete", rifOk);
+    }
 
     const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
 
