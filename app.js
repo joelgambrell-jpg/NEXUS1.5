@@ -110,8 +110,136 @@
   function usable(){ return !!(eq && id); }
   function done(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
 
+  // =========================
+  // Completion gating (prevents false COMPLETE)
+  // - Only allow setting step done if there is real saved data for that step.
+  // - This matches the same "signals" your package_export.html uses.
+  // =========================
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+
+  function hasAnyFilledRow(rows){
+    const out = (Array.isArray(rows) ? rows : []);
+    return out.some(r => Object.values(r || {}).some(x => String(x || "").trim() !== ""));
+  }
+
+  function localHasAnyKeyWithPrefix(prefix){
+    try{
+      for (let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function prefodHasSavedDoc(eqId){
+    try{
+      if (!eqId) return false;
+
+      // Known primary keys used across your builds
+      const knownKeys = [
+        `nexus_${eqId}_prefod_checklist_v1`,
+        `nexus_${eqId}_prefod_checklist`,
+        `nexus_${eqId}_prefod`,
+        `nexus_${eqId}_form_prefod`,
+        `prefod_${eqId}`,
+        `nexus_prefod_${eqId}`,
+        `nexus_${eqId}_prefod_v1`,
+        `nexus_${eqId}_prefod_v2`,
+        `nexus_${eqId}_prefod_log_v1`,
+      ];
+
+      for (const k of knownKeys){
+        const doc = readJSON(k);
+        if (doc && typeof doc === "object") return true;
+      }
+
+      // Fallback scan (prefod + eq in key)
+      const eqLower = String(eqId).toLowerCase();
+      for (let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if (!k) continue;
+        const kl = k.toLowerCase();
+        if (kl.indexOf("prefod") === -1) continue;
+        if (kl.indexOf(eqLower) === -1) continue;
+        const doc = readJSON(k);
+        if (doc && typeof doc === "object") return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function isStepActuallyComplete(stepId){
+    const sid = String(stepId || "").trim();
+
+    // RIF/L2: "complete" if any saved digital doc exists (your export reads these)
+    if (sid === "rif"){
+      return localHasAnyKeyWithPrefix(`nexus/equipment/${eq||"NO_EQ"}/rifs/`);
+    }
+    if (sid === "l2"){
+      return localHasAnyKeyWithPrefix(`nexus/equipment/${eq||"NO_EQ"}/l2s/`);
+    }
+
+    // Meg (Line/Load): requires saved meg log with at least header/rows
+    if (sid === "meg" || sid === "megohmmeter_line" || sid === "megohmmeter_load"){
+      const meg =
+        readJSON(`nexus_${eq||"NO_EQ"}_meg_log_v2`) ||
+        readJSON(`nexus_${eq||"NO_EQ"}_meg_log_v1`);
+
+      if (!meg) return false;
+
+      const hasHeader =
+        String(meg.testDate||'').trim() ||
+        String(meg.tech||'').trim() ||
+        String(meg.notes||'').trim();
+
+      const hasRows =
+        hasAnyFilledRow(meg.lineRows) ||
+        hasAnyFilledRow(meg.loadRows);
+
+      return !!(hasHeader || hasRows);
+    }
+
+    // Torque: requires saved torque log with at least one row or tilt result
+    if (sid === "torque"){
+      const torque = readJSON(`nexus_${eq||"NO_EQ"}_torque_log_v1`);
+      if (!torque) return false;
+
+      const hasRows = hasAnyFilledRow(torque.rows);
+      const hasTilt = !!(torque.tilt && typeof torque.tilt === "object" && Object.keys(torque.tilt).length);
+      return !!(hasRows || hasTilt);
+    }
+
+    // FPV photo: requires saved image blob
+    if (sid === "fpv_photo"){
+      const blob = (localStorage.getItem(`nexus_${eq||"NO_EQ"}_fpv_photo_blob`) || "");
+      return blob.startsWith("data:image/");
+    }
+
+    // Pre-FOD: requires a saved prefod doc
+    if (sid === "prefod"){
+      return prefodHasSavedDoc(eq || "NO_EQ");
+    }
+
+    // Default: allow manual completion for unknown steps (keeps existing behavior)
+    return true;
+  }
+
   async function setDoneState(nextDone){
-    if (!usable()) return;
+    if (!usable()) return false;
+
+    // If turning ON, gate completion based on real saved data for that step.
+    if (nextDone){
+      if (!isStepActuallyComplete(id)){
+        alert("Not complete yet: required saved data not found for this step.");
+        return false;
+      }
+    }
 
     if (cfg.completedKey){
       if (nextDone) localStorage.setItem(cfg.completedKey, "true");
@@ -126,6 +254,7 @@
     }
 
     await fbSetStep(eq, id, nextDone);
+    return true;
   }
 
   function refreshStepBtn(){
@@ -150,7 +279,12 @@
     stepBtn.addEventListener("click", async () => {
       if (!usable()) return;
       const next = !done();
-      await setDoneState(next);
+      const ok = await setDoneState(next);
+      // If user tried to mark complete but gate failed, keep UI consistent.
+      if (!ok && next){
+        // Ensure not marked complete
+        try{ localStorage.removeItem(stepKey(id)); }catch(e){}
+      }
       refreshStepBtn();
     });
   }
