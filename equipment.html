@@ -356,9 +356,12 @@
       </div>
     </div>
 
-    <!-- Steps grid: Construction Check Sheet is inside this grid and will MOVE in order via JS -->
+    <!-- Steps grid: Phenolic is parked beside RIF; CCS moves in order -->
     <div class="grid" id="stepsGrid">
       <a class="btn" id="rifBtn">Receipt Inspection Form</a>
+
+      <!-- FIX: Phenolic Display beside RIF (stays parked) -->
+      <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
 
       <!-- This button will be dynamically moved beside the next step as completion advances -->
       <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
@@ -374,7 +377,6 @@
     <div class="bubble">
       <div class="bubble-title">Reference &amp; Check Sheets</div>
       <div class="bubble-grid">
-        <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
         <a class="btn ref" id="transformerBtn">Diagram Image</a>
         <a class="btn ref" id="supportingBtn">Supporting Documents</a>
       </div>
@@ -438,8 +440,6 @@
     return legacy || (line && load);
   }
 
-  // NOTE: taskSteps are the workflow steps that drive progress (same list as before)
-  // CCS is NOT a step; it moves beside the next step but does not affect %.
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
     {id:"meg",btn:"lvtBtn"},
@@ -508,7 +508,6 @@
   function refresh(){
     let done = 0;
 
-    // 1) compute completion and toggle .complete on step buttons
     const stepState = taskSteps.map(s => {
       const ok = (s.id === "meg")
         ? megIsComplete()
@@ -521,19 +520,14 @@
       return ok;
     });
 
-    // 2) find the first incomplete step (in-order)
     let nextIdx = 0;
     while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
 
-    // 3) move Construction Check Sheet beside the "next" step
-    //    we insert CCS immediately BEFORE the next step element.
-    //    If all steps complete, park CCS at the end.
     const gridEl = document.getElementById("stepsGrid");
     const ccsEl = document.getElementById("constructionBtn");
     if (gridEl && ccsEl){
       const nextStepBtnId = (nextIdx < taskSteps.length) ? taskSteps[nextIdx].btn : null;
       const nextStepEl = nextStepBtnId ? document.getElementById(nextStepBtnId) : null;
-
       insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
@@ -696,7 +690,6 @@
   window.addEventListener("pageshow", () => { refresh(); renderCountdown(); });
   window.addEventListener("storage", () => { refresh(); renderCountdown(); });
 
-  // Firestore listeners unchanged
   let fbStepsUnsub = null;
 
   async function startFirestoreStepsListener(){
