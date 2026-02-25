@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
 <title>Equipment</title>
 
 <style>
@@ -63,12 +63,7 @@
   .btn.locked{ opacity:.6; pointer-events:none; }
   .btn.complete{ border-color: rgba(45,255,155,0.8); box-shadow: 0 0 0 2px rgba(45,255,155,0.15) inset; }
 
-  /* ============================
-     NEW: Reference buttons neon-blue to differentiate
-     - Steps remain default (blue) until .complete turns them green
-     - Reference buttons are neon-blue always
-     - Construction Check Sheet can "light green" by toggling .complete on it
-     ============================ */
+  /* Reference buttons: neon blue differentiation */
   .btn.ref{
     color: #7be6ff;
     border-color: rgba(0,229,255,0.95);
@@ -81,12 +76,6 @@
     box-shadow:
       0 0 0 2px rgba(0,229,255,0.18) inset,
       0 0 22px rgba(0,229,255,0.30);
-  }
-  /* If we toggle .complete on CCS, let it override the neon and go green */
-  .btn.ref.complete{
-    color: #d7ffe9;
-    border-color: rgba(45,255,155,0.95);
-    box-shadow: 0 0 0 2px rgba(45,255,155,0.20) inset, 0 0 18px rgba(45,255,155,0.20);
   }
 
   .progress-wrap{
@@ -367,22 +356,24 @@
       </div>
     </div>
 
-    <!-- Steps stay in the correct order/positions (no CCS inserted here) -->
-    <div class="grid">
-      <a class="btn step" id="rifBtn">Receipt Inspection Form</a>
-      <a class="btn step" id="lvtBtn">Megohmmeter Testing</a>
-      <a class="btn step" id="torqueBtn">Torque Application</a>
+    <!-- Steps grid: Construction Check Sheet is inside this grid and will MOVE in order via JS -->
+    <div class="grid" id="stepsGrid">
+      <a class="btn" id="rifBtn">Receipt Inspection Form</a>
 
-      <a class="btn step" id="l2Btn">L2 Installation Verification Form</a>
-      <a class="btn step" id="prefodBtn">Pre- Foreign Object and Debris</a>
-      <a class="btn step" id="finishedPhotoBtn">Finished Product Verification Photo</a>
+      <!-- This button will be dynamically moved beside the next step as completion advances -->
+      <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
+
+      <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
+      <a class="btn" id="torqueBtn">Torque Application</a>
+      <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
+      <a class="btn" id="prefodBtn">Pre- Foreign Object and Debris</a>
+      <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
     </div>
 
-    <!-- Reference buttons (neon blue) + CCS lives here beside the others -->
+    <!-- Reference buttons (neon blue) -->
     <div class="bubble">
       <div class="bubble-title">Reference &amp; Check Sheets</div>
       <div class="bubble-grid">
-        <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
         <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
         <a class="btn ref" id="transformerBtn">Diagram Image</a>
         <a class="btn ref" id="supportingBtn">Supporting Documents</a>
@@ -447,6 +438,8 @@
     return legacy || (line && load);
   }
 
+  // NOTE: taskSteps are the workflow steps that drive progress (same list as before)
+  // CCS is NOT a step; it moves beside the next step but does not affect %.
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
     {id:"meg",btn:"lvtBtn"},
@@ -456,11 +449,6 @@
     {id:"fpv_photo",btn:"finishedPhotoBtn"}
   ];
 
-  /* ============================
-     FIX: Pre-FOD should open window.FORMS page (form.html?id=prefod)
-     so it shows the new HTML/buttons (including Export PDF / Package Export)
-     Everything else remains task.html based.
-     ============================ */
   taskSteps.forEach(s=>{
     const el = document.getElementById(s.btn);
     if (!el) return;
@@ -473,7 +461,6 @@
     el.href = taskLink(s.id);
   });
 
-  // CHANGE: finished photo goes direct to the capture page (not task.html)
   const fpvBtn = document.getElementById("finishedPhotoBtn");
   if (fpvBtn) fpvBtn.href = directPage("fpv_photo_capture.html");
 
@@ -483,10 +470,6 @@
   const constructionBtn = document.getElementById("constructionBtn");
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
 
-  /* ============================
-     MIN CHANGE: Phenolic button now routes to phenolic_display.html (ONLY entry point)
-     and can show Setup label if present.
-     ============================ */
   const phenolicBtn = document.getElementById("phenolicBtn");
   if (phenolicBtn){
     phenolicBtn.href = directPage("phenolic_display.html");
@@ -516,31 +499,42 @@
     return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}&return=equipment` : ""}`;
   }
 
+  function insertBefore(parent, node, beforeNode){
+    if (!parent || !node) return;
+    if (!beforeNode) { parent.appendChild(node); return; }
+    parent.insertBefore(node, beforeNode);
+  }
+
   function refresh(){
     let done = 0;
 
-    // Track contiguous completion (in order) for CCS "between steps" behavior
-    let contiguousDone = 0;
-
-    for (let i=0;i<taskSteps.length;i++){
-      const s = taskSteps[i];
-      const el = document.getElementById(s.btn);
-
+    // 1) compute completion and toggle .complete on step buttons
+    const stepState = taskSteps.map(s => {
       const ok = (s.id === "meg")
         ? megIsComplete()
         : (localStorage.getItem(stepKey(s.id)) === "1");
 
+      const el = document.getElementById(s.btn);
       if (el) el.classList.toggle("complete", ok);
+
       if (ok) done++;
+      return ok;
+    });
 
-      if (ok && contiguousDone === i) contiguousDone++;
-      else if (!ok) break;
-    }
+    // 2) find the first incomplete step (in-order)
+    let nextIdx = 0;
+    while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
 
-    // CCS: neon-blue by default, but "lights green" once you've completed step 1 (or more) in order.
-    // This does NOT affect progress math.
-    if (constructionBtn){
-      constructionBtn.classList.toggle("complete", contiguousDone >= 7);
+    // 3) move Construction Check Sheet beside the "next" step
+    //    we insert CCS immediately BEFORE the next step element.
+    //    If all steps complete, park CCS at the end.
+    const gridEl = document.getElementById("stepsGrid");
+    const ccsEl = document.getElementById("constructionBtn");
+    if (gridEl && ccsEl){
+      const nextStepBtnId = (nextIdx < taskSteps.length) ? taskSteps[nextIdx].btn : null;
+      const nextStepEl = nextStepBtnId ? document.getElementById(nextStepBtnId) : null;
+
+      insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
     const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
@@ -571,7 +565,7 @@
     }
   }
 
-  // ===== Goal + Countdown (same as your original) =====
+  // ===== Goal + Countdown (unchanged) =====
   const goalDateEl = document.getElementById("goalDate");
   const notifyEmailsEl = document.getElementById("notifyEmails");
   const saveGoalBtn = document.getElementById("saveGoalBtn");
