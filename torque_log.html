@@ -574,7 +574,7 @@
 
   const TILT_KEYS = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
 
-  // NEW: broadcast tilt changes so lock gate can re-evaluate immediately
+  // Broadcast tilt changes so lock gate can re-evaluate immediately
   function nxFireTiltChanged(){
     try{
       window.dispatchEvent(new CustomEvent("nexus:tiltchange", { detail:{ eq:eq || "NO_EQ" } }));
@@ -594,7 +594,7 @@
     function apply(v){
       pills.forEach(p=>p.classList.toggle('on', p.getAttribute('data-v')===v));
       td.setAttribute('data-result', v||'');
-      nxFireTiltChanged(); // NEW: re-check lock rules on every selection
+      nxFireTiltChanged();
     }
     pills.forEach(p=>p.addEventListener('click',()=>apply(p.getAttribute('data-v'))));
     apply(value);
@@ -605,7 +605,7 @@
       const k = td.getAttribute('data-tilt');
       mkGoNoGoCell(td, (obj && obj[k]) ? obj[k] : '');
     });
-    nxFireTiltChanged(); // NEW: after programmatic load, re-check lock rules
+    nxFireTiltChanged();
   }
 
   function readTilt(){
@@ -619,10 +619,6 @@
 
   /* ==========================================================
      ADDED: Torque Photo loader + Lightbox (Zoom + Pan)
-     FIXES:
-       - Move lightbox to document.body on open (prevents page jump)
-       - Use focus({preventScroll:true}) where available
-       - Real zoom controls + mouse wheel zoom + drag pan
      ========================================================== */
   (function(){
     const img = document.getElementById("nxTorquePhotoImg");
@@ -639,7 +635,6 @@
     const btnReset = document.getElementById("nxImgReset");
     const readout = document.getElementById("nxImgZoomRead");
 
-    // Remember original DOM position (so file structure stays the same)
     const lbOriginalParent = lb ? lb.parentNode : null;
     const lbNextSibling = lb ? lb.nextSibling : null;
 
@@ -705,7 +700,6 @@
     function openLightbox(){
       if (!lb || !zoomImg || !img || !img.src) return;
 
-      // KEY FIX: move overlay to body so opening does NOT scroll the page
       moveLightboxToBody();
 
       zoomImg.src = img.src;
@@ -713,10 +707,8 @@
       lb.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
 
-      // Wait for layout, then fit
       requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ fitView(); }); });
 
-      // Focus without scroll jump
       try{ closeBtn && closeBtn.focus({ preventScroll:true }); }
       catch(e){ try{ closeBtn && closeBtn.focus(); }catch(_){ } }
     }
@@ -728,10 +720,8 @@
       document.body.style.overflow = "";
       dragging = false;
 
-      // Put lightbox back where it was in the markup (keeps your file structure intact)
       restoreLightbox();
 
-      // Return focus without scroll jump
       try{ img && img.focus({ preventScroll:true }); }
       catch(e){ try{ img && img.focus(); }catch(_){ } }
     }
@@ -781,7 +771,6 @@
     if (btnFit) btnFit.addEventListener("click", fitView);
     if (btnReset) btnReset.addEventListener("click", resetView);
 
-    // Wheel zoom
     if (canvas){
       canvas.addEventListener("wheel", (e)=>{
         if (!lb || !lb.classList.contains("nx-open")) return;
@@ -790,7 +779,6 @@
       }, { passive:false });
     }
 
-    // Drag pan (pointer)
     function onPointerDown(e){
       if (!lb || !lb.classList.contains("nx-open")) return;
       dragging = true;
@@ -821,7 +809,6 @@
       canvas.addEventListener("pointerleave", onPointerUp);
     }
 
-    // When image loads into lightbox, fit it
     if (zoomImg){
       zoomImg.addEventListener("load", ()=>{
         if (lb && lb.classList.contains("nx-open")) fitView();
@@ -861,14 +848,12 @@
   })();
 
   /* ==========================================================
-     ADDED: Tilt Test 2-person sign-off gate (No role requirement)
-     - Locks Torque Notes + Torque Application Entries until satisfied
-     - Two distinct signer names
-     - No role requirement (role rules removed)
+     Tilt Test 2-person sign-off gate
+     CHANGED: unlock requires ALL tilt checks == GO AND sign-offs completed
+     FIXED: tiltAllGo reads directly from DOM td[data-tilt][data-result]
+            (no dependency on other functions/timing)
      ========================================================== */
   (function(){
-    const ROLE_ORDER = ["viewer","tech","foreman","superintendent","admin"];
-    function roleIndex(r){ return 999; }
     function getRole(){
       try{
         var sel = document.getElementById("nxRoleSelect");
@@ -889,7 +874,6 @@
       }catch(e){}
       return "viewer";
     }
-    function roleAtLeast(min){ return true; }
 
     function signKey(){ return `nexus_${eq||"NO_EQ"}_torque_tilt_signoffs_v1`; }
 
@@ -917,22 +901,23 @@
     }
     function readSignoffs(){ return readState().signoffs || []; }
 
-    // NEW: Tilt must be ALL GO (no blanks, no NO GO) to unlock, in addition to sign-offs
+    // IMPORTANT FIX: read tilt state directly from DOM cells
     const TILT_REQUIRED = ["AB","AC","BC","AG","BG","CG","AN","BN","CN","NG"];
     function tiltAllGo(){
       try{
-        if (typeof readTilt !== "function") return false;
-        const t = readTilt();
         for (var i=0;i<TILT_REQUIRED.length;i++){
           var k = TILT_REQUIRED[i];
-          if (!t || t[k] !== "GO") return false;
+          var td = document.querySelector('[data-tilt="'+k+'"]');
+          if (!td) return false;
+          var v = (td.getAttribute("data-result") || "").trim();
+          if (v !== "GO") return false;
         }
         return true;
       }catch(e){}
       return false;
     }
 
-    function requirementsMet(arr){
+    function signoffsOk(arr){
       const a = Array.isArray(arr) ? arr : [];
       const s1 = a[0] || null;
       const s2 = a[1] || null;
@@ -940,10 +925,12 @@
       const s2ok = !!(s2 && String(s2.name||"").trim());
       const n1 = (s1 && String(s1.name||"").trim().toLowerCase()) || "";
       const n2 = (s2 && String(s2.name||"").trim().toLowerCase()) || "";
-      const distinct = n1 && n2 && n1 != n2;
+      const distinct = n1 && n2 && n1 !== n2;
+      return s1ok && s2ok && distinct;
+    }
 
-      // CHANGED: require tiltAllGo() as well (sign-off cannot override NO GO / blank)
-      return s1ok && s2ok && distinct && tiltAllGo();
+    function requirementsMet(arr){
+      return signoffsOk(arr) && tiltAllGo();
     }
 
     function findSectionByTitle(titleText){
@@ -1048,7 +1035,10 @@
           statusEl.classList.remove("bad");
         } else {
           const tiltOk = tiltAllGo();
-          statusEl.textContent = tiltOk ? "Locked (sign-offs incomplete)" : "Locked (Tilt must be ALL GO)";
+          const soOk = signoffsOk(arr);
+          if (!tiltOk) statusEl.textContent = "Locked (Tilt must be ALL GO)";
+          else if (!soOk) statusEl.textContent = "Locked (sign-offs incomplete)";
+          else statusEl.textContent = "Locked";
           statusEl.classList.remove("ok");
           statusEl.classList.add("bad");
         }
@@ -1127,14 +1117,16 @@
       });
     }
 
-    // NEW: when tilt selections change, re-evaluate lock immediately
     window.addEventListener("nexus:tiltchange", render);
-
     window.addEventListener("nexus:rolechange", render);
     try{
       var roleSel = document.getElementById("nxRoleSelect");
       if (roleSel) roleSel.addEventListener("change", render);
     }catch(e){}
+
+    // Timing safety: evaluate after the tilt UI is built
+    window.addEventListener("load", function(){ setTimeout(render, 0); });
+
     render();
   })();
 
@@ -1151,7 +1143,7 @@
     };
     localStorage.setItem(dataKey(), JSON.stringify(payload));
     localStorage.setItem(tiltKey(), JSON.stringify(payload.tilt));
-    nxFireTiltChanged(); // NEW: keep lock state accurate after save (optional but safe)
+    nxFireTiltChanged();
   }
 
   function loadLocal(){
