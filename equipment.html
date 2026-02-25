@@ -238,6 +238,7 @@
   .goal-btn.secondary{ opacity:.9; }
 
   .section-grid{ display:grid; grid-template-columns: 1fr; gap:12px; }
+
   .bubble{ margin-top: 14px; padding: 16px; border-radius: 18px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.20); }
   .bubble-title{ font-weight:900; margin-bottom:10px; }
   .bubble-grid{ display:flex; gap:10px; flex-wrap:wrap; }
@@ -246,7 +247,7 @@
   .procore-hidden{ display:none!important; }
 
   @media print{
-    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid { display:none !important; }
+    .nx-session-banner, .nx-back-btn, .goal-card, #energizationWrap, .bubble, .grid, .nx-split { display:none !important; }
     body{ background:#fff !important; color:#000 !important; }
     .card{ background:#fff !important; border:none !important; backdrop-filter:none !important; }
   }
@@ -263,9 +264,26 @@
   }
 
   /* ===========================================================
+     NEW: Desktop split layout (Observations right side)
+     =========================================================== */
+  .nx-split{
+    margin-top: 12px;
+    display:grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 12px;
+    align-items:start;
+  }
+  .nx-leftcol{ min-width:0; }
+  .nx-rightcol{ min-width:0; }
+  @media (max-width: 1020px){
+    .nx-split{ grid-template-columns: 1fr; }
+    .nx-rightcol{ order:-1; } /* keep observations above steps on smaller screens */
+  }
+
+  /* ===========================================================
      Intracompany Observations (Procore-feel) — NEW
      =========================================================== */
-  .obs-wrap{ margin-top:14px; padding: 14px; border-radius: 18px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.20); }
+  .obs-wrap{ padding: 14px; border-radius: 18px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.20); }
   .obs-top{
     display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.18);
@@ -666,75 +684,89 @@
         <a class="btn secondary locked" id="procoreConstructionBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Construction</a>
         <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Energization</a>
       </div>
+    </div>
 
-      <!-- ===========================================================
-           Intracompany Observations (replaces old Exports slot) — NEW
-           =========================================================== -->
-      <div class="obs-wrap" id="obsWrap">
-        <div class="obs-top">
-          <div class="obs-title">
-            <div class="obs-h">Intracompany Observations</div>
-            <div class="obs-chips" aria-label="Observation counts">
-              <span class="obs-chip" title="Open observations">
-                <b>Open</b> <span class="n" id="obsOpenCount">0</span>
-              </span>
-              <span class="obs-chip" title="Closed observations">
-                <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
-              </span>
+    <!-- ===========================================================
+         NEW: Split area (Observations right, workflow left)
+         =========================================================== -->
+    <div class="nx-split" id="nxSplit">
+
+      <!-- LEFT: steps + references + exports (exports moved BELOW references) -->
+      <div class="nx-leftcol">
+
+        <!-- Steps grid: Phenolic is parked beside RIF; CCS moves in order -->
+        <div class="grid" id="stepsGrid">
+          <a class="btn" id="rifBtn">Receipt Inspection Form</a>
+
+          <!-- Phenolic Display beside RIF (stays parked) -->
+          <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
+
+          <!-- CCS will be dynamically moved beside the next step as completion advances -->
+          <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
+
+          <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
+          <a class="btn" id="torqueBtn">Torque Application</a>
+          <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
+          <a class="btn" id="prefodBtn">Pre- Foreign Object and Debris</a>
+          <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
+        </div>
+
+        <!-- Reference buttons (neon blue) -->
+        <div class="bubble" id="referencesBubble">
+          <div class="bubble-title">Reference &amp; Check Sheets</div>
+          <div class="bubble-grid">
+            <a class="btn ref" id="transformerBtn">Diagram Image</a>
+            <a class="btn ref" id="supportingBtn">Supporting Documents</a>
+          </div>
+        </div>
+
+        <!-- Exports moved BELOW references -->
+        <div class="bubble exports-full" id="exportsBubble">
+          <div class="bubble-title">Exports</div>
+          <div class="bubble-grid">
+            <a class="btn" id="packageExportBtn" href="#">Export Package (Print/PDF)</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Intracompany Observations -->
+      <div class="nx-rightcol">
+
+        <div class="obs-wrap" id="obsWrap">
+          <div class="obs-top">
+            <div class="obs-title">
+              <div class="obs-h">Intracompany Observations</div>
+              <div class="obs-chips" aria-label="Observation counts">
+                <span class="obs-chip" title="Open observations">
+                  <b>Open</b> <span class="n" id="obsOpenCount">0</span>
+                </span>
+                <span class="obs-chip" title="Closed observations">
+                  <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
+                </span>
+              </div>
+            </div>
+            <div class="obs-actions">
+              <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
             </div>
           </div>
-          <div class="obs-actions">
-            <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
+
+          <div class="obs-tabs" role="tablist" aria-label="Observation filters">
+            <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
+            <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
+            <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
           </div>
+
+          <div class="obs-search">
+            <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
+          </div>
+
+          <div class="obs-list" id="obsList"></div>
         </div>
 
-        <div class="obs-tabs" role="tablist" aria-label="Observation filters">
-          <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
-          <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
-          <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
-        </div>
-
-        <div class="obs-search">
-          <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
-        </div>
-
-        <div class="obs-list" id="obsList"></div>
       </div>
     </div>
 
-    <!-- Steps grid: Phenolic is parked beside RIF; CCS moves in order -->
-    <div class="grid" id="stepsGrid">
-      <a class="btn" id="rifBtn">Receipt Inspection Form</a>
-
-      <!-- Phenolic Display beside RIF (stays parked) -->
-      <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
-
-      <!-- CCS will be dynamically moved beside the next step as completion advances -->
-      <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
-
-      <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
-      <a class="btn" id="torqueBtn">Torque Application</a>
-      <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
-      <a class="btn" id="prefodBtn">Pre- Foreign Object and Debris</a>
-      <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
-    </div>
-
-    <!-- NEW: Export Package moved BELOW other buttons -->
-    <div class="bubble exports-full" id="exportsBubble">
-      <div class="bubble-title">Exports</div>
-      <div class="bubble-grid">
-        <a class="btn" id="packageExportBtn" href="#">Export Package (Print/PDF)</a>
-      </div>
-    </div>
-
-    <!-- Reference buttons (neon blue) -->
-    <div class="bubble">
-      <div class="bubble-title">Reference &amp; Check Sheets</div>
-      <div class="bubble-grid">
-        <a class="btn ref" id="transformerBtn">Diagram Image</a>
-        <a class="btn ref" id="supportingBtn">Supporting Documents</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1175,7 +1207,6 @@
   function nowISO(){ return new Date().toISOString(); }
 
   function uuid(){
-    // RFC4122-ish (good enough for local)
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){
       const r = (Math.random()*16)|0, v = c==="x" ? r : (r&0x3|0x8);
       return v.toString(16);
@@ -1183,7 +1214,6 @@
   }
 
   function getRole(){
-    // Try common role keys used across NEXUS-like pages
     const candidates = [
       localStorage.getItem("nexus_role"),
       localStorage.getItem("nx_role"),
@@ -1195,7 +1225,6 @@
     ].map(v => (v || "").toString().trim()).filter(Boolean);
 
     const r = (candidates[0] || "tech").toLowerCase();
-    // normalize
     if (r.includes("admin")) return "admin";
     if (r.includes("foreman")) return "foreman";
     if (r.includes("super")) return "foreman";
@@ -1224,7 +1253,6 @@
     const raw = localStorage.getItem(obsKey());
     const data = safeParse(raw, null);
     if (data && Array.isArray(data.items)) return data;
-    // legacy / empty
     return { items: [] };
   }
 
@@ -1268,8 +1296,6 @@
 
   const obsOverlay = document.getElementById("obsOverlay");
   const obsDrawer = document.getElementById("obsDrawer");
-  const obsDrawerTitle = document.getElementById("obsDrawerTitle");
-  const obsDrawerSub = document.getElementById("obsDrawerSub");
   const obsDrawerEq = document.getElementById("obsDrawerEq");
   const obsDrawerRole = document.getElementById("obsDrawerRole");
 
@@ -1293,7 +1319,7 @@
 
   let obsFilter = "open";
   let obsEditingId = null;
-  let obsPhotosDraft = []; // array of {id, dataUrl}
+  let obsPhotosDraft = [];
 
   function setActiveTab(filter){
     obsFilter = filter;
@@ -1340,7 +1366,6 @@
 
   function canEdit(it, role, userTag){
     if (isForemanPlus(role)) return true;
-    // tech: edit only own & only while open-ish
     const mine = (it.createdBy || "") === userTag;
     const openish = statusBucket(it.status) === "open";
     return mine && openish;
@@ -1348,12 +1373,10 @@
 
   function canDelete(it, role, userTag){
     if (isForemanPlus(role)) return true;
-    // tech: no delete by default
     return false;
   }
 
   function canChangeStatus(role){
-    // Procore feel: tech creates; foreman+ closes/accepts
     return isForemanPlus(role);
   }
 
@@ -1366,7 +1389,7 @@
     obsDrawerRole.textContent = isForemanPlus(role) ? "Foreman+" : "Tech";
 
     if (mode === "create"){
-      obsDrawerTitle.textContent = "Create Observation";
+      document.getElementById("obsDrawerTitle").textContent = "Create Observation";
       obsDeleteBtn.style.display = "none";
       obsTitleIn.value = "";
       obsTypeSel.value = "Mechanical";
@@ -1379,7 +1402,7 @@
       obsPhotosDraft = [];
       renderThumbs();
     } else {
-      obsDrawerTitle.textContent = canEdit(it, role, userTag) ? "Edit Observation" : "View Observation";
+      document.getElementById("obsDrawerTitle").textContent = canEdit(it, role, userTag) ? "Edit Observation" : "View Observation";
       obsDeleteBtn.style.display = canDelete(it, role, userTag) ? "inline-flex" : "none";
       obsTitleIn.value = (it.title || "");
       obsTypeSel.value = (it.type || "Other");
@@ -1393,7 +1416,6 @@
       renderThumbs();
     }
 
-    // Field permissions
     const editable = (mode === "create") ? true : (it ? canEdit(it, role, userTag) : false);
     const statusEditable = canChangeStatus(role);
 
@@ -1406,7 +1428,6 @@
     obsDescTa.disabled = !editable;
     obsPhotoInput.disabled = !editable;
 
-    // Status: foreman+ only
     obsStatusSel.disabled = !statusEditable;
 
     obsSaveBtn.disabled = !(editable || statusEditable);
@@ -1416,7 +1437,6 @@
     obsOverlay.setAttribute("aria-hidden", "false");
     obsDrawer.setAttribute("aria-hidden", "false");
 
-    // Focus
     setTimeout(() => { try{ obsTitleIn.focus(); }catch(e){} }, 80);
   }
 
@@ -1426,7 +1446,6 @@
     obsOverlay.setAttribute("aria-hidden", "true");
     obsDrawer.setAttribute("aria-hidden", "true");
     obsEditingId = null;
-    // reset file input
     if (obsPhotoInput) obsPhotoInput.value = "";
   }
 
@@ -1480,7 +1499,6 @@
   function renderObservations(){
     const data = loadObservations();
     const items = Array.isArray(data.items) ? data.items.slice() : [];
-    // Sort newest first
     items.sort((a,b) => {
       const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
@@ -1628,12 +1646,10 @@
     const typeVal = (obsTypeSel?.value || "Other").trim();
     const priVal = (obsPrioritySel?.value || "Low").trim();
 
-    // If editing existing
     if (editing){
       const editable = canEdit(editing, role, userTag);
       const statusEditable = canChangeStatus(role);
 
-      // Tech editing: can update fields if permitted; status changes only if foreman+
       if (!editable && !statusEditable){
         return { ok:false, msg:"You do not have permission to edit this observation." };
       }
@@ -1670,7 +1686,6 @@
       return { ok:true };
     }
 
-    // Creating
     const v = validateRequired();
     if (!v.ok) return v;
 
@@ -1718,8 +1733,6 @@
   }
 
   function toast(msg){
-    // lightweight: use alert to avoid injecting new global UI components
-    // (keeps this drop-in isolated)
     alert(msg);
   }
 
@@ -1816,7 +1829,6 @@
   // render counts/list initially
   renderObservations();
 
-  // ===== Existing init calls =====
   refresh();
   loadGoalFromLocal();
   startCountdown();
