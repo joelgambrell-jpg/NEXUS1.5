@@ -6,14 +6,13 @@
        FEEDS: <...>
      Applies background/text colors per color code dropdown spec
 
-     CHANGE (NO SHORTENING / NO REBUILD):
-     - Implements Step Complete EXACTLY like form.html: uses the same #stepCompleteBtn id/button wiring
-       that app.js expects, by:
-         1) Adding a canonical <button class="btn" id="stepCompleteBtn">…</button>
-         2) Ensuring ?id=phenolic is present (history.replaceState) so app.js has a step id
-         3) Loading config.js + app.js (same as form.html)
-     - Keeps your existing Phenolic Complete/Clear buttons in the DOM (not removed), but hides them so you
-       only have ONE canonical step-complete control, matching the rest of the system.
+     ADDED (ONLY WHAT'S NEEDED):
+     - Step Complete wiring identical to app.js, but ALLOWS phenolic to be completable
+     - Uses same storage keys equipment.html expects:
+         nexus_${eq}_step_phenolic = "1"
+         nexus_${eq}_landing_complete = "1"
+     - Optional Firebase sync via window.NEXUS_FB (same as app.js)
+     - Keeps your two existing buttons, but makes them behave like the canonical step toggle
 -->
 <!doctype html>
 <html lang="en">
@@ -106,7 +105,6 @@
     justify-content:center;
     user-select:none;
     gap:10px;
-    font-family:inherit !important;
   }
   .btn.secondary{
     background: rgba(0,0,0,0.18);
@@ -114,6 +112,7 @@
     border:2px solid rgba(255,255,255,0.30);
   }
 
+  /* step-complete visual (matches your system look) */
   .btn.complete{
     background:#00ff66 !important;
     color:#002b14 !important;
@@ -194,9 +193,6 @@
     background: rgba(0,0,0,0.35);
     border-top: 1px solid rgba(255,255,255,0.18);
   }
-
-  /* EXACTLY like form.html: app.js may start hidden then show when it wires */
-  #stepCompleteBtn{ display:none; }
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -252,12 +248,9 @@
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
 
-      <!-- KEEP your old custom buttons (NOT REMOVED), but they will be hidden to prevent confusion -->
-      <button type="button" class="btn" id="phenolicCompleteBtn" style="display:none;">Mark Phenolic Complete</button>
-      <button type="button" class="btn secondary" id="phenolicClearBtn" style="display:none;">Clear Phenolic Complete</button>
-
-      <!-- CANONICAL Step Complete button — EXACT ID used in form.html / app.js -->
-      <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
+      <!-- Keep your buttons (NOT removed) -->
+      <button type="button" class="btn" id="phenolicCompleteBtn">Mark Phenolic Complete</button>
+      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Phenolic Complete</button>
     </div>
 
     <div class="phenolic-wrap">
@@ -364,26 +357,134 @@
 })();
 </script>
 
-<!-- KEY PART: make this page look like a "form" step to app.js by ensuring ?id=phenolic exists -->
+<!-- ADDED: Step Complete wiring (copied from app.js pattern, but DOES NOT disable phenolic) -->
 <script>
 (function(){
-  try{
-    const url = new URL(location.href);
-    const qs = url.searchParams;
+  const params = new URLSearchParams(location.search);
+  const eq = (params.get("eq") || "").trim();
 
-    // app.js step complete wiring in your repo expects an `id` in the querystring (like form.html uses).
-    // This adds it without reloading.
-    if (!qs.get("id")){
-      qs.set("id", "phenolic"); // STEP ID used everywhere
-      history.replaceState(null, "", url.pathname + "?" + qs.toString() + url.hash);
+  // This is the step ID your equipment page expects for phenolic
+  const STEP_ID = "phenolic";
+
+  // Storage keys used by equipment.html (matches app.js)
+  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
+  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+
+  // =========================
+  // Firebase sync (optional) (matches app.js)
+  // =========================
+  async function fbSetStep(eqId, stepId, isDone){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db, auth } = window.NEXUS_FB;
+
+      const { doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+      await setDoc(ref, {
+        done: !!isDone,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth?.currentUser?.uid || null
+      }, { merge:true });
+    }catch(e){
+      console.warn("Firebase step sync failed:", e);
     }
-  }catch(e){}
+  }
+
+  let fbUnsub = null;
+  async function fbListenStep(eqId, stepId){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db } = window.NEXUS_FB;
+
+      const { doc, onSnapshot } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+
+      fbUnsub = onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        if (data.done) localStorage.setItem(stepKey(stepId), "1");
+        else localStorage.removeItem(stepKey(stepId));
+        refreshBtns();
+      });
+    }catch(e){
+      console.warn("Firebase listener failed:", e);
+    }
+  }
+
+  // =========================
+  // Buttons on this page (re-use your existing ones)
+  // =========================
+  const setBtn = document.getElementById("phenolicCompleteBtn");
+  const clrBtn = document.getElementById("phenolicClearBtn");
+
+  function usable(){ return !!eq; }
+  function done(){ return !!(eq && localStorage.getItem(stepKey(STEP_ID)) === "1"); }
+
+  async function setDoneState(nextDone){
+    if (!usable()) return;
+
+    if (nextDone){
+      localStorage.setItem(stepKey(STEP_ID), "1");
+      localStorage.setItem(landingKey(), "1");
+    } else {
+      localStorage.removeItem(stepKey(STEP_ID));
+    }
+
+    await fbSetStep(eq, STEP_ID, nextDone);
+  }
+
+  function refreshBtns(){
+    const isDone = done();
+
+    if (setBtn){
+      setBtn.style.display = "inline-flex";
+      setBtn.disabled = !usable();
+      setBtn.title = usable() ? "" : "Missing eq in URL";
+      setBtn.classList.toggle("complete", isDone);
+      setBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
+    }
+
+    if (clrBtn){
+      clrBtn.style.display = isDone ? "inline-flex" : "none";
+      clrBtn.disabled = !usable();
+      clrBtn.title = usable() ? "" : "Missing eq in URL";
+      clrBtn.textContent = "Clear Step Complete";
+    }
+  }
+
+  if (setBtn){
+    setBtn.addEventListener("click", async () => {
+      if (!usable()) return;
+      const next = !done();
+      await setDoneState(next);
+      refreshBtns();
+    });
+  }
+
+  if (clrBtn){
+    clrBtn.addEventListener("click", async () => {
+      if (!usable()) return;
+      await setDoneState(false);
+      refreshBtns();
+    });
+  }
+
+  refreshBtns();
+  window.addEventListener("storage", refreshBtns);
+  window.addEventListener("focus", refreshBtns);
+  window.addEventListener("pageshow", refreshBtns);
+
+  if (usable()) fbListenStep(eq, STEP_ID);
+
+  window.addEventListener("beforeunload", () => {
+    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+  });
 })();
 </script>
-
-<!-- EXACTLY like form.html: load config.js + app.js so the existing stepCompleteBtn wiring runs -->
-<script src="config.js"></script>
-<script src="app.js"></script>
 
 <script>
 (function(){
