@@ -78,6 +78,16 @@
       0 0 22px rgba(0,229,255,0.30);
   }
 
+  /* ADDED: allow REF buttons (Phenolic is .ref) to visibly show completion */
+  .btn.ref.complete{
+    color:#001b10;
+    background:#2dff9b;
+    border-color:#2dff9b;
+    box-shadow:
+      0 0 0 2px rgba(45,255,155,0.25) inset,
+      0 0 24px rgba(45,255,155,0.35);
+  }
+
   /* FIXED: selector typo so CCS default yellow actually applies */
   #constructionBtn.btn.ref{
   color:#111;                               /* dark text for contrast */
@@ -541,14 +551,14 @@
       return ok;
     });
 
-    /* Phenolic completion (counts in progress) */
+    /* UPDATED: Phenolic completion now COUNTS toward progress */
     const phenBtnEl = document.getElementById("phenolicBtn");
     let phenOk = false;
     if (phenBtnEl){
       phenOk = (localStorage.getItem(stepKey("phenolic")) === "1");
       phenBtnEl.classList.toggle("complete", phenOk);
+      if (phenOk) done++;
     }
-    if (phenOk) done++;
 
     /* CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
     const ccsEl = document.getElementById("constructionBtn");
@@ -569,7 +579,7 @@
       insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
-    /* Progress totals now include Phenolic as +1 */
+    /* UPDATED: denominator includes Phenolic (without changing CCS sequencing order) */
     const totalSteps = taskSteps.length + 1;
     const pct = totalSteps ? Math.round((done / totalSteps) * 100) : 0;
 
