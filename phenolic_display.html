@@ -6,13 +6,14 @@
        FEEDS: <...>
      Applies background/text colors per color code dropdown spec
 
-     ADDED (ONLY WHAT'S NEEDED):
-     - Step Complete wiring identical to app.js, but ALLOWS phenolic to be completable
-     - Uses same storage keys equipment.html expects:
-         nexus_${eq}_step_phenolic = "1"
-         nexus_${eq}_landing_complete = "1"
-     - Optional Firebase sync via window.NEXUS_FB (same as app.js)
-     - Keeps your two existing buttons, but makes them behave like the canonical step toggle
+     STANDARDIZED CHANGE (NO SHORTENING / NO FEATURE REMOVAL):
+     - Replaced the two-button phenolic complete/clear controls with ONE standard
+       "Step Complete" toggle button that matches your other task pages (form.html/app.js):
+         - Shows "Mark Step Complete" when not done
+         - Shows green "Step Complete ✓" when done
+         - Uses localStorage key: nexus_${eq}_step_phenolic
+         - Optional Firestore sync to equipment/{eq}/steps/phenolic (done true/false)
+         - Listens to storage/focus/pageshow to stay in sync
 -->
 <!doctype html>
 <html lang="en">
@@ -112,7 +113,7 @@
     border:2px solid rgba(255,255,255,0.30);
   }
 
-  /* step-complete visual (matches your system look) */
+  /* STANDARD: Step complete visual (matches form.html/app.js behavior) */
   .btn.complete{
     background:#00ff66 !important;
     color:#002b14 !important;
@@ -248,9 +249,8 @@
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
 
-      <!-- Keep your buttons (NOT removed) -->
-      <button type="button" class="btn" id="phenolicCompleteBtn">Mark Phenolic Complete</button>
-      <button type="button" class="btn secondary" id="phenolicClearBtn">Clear Phenolic Complete</button>
+      <!-- STANDARDIZED: Single Step Complete toggle (matches form/app pages) -->
+      <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
     </div>
 
     <div class="phenolic-wrap">
@@ -357,21 +357,19 @@
 })();
 </script>
 
-<!-- ADDED: Step Complete wiring (copied from app.js pattern, but DOES NOT disable phenolic) -->
+<!-- STANDARDIZED: Step Complete button logic (matches form/app pages) -->
 <script>
 (function(){
-  const params = new URLSearchParams(location.search);
-  const eq = (params.get("eq") || "").trim();
-
-  // This is the step ID your equipment page expects for phenolic
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
   const STEP_ID = "phenolic";
 
-  // Storage keys used by equipment.html (matches app.js)
+  // Storage keys used by equipment.html (matches your pattern)
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
   // =========================
-  // Firebase sync (optional) (matches app.js)
+  // Firebase sync (optional)
   // =========================
   async function fbSetStep(eqId, stepId, isDone){
     try{
@@ -408,7 +406,7 @@
         const data = snap.data() || {};
         if (data.done) localStorage.setItem(stepKey(stepId), "1");
         else localStorage.removeItem(stepKey(stepId));
-        refreshBtns();
+        refreshStepBtn();
       });
     }catch(e){
       console.warn("Firebase listener failed:", e);
@@ -416,13 +414,15 @@
   }
 
   // =========================
-  // Buttons on this page (re-use your existing ones)
+  // Step Complete button
   // =========================
-  const setBtn = document.getElementById("phenolicCompleteBtn");
-  const clrBtn = document.getElementById("phenolicClearBtn");
+  const stepBtn = document.getElementById("stepCompleteBtn");
 
-  function usable(){ return !!eq; }
-  function done(){ return !!(eq && localStorage.getItem(stepKey(STEP_ID)) === "1"); }
+  // Hide immediately until we decide state (prevents flash on load)
+  if (stepBtn) stepBtn.style.display = "none";
+
+  function usable(){ return !!(eq && STEP_ID); }
+  function done(){ return !!(eq && STEP_ID && localStorage.getItem(stepKey(STEP_ID)) === "1"); }
 
   async function setDoneState(nextDone){
     if (!usable()) return;
@@ -437,46 +437,33 @@
     await fbSetStep(eq, STEP_ID, nextDone);
   }
 
-  function refreshBtns(){
+  function refreshStepBtn(){
+    if (!stepBtn) return;
+
+    // Show on this page (Phenolic is now a completable step)
+    stepBtn.style.display = "inline-flex";
+    stepBtn.disabled = !usable();
+    stepBtn.title = usable() ? "" : "Missing eq in URL";
+
     const isDone = done();
-
-    if (setBtn){
-      setBtn.style.display = "inline-flex";
-      setBtn.disabled = !usable();
-      setBtn.title = usable() ? "" : "Missing eq in URL";
-      setBtn.classList.toggle("complete", isDone);
-      setBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
-    }
-
-    if (clrBtn){
-      clrBtn.style.display = isDone ? "inline-flex" : "none";
-      clrBtn.disabled = !usable();
-      clrBtn.title = usable() ? "" : "Missing eq in URL";
-      clrBtn.textContent = "Clear Step Complete";
-    }
+    stepBtn.classList.toggle("complete", isDone);
+    stepBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
   }
 
-  if (setBtn){
-    setBtn.addEventListener("click", async () => {
+  if (stepBtn){
+    stepBtn.addEventListener("click", async () => {
       if (!usable()) return;
       const next = !done();
       await setDoneState(next);
-      refreshBtns();
+      refreshStepBtn();
     });
   }
 
-  if (clrBtn){
-    clrBtn.addEventListener("click", async () => {
-      if (!usable()) return;
-      await setDoneState(false);
-      refreshBtns();
-    });
-  }
-
-  refreshBtns();
-  window.addEventListener("storage", refreshBtns);
-  window.addEventListener("focus", refreshBtns);
-  window.addEventListener("pageshow", refreshBtns);
+  // keep in sync
+  refreshStepBtn();
+  window.addEventListener("storage", refreshStepBtn);
+  window.addEventListener("focus", refreshStepBtn);
+  window.addEventListener("pageshow", refreshStepBtn);
 
   if (usable()) fbListenStep(eq, STEP_ID);
 
