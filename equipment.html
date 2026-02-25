@@ -61,7 +61,16 @@
   }
   .btn.secondary{ background: rgba(0,0,0,0.22); color:#fff; border:2px solid rgba(255,255,255,0.35); }
   .btn.locked{ opacity:.6; pointer-events:none; }
-  .btn.complete{ border-color: rgba(45,255,155,0.8); box-shadow: 0 0 0 2px rgba(45,255,155,0.15) inset; }
+
+  /* ✅ CHANGED: Make ALL completed buttons GREEN (filled), not just outlined */
+  .btn.complete{
+    color:#001b10 !important;
+    background: var(--ok) !important;
+    border-color: var(--ok) !important;
+    box-shadow:
+      0 0 0 2px rgba(45,255,155,0.25) inset,
+      0 0 24px rgba(45,255,155,0.35);
+  }
 
   /* Reference buttons: neon blue differentiation */
   .btn.ref{
@@ -78,22 +87,12 @@
       0 0 22px rgba(0,229,255,0.30);
   }
 
-  /* ADDED: allow REF buttons (Phenolic is .ref) to visibly show completion */
-  .btn.ref.complete{
-    color:#001b10;
-    background:#2dff9b;
-    border-color:#2dff9b;
-    box-shadow:
-      0 0 0 2px rgba(45,255,155,0.25) inset,
-      0 0 24px rgba(45,255,155,0.35);
-  }
-
-  /* FIXED: selector typo so CCS default yellow actually applies */
+  /* CCS default (clean yellow) */
   #constructionBtn.btn.ref{
-  color:#111;                               /* dark text for contrast */
-  border-color: rgba(255, 212, 0, 0.95);     /* yellow border */
-  background: rgba(255, 212, 0, 0.90);       /* solid yellow */
-  box-shadow: none;
+    color:#111;                               /* dark text for contrast */
+    border-color: rgba(255, 212, 0, 0.95);     /* yellow border */
+    background: rgba(255, 212, 0, 0.90);       /* solid yellow */
+    box-shadow: none;
   }
 
   /* CCS — Turn GREEN when complete */
@@ -471,8 +470,10 @@
     return legacy || (line && load);
   }
 
+  /* ✅ CHANGED: Phenolic is now a COUNTED task step (affects progress + CCS floating logic) */
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
+    {id:"phenolic",btn:"phenolicBtn"},
     {id:"meg",btn:"lvtBtn"},
     {id:"torque",btn:"torqueBtn"},
     {id:"l2",btn:"l2Btn"},
@@ -489,6 +490,20 @@
       return;
     }
 
+    if (s.id === "phenolic"){
+      el.href = directPage("phenolic_display.html");
+
+      const label =
+        (meta.phenolicLabel || meta.phenolicName || meta.phenolicTitle || "").toString().trim();
+
+      if (label){
+        el.textContent = `Phenolic: ${label}`;
+      } else {
+        el.textContent = "Phenolic Display";
+      }
+      return;
+    }
+
     el.href = taskLink(s.id);
   });
 
@@ -500,20 +515,6 @@
 
   const constructionBtn = document.getElementById("constructionBtn");
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
-
-  const phenolicBtn = document.getElementById("phenolicBtn");
-  if (phenolicBtn){
-    phenolicBtn.href = directPage("phenolic_display.html");
-
-    const label =
-      (meta.phenolicLabel || meta.phenolicName || meta.phenolicTitle || "").toString().trim();
-
-    if (label){
-      phenolicBtn.textContent = `Phenolic: ${label}`;
-    } else {
-      phenolicBtn.textContent = "Phenolic Display";
-    }
-  }
 
   const transformerBtn = document.getElementById("transformerBtn");
   if (transformerBtn) transformerBtn.href = taskLink("transformer");
@@ -551,15 +552,6 @@
       return ok;
     });
 
-    /* UPDATED: Phenolic completion now COUNTS toward progress */
-    const phenBtnEl = document.getElementById("phenolicBtn");
-    let phenOk = false;
-    if (phenBtnEl){
-      phenOk = (localStorage.getItem(stepKey("phenolic")) === "1");
-      phenBtnEl.classList.toggle("complete", phenOk);
-      if (phenOk) done++;
-    }
-
     /* CCS completion auto based on full signoff flag (and/or firestore 'ccs' step) */
     const ccsEl = document.getElementById("constructionBtn");
     if (ccsEl){
@@ -579,13 +571,11 @@
       insertBefore(gridEl, ccsEl, nextStepEl);
     }
 
-    /* UPDATED: denominator includes Phenolic (without changing CCS sequencing order) */
-    const totalSteps = taskSteps.length + 1;
-    const pct = totalSteps ? Math.round((done / totalSteps) * 100) : 0;
+    const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
 
     if (fill) fill.style.width = `${pct}%`;
     if (txt)  txt.textContent = `Progress: ${pct}%`;
-    if (cnt)  cnt.textContent = `${done}/${totalSteps}`;
+    if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
 
     if (eBtn){
       if (pct >= 100){
@@ -758,7 +748,6 @@
       knownStepIds.add(MEG_LOAD_STEP);
 
       // allow Firestore-driven completion for these
-      knownStepIds.add("phenolic");
       knownStepIds.add("ccs");
 
       fbStepsUnsub = onSnapshot(stepsCol, (snap) => {
