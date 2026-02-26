@@ -361,6 +361,9 @@
         }
 
         btn.addEventListener("click", function(){
+          // ✅ MEG read-only: show state but do not allow toggling from this button
+          if(step === "meg"){ refresh(); return; }
+
           const st = window.NEXUS.getStepState(step);
           const currentlyOn = (st.toggle === true);
           const nextOn = !currentlyOn;
