@@ -1,6 +1,8 @@
 <!-- index.html (FULL DROP-IN) — Launcher page with Equipment Image upload (GitHub/localStorage)
      ADD: Phenolic fields (color code dropdown + FED FROM + FEEDS + Phenolic Equip ID)
      ADD: Torque Photo upload (per-equipment) -> localStorage key: nexus_${eq}_torque_photo
+     ADD: Equipment Type dropdown (CCS template selector) -> meta.equipmentType saved in nexus_meta_${eq}
+     NOTE: Equipment Type auto-locks after any progress is detected for this equipment.
 -->
 <!doctype html>
 <html lang="en">
@@ -202,6 +204,26 @@
     margin:0 0 10px;
   }
 
+  /* ===== Equipment Type helper ===== */
+  .subhint{
+    margin-top:8px;
+    font-size:12px;
+    font-weight:900;
+    opacity:.9;
+    line-height:1.35;
+  }
+  .locknote{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:900;
+    font-size:12px;
+    opacity:.95;
+    line-height:1.35;
+  }
+
   .footer{
     max-width:1200px;
     margin:22px auto 0;
@@ -240,6 +262,23 @@
         <div class="field">
           <label for="eqInput">Equipment ID</label>
           <input id="eqInput" type="text" placeholder="TR-001" value="TR-001" />
+        </div>
+
+        <!-- NEW: Equipment Type (CCS template selector) -->
+        <div class="field">
+          <label for="equipmentTypeSelect">Equipment Type (Construction Check Sheet Template)</label>
+          <select id="equipmentTypeSelect">
+            <option value="switchgear">Switchgear</option>
+            <option value="panelboard">Panelboard</option>
+            <option value="busway">Busway</option>
+            <option value="ups">UPS</option>
+            <option value="ats">ATS</option>
+            <option value="generator">Generator</option>
+          </select>
+          <div class="subhint">
+            This selection controls which CCS file opens from the Equipment Page (ex: <code>ccs_switchgear.html</code>).
+          </div>
+          <div id="equipmentTypeLockNote" class="locknote" style="display:none;"></div>
         </div>
 
         <!-- NEW: Equipment Image Upload -->
@@ -387,6 +426,9 @@
   }
 
   const eqInput = document.getElementById("eqInput");
+  const equipmentTypeSelect = document.getElementById("equipmentTypeSelect");
+  const equipmentTypeLockNote = document.getElementById("equipmentTypeLockNote");
+
   const bldgInput = document.getElementById("bldgInput");
   const phaseSelect = document.getElementById("phaseSelect");
   const podSelect = document.getElementById("podSelect");
@@ -418,6 +460,63 @@
     return {};
   }
 
+  function normalizeType(v){
+    return (v || "").toString().trim().toLowerCase();
+  }
+
+  function hasAnyProgress(eq){
+    if(!eq) return false;
+
+    const signedKey = `nexus_${eq}_ccs_signed_off`;
+    if (localStorage.getItem(signedKey) === "1") return true;
+
+    const stepPrefix = `nexus_${eq}_step_`;
+    for (let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.indexOf(stepPrefix) === 0) return true;
+    }
+
+    // Conservative extra checks (won't break anything if keys don't exist)
+    // If torque/meg pages store per-equipment keys, they often include these prefixes:
+    const extraPrefixes = [
+      `nexus_${eq}_torque_`,
+      `nexus_${eq}_meg_`,
+      `nexus_${eq}_prefod_`,
+      `nexus_${eq}_rif_`,
+      `nexus_${eq}_l2_`
+    ];
+    for (let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k) continue;
+      for (const p of extraPrefixes){
+        if (k.indexOf(p) === 0) return true;
+      }
+    }
+
+    return false;
+  }
+
+  function applyEquipmentTypeLock(eq){
+    const locked = hasAnyProgress(eq);
+    if (!equipmentTypeSelect) return;
+
+    if (locked){
+      equipmentTypeSelect.disabled = true;
+      if (equipmentTypeLockNote){
+        equipmentTypeLockNote.style.display = "block";
+        equipmentTypeLockNote.textContent =
+          "Equipment Type is locked because progress already exists for this equipment. (Prevents switching CCS templates mid-work.)";
+      }
+    } else {
+      equipmentTypeSelect.disabled = false;
+      if (equipmentTypeLockNote){
+        equipmentTypeLockNote.style.display = "none";
+        equipmentTypeLockNote.textContent = "";
+      }
+    }
+  }
+
   function saveMeta(eq){
     if(!eq) return;
 
@@ -426,6 +525,7 @@
     // preserve anything already present by merging
     const next = {
       ...meta,
+      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "switchgear",
       building: (bldgInput.value || "").trim(),
       phase: (phaseSelect.value || "").trim(),
       pod: (podSelect.value || "").trim(),
@@ -447,6 +547,10 @@
   function loadMetaIntoFields(eq){
     const meta = loadMeta(eq);
 
+    // Equipment type defaults to switchgear if missing
+    const type = normalizeType(meta.equipmentType) || "switchgear";
+    if (equipmentTypeSelect) equipmentTypeSelect.value = type;
+
     if (meta.building != null) bldgInput.value = meta.building || bldgInput.value;
     if (meta.phase != null) phaseSelect.value = meta.phase || "";
     if (meta.pod != null) podSelect.value = meta.pod || "";
@@ -459,15 +563,22 @@
     if (p.fedFrom != null) phenolicFedFrom.value = p.fedFrom || "";
     if (p.equipId != null) phenolicEquipId.value = p.equipId || "";
     if (p.feeds != null) phenolicFeeds.value = p.feeds || "";
+
+    applyEquipmentTypeLock(eq);
   }
 
-  // persist meta on changes (ADDED phenolic fields, nothing removed)
-  [eqInput,bldgInput,phaseSelect,podSelect,procoreEquipUrl,procoreEnergUrl,
-   phenolicColorCode, phenolicFedFrom, phenolicEquipId, phenolicFeeds
+  // persist meta on changes (ADDED equipmentType + phenolic fields, nothing removed)
+  [
+    eqInput,
+    equipmentTypeSelect,
+    bldgInput,phaseSelect,podSelect,procoreEquipUrl,procoreEnergUrl,
+    phenolicColorCode, phenolicFedFrom, phenolicEquipId, phenolicFeeds
   ].forEach(el=>{
+    if (!el) return;
     el.addEventListener("change", ()=>{
       const eq = getEq();
       saveMeta(eq);
+      if (el === equipmentTypeSelect) applyEquipmentTypeLock(eq);
     });
     el.addEventListener("input", ()=>{
       const eq = getEq();
@@ -477,11 +588,14 @@
 
   // when eq changes, load meta for that eq
   eqInput.addEventListener("change", ()=>{
-    loadMetaIntoFields(getEq());
+    const eq = getEq();
+    loadMetaIntoFields(eq);
     loadPreviewForCurrentEq();
     loadTorquePreviewForCurrentEq();
   });
   eqInput.addEventListener("input", ()=>{
+    const eq = getEq();
+    applyEquipmentTypeLock(eq);
     loadPreviewForCurrentEq();
     loadTorquePreviewForCurrentEq();
   });
