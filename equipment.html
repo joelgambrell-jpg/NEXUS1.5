@@ -922,14 +922,10 @@
   setLinkButton(document.getElementById("procoreConstructionBtn"), meta.procoreEquipUrl);
   setLinkButton(document.getElementById("procoreEnergizationBtn"), meta.procoreEnergizationUrl);
 
-  function taskLink(id){
-    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
-  }
   function directPage(page){
     return `${page}${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
-
   function ccsSignedKey(){ return `nexus_${eq || "NO_EQ"}_ccs_signed_off`; }
 
   const MEG_LINE_STEP = "megohmmeter_line";
@@ -940,6 +936,22 @@
     const load = localStorage.getItem(stepKey(MEG_LOAD_STEP)) === "1";
     return legacy || (line && load);
   }
+
+  /* ===========================================================
+     ✅ FIX FOR 404s:
+     This page was generating links to task.html (which does not exist in your repo),
+     causing 404s. All step links below now point to your actual pages.
+     =========================================================== */
+
+  // Map step IDs to existing pages in your repo
+  const STEP_PAGE = {
+    rif: "RIF.html",
+    meg: "meg_log.html",
+    torque: "torque_log.html",
+    l2: "l2.html",
+    prefod: "prefod.html",
+    fpv_photo: "fpv_photo_capture.html"
+  };
 
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
@@ -955,11 +967,6 @@
     const el = document.getElementById(s.btn);
     if (!el) return;
 
-    if (s.id === "prefod"){
-      el.href = `form.html?id=prefod${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
-      return;
-    }
-
     if (s.id === "phenolic"){
       el.href = directPage("phenolic_display.html");
       const label =
@@ -969,46 +976,35 @@
       return;
     }
 
-    el.href = taskLink(s.id);
+    // Use mapped step page if available; otherwise fall back to form.html (never 404)
+    const page = STEP_PAGE[s.id];
+    if (page){
+      el.href = directPage(page);
+    } else {
+      el.href = `form.html?id=${encodeURIComponent(s.id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+    }
   });
-
-  const fpvBtn = document.getElementById("finishedPhotoBtn");
-  if (fpvBtn) fpvBtn.href = directPage("fpv_photo_capture.html");
 
   const packageExportBtn = document.getElementById("packageExportBtn");
   if (packageExportBtn) packageExportBtn.href = directPage("package_export.html");
 
-  /* ===========================================================
-     ✅ CHANGE: CCS template selection by Equipment Type
-     - Reads meta.equipmentType (saved by index.html)
-     - Defaults to Transformer -> construction_check_sheet.html
-     - Maps other types to your new CCS files
-     =========================================================== */
-  function normType(v){
-    return (v || "").toString().trim().toLowerCase();
-  }
-  const CCS_TEMPLATE_BY_TYPE = {
-    transformer: "construction_check_sheet.html",
-    switchgear: "construction_check_sheet_switchgear.html",
-    panelboard: "construction_check_sheet_panelboard.html",
-    busway: "construction_check_sheet_busway.html",
-    ups: "construction_check_sheet_ups.html",
-    ats: "construction_check_sheet_ats.html",
-    generator: "construction_check_sheet_generator.html"
-  };
-  function getCcsTemplatePage(){
-    const t = normType(meta.equipmentType) || "transformer";
-    return CCS_TEMPLATE_BY_TYPE[t] || CCS_TEMPLATE_BY_TYPE.transformer;
-  }
-
   const constructionBtn = document.getElementById("constructionBtn");
-  if (constructionBtn) constructionBtn.href = directPage(getCcsTemplatePage());
+  if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
 
+  // Reference buttons:
+  // Diagram Image -> direct to the diagram file (no 404)
   const transformerBtn = document.getElementById("transformerBtn");
-  if (transformerBtn) transformerBtn.href = taskLink("transformer");
+  if (transformerBtn){
+    transformerBtn.href = "meg_diagram.png";
+    transformerBtn.target = "_blank";
+    transformerBtn.rel = "noopener";
+  }
 
+  // Supporting Documents -> use form.html fallback (exists) so it cannot 404
   const supportingBtn = document.getElementById("supportingBtn");
-  if (supportingBtn) supportingBtn.href = taskLink("supporting");
+  if (supportingBtn){
+    supportingBtn.href = `form.html?id=supporting${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+  }
 
   const fill = document.getElementById("progressFill");
   const txt  = document.getElementById("progressText");
