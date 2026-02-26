@@ -125,7 +125,7 @@
       backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
       backBtn.textContent = eq ? "← Back to Equipment" : "← Back to Home";
 
-      const target = `task.html?id=meg${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
       const goBtn = document.getElementById("goBtn");
       goBtn.href = target;
 
