@@ -117,6 +117,31 @@
   .progress-fill{ height:100%; width:0%; background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%); border-radius:999px; transition: width .25s ease; }
   .progress-hint{ margin-top:10px; font-size:12px; font-weight:800; opacity:.9; }
 
+  /* ===========================================================
+     ✅ NEW: Messages under progress bar (field-directive)
+     =========================================================== */
+  .progress-messages{
+    margin-top:10px;
+    display:grid;
+    gap:6px;
+  }
+  .progress-msg-line{
+    display:flex;
+    gap:8px;
+    align-items:baseline;
+    flex-wrap:wrap;
+  }
+  .progress-msg-label{
+    font-size:12px;
+    font-weight:900;
+    opacity:.92;
+  }
+  .progress-msg-value{
+    font-size:12px;
+    font-weight:900;
+    color:#fff;
+  }
+
   #energizationWrap{ position:relative; margin: 14px 0 6px; display:flex; justify-content:center; align-items:center; padding:10px 0; }
   #energizationBtn{ width:min(520px, 100%); font-size:18px; padding:14px 16px; position:relative; z-index:2; }
   #energizationBtn.unlocked{
@@ -695,6 +720,19 @@
           <div class="progress-track">
             <div class="progress-fill" id="progressFill"></div>
           </div>
+
+          <!-- ✅ NEW: field-directive messages under the progress bar -->
+          <div class="progress-messages" aria-live="polite">
+            <div class="progress-msg-line">
+              <div class="progress-msg-label">Next Required Step:</div>
+              <div class="progress-msg-value" id="nxNextStep">Complete Receipt Inspection Form and Construction Check Sheet</div>
+            </div>
+            <div class="progress-msg-line">
+              <div class="progress-msg-label">Remaining Work Items:</div>
+              <div class="progress-msg-value" id="nxRemainingItems">7</div>
+            </div>
+          </div>
+
           <div class="progress-hint">
             Progress updates when each form is marked complete (use the “Complete” toggle on each task page).
           </div>
@@ -904,14 +942,14 @@
         <label for="obsRelatedStep">Related Step (optional)</label>
         <select class="obs-sel" id="obsRelatedStep">
           <option value="">(None)</option>
-          <option value="RIF">RIF</option>
-          <option value="Phenolic">Phenolic</option>
-          <option value="CCS">Construction Check Sheet</option>
-          <option value="Meg">Megohmmeter</option>
-          <option value="Torque">Torque</option>
-          <option value="L2">L2</option>
-          <option value="Pre-FOD">Pre-FOD</option>
-          <option value="FPV Photo">FPV Photo</option>
+          <option value="Receipt Inspection Form">Receipt Inspection Form</option>
+          <option value="Phenolic Display">Phenolic Display</option>
+          <option value="Construction Check Sheet">Construction Check Sheet</option>
+          <option value="Megohmmeter Testing">Megohmmeter Testing</option>
+          <option value="Torque Application">Torque Application</option>
+          <option value="L2 Installation Verification Form">L2 Installation Verification Form</option>
+          <option value="Pre-Foreign Object and Debris">Pre-Foreign Object and Debris</option>
+          <option value="Finished Product Verification Photo">Finished Product Verification Photo</option>
           <option value="Energization">Energization</option>
         </select>
       </div>
@@ -1028,14 +1066,26 @@
     fpv_photo: "fpv_photo_capture.html"
   };
 
+  /* ===========================================================
+     ✅ WORKFLOW ORDER (no abbreviations in messages)
+     Receipt Inspection Form
+     Phenolic Display
+     Torque Application
+     L2 Installation Verification Form
+     Megohmmeter Testing
+     Pre-Foreign Object and Debris
+     Finished Product Verification Photo
+     THEN Final Construction Check Sheet Sign-Off
+     =========================================================== */
+
   const taskSteps=[
-    {id:"rif",btn:"rifBtn"},
-    {id:"phenolic",btn:"phenolicBtn"},
-    {id:"meg",btn:"lvtBtn"},
-    {id:"torque",btn:"torqueBtn"},
-    {id:"l2",btn:"l2Btn"},
-    {id:"prefod",btn:"prefodBtn"},
-    {id:"fpv_photo",btn:"finishedPhotoBtn"}
+    {id:"rif",btn:"rifBtn", name:"Receipt Inspection Form"},
+    {id:"phenolic",btn:"phenolicBtn", name:"Phenolic Display"},
+    {id:"torque",btn:"torqueBtn", name:"Torque Application"},
+    {id:"l2",btn:"l2Btn", name:"L2 Installation Verification Form"},
+    {id:"meg",btn:"lvtBtn", name:"Megohmmeter Testing"},
+    {id:"prefod",btn:"prefodBtn", name:"Pre-Foreign Object and Debris"},
+    {id:"fpv_photo",btn:"finishedPhotoBtn", name:"Finished Product Verification Photo"}
   ];
 
   taskSteps.forEach(s=>{
@@ -1086,14 +1136,12 @@
   const cnt  = document.getElementById("progressCount");
   const eBtn = document.getElementById("energizationBtn");
 
+  /* ✅ NEW: progress message elements */
+  const nxNextStepEl = document.getElementById("nxNextStep");
+  const nxRemainingEl = document.getElementById("nxRemainingItems");
+
   function energizationHref(){
     return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}&return=equipment` : ""}`;
-  }
-
-  function insertBefore(parent, node, beforeNode){
-    if (!parent || !node) return;
-    if (!beforeNode) { parent.appendChild(node); return; }
-    parent.insertBefore(node, beforeNode);
   }
 
   function refresh(){
@@ -1112,22 +1160,16 @@
     });
 
     const ccsEl = document.getElementById("constructionBtn");
+    let ccsSigned = false;
     if (ccsEl){
       const ccsOk =
         (localStorage.getItem(ccsSignedKey()) === "1") ||
         (localStorage.getItem(stepKey("ccs")) === "1");
+      ccsSigned = !!ccsOk;
       ccsEl.classList.toggle("complete", ccsOk);
     }
 
-    let nextIdx = 0;
-    while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
-
-    const gridEl = document.getElementById("stepsGrid");
-    if (gridEl && ccsEl){
-      const nextStepBtnId = (nextIdx < taskSteps.length) ? taskSteps[nextIdx].btn : null;
-      const nextStepEl = nextStepBtnId ? document.getElementById(nextStepBtnId) : null;
-      insertBefore(gridEl, ccsEl, nextStepEl);
-    }
+    /* ✅ CCS stays constant in the grid (no reordering / no insertion) */
 
     const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
 
@@ -1135,8 +1177,45 @@
     if (txt)  txt.textContent = `Progress: ${pct}%`;
     if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
 
+    /* ===========================================================
+       ✅ NEW: Next Required Step + Remaining Work Items messaging
+       =========================================================== */
+    const allOperationalComplete = (done >= taskSteps.length);
+
+    if (nxNextStepEl && nxRemainingEl){
+      if (!allOperationalComplete){
+        let nextIdx = 0;
+        while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
+
+        const nextStep = (nextIdx < taskSteps.length) ? taskSteps[nextIdx] : null;
+
+        if (nextStep){
+          nxNextStepEl.textContent = `Complete ${nextStep.name} and Construction Check Sheet`;
+          nxRemainingEl.textContent = String(taskSteps.length - done);
+        } else {
+          nxNextStepEl.textContent = "Complete Receipt Inspection Form and Construction Check Sheet";
+          nxRemainingEl.textContent = String(taskSteps.length);
+        }
+      } else {
+        if (!ccsSigned){
+          nxNextStepEl.textContent = "Apply Final Construction Check Sheet Sign-Off";
+          nxRemainingEl.textContent = "1";
+        } else {
+          nxNextStepEl.textContent = "All required steps and approvals complete";
+          nxRemainingEl.textContent = "0";
+        }
+      }
+    }
+
+    /* ===========================================================
+       ✅ Energization gating:
+       Unlock ONLY when all operational steps are complete AND
+       Final Construction Check Sheet Sign-Off is complete.
+       =========================================================== */
     if (eBtn){
-      if (pct >= 100){
+      const energReady = allOperationalComplete && ccsSigned;
+
+      if (energReady){
         eBtn.classList.remove("locked");
         eBtn.classList.add("unlocked");
         eBtn.href = energizationHref();
@@ -1153,7 +1232,8 @@
 
     const pE = document.getElementById("procoreEnergizationBtn");
     if (pE){
-      pE.style.display = (pct >= 100) ? "inline-flex" : "none";
+      const energReady = allOperationalComplete && ccsSigned;
+      pE.style.display = energReady ? "inline-flex" : "none";
     }
   }
 
