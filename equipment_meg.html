@@ -12,7 +12,7 @@
     :root{ --bg:#b60000; --panel:rgba(255,255,255,0.22); --line:rgba(255,255,255,0.20); }
     html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
 
-    /* ✅ Prevent flash: keep page hidden unless redirect fails */
+    /* ✅ NO FLASH: keep hidden unless redirect fails */
     body{ opacity:0; }
 
     body{
@@ -69,26 +69,24 @@
 
   <link rel="stylesheet" href="assets/css/nexus-core.css">
 
-  <!-- ✅ Immediate redirect (no flash), with safe fallback -->
+  <!-- ✅ Redirect ASAP to the CORRECT Meg page that has your SOP + step logic -->
   <script>
     (function(){
       const qs = new URLSearchParams(location.search);
       const eq = (qs.get("eq") || "").trim();
 
-      /* ✅ Canonical target for Meg step */
-      const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+      /* ✅ This is the standardized Meg landing you said was correct */
+      const target = `equipment_meg.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-      /* Redirect ASAP */
+      /* Immediate redirect (prevents seeing any intermediate buttons) */
       try{
         location.replace(target);
-      }catch(e){
-        // if replace fails, fall back to later code that shows UI
-      }
+      }catch(e){}
 
-      /* If we are still here after a short moment, show the fallback UI */
+      /* If we are still here (redirect blocked), show fallback UI */
       setTimeout(() => {
         try{ document.body.style.opacity = "1"; }catch(e){}
-      }, 650);
+      }, 700);
     })();
   </script>
 </head>
@@ -134,6 +132,7 @@
       </div>
     </div>
 
+    <!-- Fallback UI only appears if redirect is blocked -->
     <div class="wrap">
       <div class="card">
         <h2 style="margin:0 0 8px;">Megohmmeter Testing</h2>
@@ -160,12 +159,9 @@
         backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
         backBtn.textContent = eq ? "← Back to Equipment" : "← Back to Home";
 
-        /* ✅ Canonical target for Meg step */
-        const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+        const target = `equipment_meg.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
         const goBtn = document.getElementById("goBtn");
         goBtn.href = target;
-
-        /* No delayed redirect here (prevents flash). The head script already tries immediately. */
       })();
     </script>
 
