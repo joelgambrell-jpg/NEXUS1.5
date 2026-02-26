@@ -487,7 +487,9 @@
     padding:10px 12px; border-radius:12px;
     border:1px solid rgba(255,255,255,0.22);
     background: rgba(0,0,0,0.22);
-    color:#fff; font-weight:900; cursor:pointer;
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
   }
   .obs-x.primary{
     border-color: rgba(0,229,255,0.85);
@@ -579,6 +581,79 @@
     border:1px solid rgba(255,255,255,0.22);
     box-shadow: 0 18px 70px rgba(0,0,0,0.55);
   }
+
+  /* ===========================================================
+     ✅ NEW: Modern Glass + WHITE TEXT for ALL Observation UI
+     Fixes black-on-black text and prevents core CSS overrides.
+     =========================================================== */
+
+  /* Drawer container modern glass */
+  .obs-drawer{
+    background: linear-gradient(160deg, rgba(10,15,35,0.96), rgba(18,25,55,0.93)) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-left: 1px solid rgba(255,255,255,0.14);
+    box-shadow:
+      -18px 0 60px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(62,203,255,0.12) inset;
+    color:#fff;
+  }
+
+  /* Ensure all text inside observation surfaces is readable */
+  #obsPanel, #obsWrap, .obs-drawer, .obs-drawer *{
+    color:#fff;
+  }
+
+  /* Search bar: match dark UI + white text */
+  .obs-search input{
+    background: rgba(255,255,255,0.06) !important;
+    color:#fff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+  }
+  .obs-search input::placeholder{
+    color: rgba(255,255,255,0.45) !important;
+  }
+  .obs-search input:focus{
+    outline:none !important;
+    border-color: rgba(0,229,255,0.85) !important;
+    box-shadow:
+      0 0 0 2px rgba(0,229,255,0.18),
+      0 0 14px rgba(0,229,255,0.22) !important;
+  }
+
+  /* Form fields: dark glass + white text (prevents black-on-black) */
+  .obs-in, .obs-sel, .obs-ta{
+    background: rgba(255,255,255,0.06) !important;
+    color:#fff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+  }
+  .obs-in::placeholder, .obs-ta::placeholder{
+    color: rgba(255,255,255,0.45) !important;
+  }
+  .obs-in:focus, .obs-sel:focus, .obs-ta:focus{
+    outline:none !important;
+    border-color: rgba(0,229,255,0.85) !important;
+    background: rgba(255,255,255,0.10) !important;
+    box-shadow:
+      0 0 0 2px rgba(0,229,255,0.18),
+      0 0 14px rgba(0,229,255,0.22) !important;
+  }
+
+  /* Keep dropdown menu readable when opened */
+  .obs-sel option{
+    color:#000;
+  }
+
+  /* Date picker + calendar icon in dark mode */
+  #obsDue{
+    color-scheme: dark;
+  }
+
+  /* File input (some browsers render text dark by default) */
+  .obs-attach input[type="file"]{
+    color:#fff !important;
+  }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
