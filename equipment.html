@@ -115,15 +115,18 @@
   .progress-label{ display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:900; margin-bottom:10px; }
   .progress-track{ width:100%; height:14px; border-radius:999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); overflow:hidden; }
   .progress-fill{ height:100%; width:0%; background: linear-gradient(90deg, #ff3b3b 0%, #ffb800 50%, #22c55e 100%); border-radius:999px; transition: width .25s ease; }
-  .progress-hint{ margin-top:10px; font-size:12px; font-weight:800; opacity:.9; }
 
-  /* ✅ NEW (progress section only): Remaining Work Items line */
-  .progress-remaining{
+  /* ===========================================================
+     ✅ CHANGED (progress box only):
+     Make the message white + cleaner stacked look.
+     =========================================================== */
+  .progress-hint{
     margin-top:10px;
     font-size:12px;
     font-weight:900;
-    opacity:.95;
-    line-height:1.35;
+    color:#ffffff;
+    opacity:1;
+    line-height:1.25;
   }
 
   #energizationWrap{ position:relative; margin: 14px 0 6px; display:flex; justify-content:center; align-items:center; padding:10px 0; }
@@ -704,12 +707,15 @@
           <div class="progress-track">
             <div class="progress-fill" id="progressFill"></div>
           </div>
-          <div class="progress-hint">
-            Progress updates when each form is marked complete (use the “Complete” toggle on each task page).
-          </div>
 
-          <!-- ✅ NEW (progress section only): Remaining work line -->
-          <div class="progress-remaining" id="remainingWork">Remaining Work Items: (calculating)</div>
+          <!-- =======================================================
+               ✅ CHANGED (progress box only):
+               Cleaner stacked look: Completed + Remaining only.
+               ======================================================= -->
+          <div class="progress-hint" id="progressHint">
+            <div>Completed: 0</div>
+            <div>Remaining Work Items: 0</div>
+          </div>
         </div>
 
         <div class="goal-card" id="goalCard">
@@ -1098,8 +1104,11 @@
   const cnt  = document.getElementById("progressCount");
   const eBtn = document.getElementById("energizationBtn");
 
-  /* ✅ NEW (progress section only): Remaining Work Items element */
-  const remainingEl = document.getElementById("remainingWork");
+  /* ===========================================================
+     ✅ CHANGED (progress box only):
+     Hook to the new compact status lines.
+     =========================================================== */
+  const progressHint = document.getElementById("progressHint");
 
   function energizationHref(){
     return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}&return=equipment` : ""}`;
@@ -1127,17 +1136,13 @@
     });
 
     const ccsEl = document.getElementById("constructionBtn");
-    let ccsOk = false;
     if (ccsEl){
-      ccsOk =
+      const ccsOk =
         (localStorage.getItem(ccsSignedKey()) === "1") ||
         (localStorage.getItem(stepKey("ccs")) === "1");
       ccsEl.classList.toggle("complete", ccsOk);
     }
 
-    /* ===========================================================
-       ✅ ORIGINAL CCS floating button logic (UNCHANGED)
-       =========================================================== */
     let nextIdx = 0;
     while (nextIdx < stepState.length && stepState[nextIdx]) nextIdx++;
 
@@ -1155,44 +1160,15 @@
     if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
 
     /* ===========================================================
-       ✅ NEW (progress section only): Remaining Work Items message
-       - Uses full names (no abbreviations)
-       - Reflects the workflow order you described (message-only)
-       - Does NOT change any button logic, completion logic, or ordering
+       ✅ CHANGED (progress box only):
+       Cleaner stacked lines: Completed + Remaining Work Items.
        =========================================================== */
-    if (remainingEl){
-      const WORKFLOW = [
-        { id:"rif", name:"Receipt Inspection" },
-        { id:"phenolic", name:"Phenolic Display" },
-        { id:"torque", name:"Torque Application" },
-        { id:"l2", name:"L2 Installation Verification" },
-        { id:"meg", name:"Megohmmeter Testing" },
-        { id:"prefod", name:"Pre- Foreign Object and Debris" },
-        { id:"fpv_photo", name:"Finished Product Verification" }
-      ];
-
-      function isDone(stepId){
-        if (stepId === "meg") return megIsComplete();
-        return localStorage.getItem(stepKey(stepId)) === "1";
-      }
-
-      const remaining = [];
-      for (const w of WORKFLOW){
-        if (!isDone(w.id)) remaining.push(w.name);
-      }
-
-      // CCS is constant until final sign-off; show it as a continuing item until signed.
-      if (!ccsOk){
-        if (remaining.length){
-          remaining.unshift("Construction Check Sheet (continue updating throughout workflow)");
-        } else {
-          remaining.push("Construction Check Sheet Final Sign-Off");
-        }
-      }
-
-      remainingEl.textContent = remaining.length
-        ? `Remaining Work Items: ${remaining.join(" • ")}`
-        : "Remaining Work Items: None";
+    if (progressHint){
+      const completed = done;
+      const remainingCount = Math.max(0, taskSteps.length - done);
+      progressHint.innerHTML =
+        "<div>Completed: " + completed + "</div>" +
+        "<div>Remaining Work Items: " + remainingCount + "</div>";
     }
 
     if (eBtn){
