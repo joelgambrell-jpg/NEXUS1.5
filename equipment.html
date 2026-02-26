@@ -978,8 +978,31 @@
   const packageExportBtn = document.getElementById("packageExportBtn");
   if (packageExportBtn) packageExportBtn.href = directPage("package_export.html");
 
+  /* ===========================================================
+     ✅ CHANGE: CCS template selection by Equipment Type
+     - Reads meta.equipmentType (saved by index.html)
+     - Defaults to Transformer -> construction_check_sheet.html
+     - Maps other types to your new CCS files
+     =========================================================== */
+  function normType(v){
+    return (v || "").toString().trim().toLowerCase();
+  }
+  const CCS_TEMPLATE_BY_TYPE = {
+    transformer: "construction_check_sheet.html",
+    switchgear: "construction_check_sheet_switchgear.html",
+    panelboard: "construction_check_sheet_panelboard.html",
+    busway: "construction_check_sheet_busway.html",
+    ups: "construction_check_sheet_ups.html",
+    ats: "construction_check_sheet_ats.html",
+    generator: "construction_check_sheet_generator.html"
+  };
+  function getCcsTemplatePage(){
+    const t = normType(meta.equipmentType) || "transformer";
+    return CCS_TEMPLATE_BY_TYPE[t] || CCS_TEMPLATE_BY_TYPE.transformer;
+  }
+
   const constructionBtn = document.getElementById("constructionBtn");
-  if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
+  if (constructionBtn) constructionBtn.href = directPage(getCcsTemplatePage());
 
   const transformerBtn = document.getElementById("transformerBtn");
   if (transformerBtn) transformerBtn.href = taskLink("transformer");
