@@ -2,7 +2,9 @@
      ADD: Phenolic fields (color code dropdown + FED FROM + FEEDS + Phenolic Equip ID)
      ADD: Torque Photo upload (per-equipment) -> localStorage key: nexus_${eq}_torque_photo
      ADD: Equipment Type dropdown (CCS template selector) -> meta.equipmentType saved in nexus_meta_${eq}
-     NOTE: Equipment Type auto-locks after any progress is detected for this equipment.
+     CHANGE: Add Transformer option. Transformer will map to construction_check_sheet.html (handled in equipment.html mapping).
+     CHANGE: Add per-equipment UNLOCK control to allow editing Equipment Type even if progress exists.
+              Unlock stored as: nexus_${eq}_equipmentType_unlock = "1"
 -->
 <!doctype html>
 <html lang="en">
@@ -24,6 +26,7 @@
     --btn-bg:#0a0f24;
     --btn-txt:#3ecbff;
     --accent:#00c2ff;
+    --warn:#ffb800;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
@@ -176,6 +179,11 @@
     background: rgba(0,0,0,0.20);
     color:#fff;
   }
+  .mini-btn.warn{
+    border-color: rgba(255,184,0,0.90);
+    color:#111;
+    background: rgba(255,184,0,0.92);
+  }
 
   /* ===== Torque Photo block (same UI style) ===== */
   #nexusTorquePhotoPreview{
@@ -223,6 +231,16 @@
     opacity:.95;
     line-height:1.35;
   }
+  .locknote.warn{
+    border-color: rgba(255,184,0,0.55);
+    box-shadow: 0 0 0 2px rgba(255,184,0,0.18) inset;
+  }
+  .type-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
 
   .footer{
     max-width:1200px;
@@ -264,10 +282,11 @@
           <input id="eqInput" type="text" placeholder="TR-001" value="TR-001" />
         </div>
 
-        <!-- NEW: Equipment Type (CCS template selector) -->
+        <!-- Equipment Type (CCS template selector) -->
         <div class="field">
           <label for="equipmentTypeSelect">Equipment Type (Construction Check Sheet Template)</label>
           <select id="equipmentTypeSelect">
+            <option value="transformer">Transformer</option>
             <option value="switchgear">Switchgear</option>
             <option value="panelboard">Panelboard</option>
             <option value="busway">Busway</option>
@@ -275,13 +294,24 @@
             <option value="ats">ATS</option>
             <option value="generator">Generator</option>
           </select>
+
           <div class="subhint">
-            This selection controls which CCS file opens from the Equipment Page (ex: <code>ccs_switchgear.html</code>).
+            This selection controls which CCS file opens from the Equipment Page. Transformer maps to <code>construction_check_sheet.html</code>.
           </div>
+
           <div id="equipmentTypeLockNote" class="locknote" style="display:none;"></div>
+
+          <div class="type-actions">
+            <button id="unlockTypeBtn" class="mini-btn warn" type="button">Unlock Type Editing</button>
+            <button id="relockTypeBtn" class="mini-btn" type="button">Re-Lock</button>
+          </div>
+
+          <div class="subhint">
+            Unlock is stored per-equipment. Use only when you must change templates without rebuilding equipment.
+          </div>
         </div>
 
-        <!-- NEW: Equipment Image Upload -->
+        <!-- Equipment Image Upload -->
         <div class="img-block">
           <label for="nexusEquipImageInput">Equipment Image</label>
           <input id="nexusEquipImageInput" type="file" accept="image/*" capture="environment" />
@@ -292,7 +322,7 @@
           </div>
         </div>
 
-        <!-- ADD: Torque Photo Upload (per-equipment) -->
+        <!-- Torque Photo Upload (per-equipment) -->
         <div class="img-block">
           <label for="nexusTorquePhotoInput">Torque Photo</label>
           <input id="nexusTorquePhotoInput" type="file" accept="image/*" capture="environment" />
@@ -339,7 +369,7 @@
         </div>
 
         <!-- =========================
-             ADD: PHENOLIC SECTION
+             PHENOLIC SECTION
              ========================= -->
         <div class="section-divider"></div>
         <div class="section-title">Phenolic</div>
@@ -376,9 +406,6 @@
           <label for="phenolicFeeds">FEEDS</label>
           <input id="phenolicFeeds" type="text" placeholder="Example: RTU-1 / Panel A / etc." />
         </div>
-        <!-- =========================
-             /ADD: PHENOLIC SECTION
-             ========================= -->
 
         <div class="btnrow">
           <button class="btn" id="openEquipmentBtn" type="button">Open Equipment Page</button>
@@ -428,6 +455,8 @@
   const eqInput = document.getElementById("eqInput");
   const equipmentTypeSelect = document.getElementById("equipmentTypeSelect");
   const equipmentTypeLockNote = document.getElementById("equipmentTypeLockNote");
+  const unlockTypeBtn = document.getElementById("unlockTypeBtn");
+  const relockTypeBtn = document.getElementById("relockTypeBtn");
 
   const bldgInput = document.getElementById("bldgInput");
   const phaseSelect = document.getElementById("phaseSelect");
@@ -435,7 +464,7 @@
   const procoreEquipUrl = document.getElementById("procoreEquipUrl");
   const procoreEnergUrl = document.getElementById("procoreEnergUrl");
 
-  // ADD: Phenolic controls
+  // Phenolic controls
   const phenolicColorCode = document.getElementById("phenolicColorCode");
   const phenolicFedFrom   = document.getElementById("phenolicFedFrom");
   const phenolicEquipId   = document.getElementById("phenolicEquipId");
@@ -464,6 +493,15 @@
     return (v || "").toString().trim().toLowerCase();
   }
 
+  // Per-equipment unlock flag for editing equipmentType even after progress
+  function typeUnlockKey(eq){ return `nexus_${eq || "NO_EQ"}_equipmentType_unlock`; }
+  function isTypeUnlocked(eq){ return localStorage.getItem(typeUnlockKey(eq)) === "1"; }
+  function setTypeUnlocked(eq, on){
+    if(!eq) return;
+    if(on) localStorage.setItem(typeUnlockKey(eq), "1");
+    else localStorage.removeItem(typeUnlockKey(eq));
+  }
+
   function hasAnyProgress(eq){
     if(!eq) return false;
 
@@ -478,7 +516,6 @@
     }
 
     // Conservative extra checks (won't break anything if keys don't exist)
-    // If torque/meg pages store per-equipment keys, they often include these prefixes:
     const extraPrefixes = [
       `nexus_${eq}_torque_`,
       `nexus_${eq}_meg_`,
@@ -498,23 +535,34 @@
   }
 
   function applyEquipmentTypeLock(eq){
-    const locked = hasAnyProgress(eq);
     if (!equipmentTypeSelect) return;
 
-    if (locked){
-      equipmentTypeSelect.disabled = true;
-      if (equipmentTypeLockNote){
+    const progress = hasAnyProgress(eq);
+    const unlocked = isTypeUnlocked(eq);
+    const locked = progress && !unlocked;
+
+    equipmentTypeSelect.disabled = locked;
+
+    if (equipmentTypeLockNote){
+      if (locked){
+        equipmentTypeLockNote.classList.add("warn");
         equipmentTypeLockNote.style.display = "block";
         equipmentTypeLockNote.textContent =
-          "Equipment Type is locked because progress already exists for this equipment. (Prevents switching CCS templates mid-work.)";
-      }
-    } else {
-      equipmentTypeSelect.disabled = false;
-      if (equipmentTypeLockNote){
+          "Equipment Type is locked because progress already exists for this equipment. Use “Unlock Type Editing” only if you must change templates without rebuilding.";
+      } else if (progress && unlocked){
+        equipmentTypeLockNote.classList.add("warn");
+        equipmentTypeLockNote.style.display = "block";
+        equipmentTypeLockNote.textContent =
+          "UNLOCKED: You can change Equipment Type even though progress exists. Changing templates mid-work can cause mismatched data—use carefully.";
+      } else {
+        equipmentTypeLockNote.classList.remove("warn");
         equipmentTypeLockNote.style.display = "none";
         equipmentTypeLockNote.textContent = "";
       }
     }
+
+    if (unlockTypeBtn) unlockTypeBtn.disabled = !eq;
+    if (relockTypeBtn) relockTypeBtn.disabled = !eq;
   }
 
   function saveMeta(eq){
@@ -522,10 +570,9 @@
 
     const meta = loadMeta(eq);
 
-    // preserve anything already present by merging
     const next = {
       ...meta,
-      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "switchgear",
+      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "transformer",
       building: (bldgInput.value || "").trim(),
       phase: (phaseSelect.value || "").trim(),
       pod: (podSelect.value || "").trim(),
@@ -547,8 +594,8 @@
   function loadMetaIntoFields(eq){
     const meta = loadMeta(eq);
 
-    // Equipment type defaults to switchgear if missing
-    const type = normalizeType(meta.equipmentType) || "switchgear";
+    // Default to transformer since the original CCS is transformer-based
+    const type = normalizeType(meta.equipmentType) || "transformer";
     if (equipmentTypeSelect) equipmentTypeSelect.value = type;
 
     if (meta.building != null) bldgInput.value = meta.building || bldgInput.value;
@@ -557,7 +604,6 @@
     if (meta.procoreEquipUrl != null) procoreEquipUrl.value = meta.procoreEquipUrl || "";
     if (meta.procoreEnergizationUrl != null) procoreEnergUrl.value = meta.procoreEnergizationUrl || "";
 
-    // ADD: phenolic
     const p = meta.phenolic || {};
     if (p.colorCode != null) phenolicColorCode.value = p.colorCode || "";
     if (p.fedFrom != null) phenolicFedFrom.value = p.fedFrom || "";
@@ -567,7 +613,31 @@
     applyEquipmentTypeLock(eq);
   }
 
-  // persist meta on changes (ADDED equipmentType + phenolic fields, nothing removed)
+  // Unlock / Relock controls
+  if (unlockTypeBtn){
+    unlockTypeBtn.addEventListener("click", ()=>{
+      const eq = getEq();
+      if(!eq) return alert("Enter Equipment ID first.");
+      const ok = confirm(
+        "Unlock Equipment Type editing for this equipment?\n\n" +
+        "Warning: changing templates mid-work can cause mismatched CCS/torque expectations.\n\n" +
+        "Press OK to unlock."
+      );
+      if(!ok) return;
+      setTypeUnlocked(eq, true);
+      applyEquipmentTypeLock(eq);
+    });
+  }
+  if (relockTypeBtn){
+    relockTypeBtn.addEventListener("click", ()=>{
+      const eq = getEq();
+      if(!eq) return alert("Enter Equipment ID first.");
+      setTypeUnlocked(eq, false);
+      applyEquipmentTypeLock(eq);
+    });
+  }
+
+  // persist meta on changes (includes equipmentType + phenolic fields; nothing removed)
   [
     eqInput,
     equipmentTypeSelect,
