@@ -3,13 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  
+
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<title>Megohmmeter Testing</title>
+  <title>Megohmmeter Testing</title>
+
   <style>
     :root{ --bg:#b60000; --panel:rgba(255,255,255,0.22); --line:rgba(255,255,255,0.20); }
     html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
+
+    /* ✅ Prevent flash: keep page hidden unless redirect fails */
+    body{ opacity:0; }
+
     body{
       background-image:url("transformer.jpg");
       background-repeat:no-repeat;
@@ -49,114 +54,145 @@
     code{ background:rgba(0,0,0,0.35); padding:2px 6px; border-radius:6px; }
   </style>
 
-<style>
-  .nx-footer{
-    margin-top: 40px;
-    padding: 18px 12px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.85);
-    background: rgba(0,0,0,0.35);
-    border-top: 1px solid rgba(255,255,255,0.18);
-  }
-</style>
+  <style>
+    .nx-footer{
+      margin-top: 40px;
+      padding: 18px 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(255,255,255,0.18);
+    }
+  </style>
 
   <link rel="stylesheet" href="assets/css/nexus-core.css">
-</head>
-<body>
-  <div class="nexus-page">\n
-<div id="nxSessionBanner" class="nx-session-banner">
-  <div class="nx-left">
-    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-    <span class="nx-pill" data-nx-status>Ready</span>
-  </div>
-  <div class="nx-right">
-    <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-      <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-        <option value="viewer">viewer</option>
-        <option value="tech">tech</option>
-        <option value="foreman">foreman</option>
-        <option value="superintendent">superintendent</option>
-        <option value="admin">admin</option>
-      </select>
-    </label>
-  </div>
-</div>
-<script>
-  (function(){
-    try{
-      var sel=document.getElementById("nxRoleSelect");
-      if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
-        sel.value = window.NEXUS.getRole();
-      }
-    }catch(e){}
-  })();
-</script>
 
-<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
-
-  <div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
-
-  <div class="wrap">
-    <div class="card">
-      <h2 style="margin:0 0 8px;">Megohmmeter Testing</h2>
-      <div class="hint">Redirecting to the correct page…</div>
-
-      <div style="margin-top:14px;">
-        <a class="btn secondary" id="backBtn" href="index.html">← Back</a>
-        <a class="btn" id="goBtn" href="#">Open Now</a>
-      </div>
-
-      <div class="hint">
-        If redirect is blocked, click <span style="font-weight:900;">Open Now</span>.<br/>
-        (Equipment context preserved via <code>?eq=</code>)
-      </div>
-    </div>
-  </div>
-
+  <!-- ✅ Immediate redirect (no flash), with safe fallback -->
   <script>
     (function(){
       const qs = new URLSearchParams(location.search);
       const eq = (qs.get("eq") || "").trim();
 
-      const backBtn = document.getElementById("backBtn");
-      backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
-      backBtn.textContent = eq ? "← Back to Equipment" : "← Back to Home";
+      /* ✅ Canonical target for Meg step */
+      const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-      const goBtn = document.getElementById("goBtn");
-      goBtn.href = target;
+      /* Redirect ASAP */
+      try{
+        location.replace(target);
+      }catch(e){
+        // if replace fails, fall back to later code that shows UI
+      }
 
-      setTimeout(() => { location.replace(target); }, 400);
+      /* If we are still here after a short moment, show the fallback UI */
+      setTimeout(() => {
+        try{ document.body.style.opacity = "1"; }catch(e){}
+      }, 650);
     })();
   </script>
+</head>
 
-<script>
-(function(){
-  window.NEXUS_back = function(){
-    try{
-      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
-        history.back();
-        return false;
-      }
-    }catch(e){}
-    const qs = new URLSearchParams(location.search);
-    const eq = qs.get("eq");
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-    return false;
-  };
-})();
-</script>
+<body>
+  <div class="nexus-page">
 
+    <div id="nxSessionBanner" class="nx-session-banner">
+      <div class="nx-left">
+        <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+        <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+        <span class="nx-pill" data-nx-status>Ready</span>
+      </div>
+      <div class="nx-right">
+        <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+          <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+            <option value="viewer">viewer</option>
+            <option value="tech">tech</option>
+            <option value="foreman">foreman</option>
+            <option value="superintendent">superintendent</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+      </div>
+    </div>
 
-<footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
-</footer>
+    <script>
+      (function(){
+        try{
+          var sel=document.getElementById("nxRoleSelect");
+          if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+            sel.value = window.NEXUS.getRole();
+          }
+        }catch(e){}
+      })();
+    </script>
 
-  <script src="assets/js/nexus-core.js"></script>
-  <script src="assets/js/nexus-firebase-bridge.js"></script>
+    <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+    <div class="nx-header-wrap">
+      <div class="nx-header">
+        <img src="nexus.png" alt="NEXUS" />
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="card">
+        <h2 style="margin:0 0 8px;">Megohmmeter Testing</h2>
+        <div class="hint">Redirecting to the correct page…</div>
+
+        <div style="margin-top:14px;">
+          <a class="btn secondary" id="backBtn" href="index.html">← Back</a>
+          <a class="btn" id="goBtn" href="#">Open Now</a>
+        </div>
+
+        <div class="hint">
+          If redirect is blocked, click <span style="font-weight:900;">Open Now</span>.<br/>
+          (Equipment context preserved via <code>?eq=</code>)
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        const qs = new URLSearchParams(location.search);
+        const eq = (qs.get("eq") || "").trim();
+
+        const backBtn = document.getElementById("backBtn");
+        backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
+        backBtn.textContent = eq ? "← Back to Equipment" : "← Back to Home";
+
+        /* ✅ Canonical target for Meg step */
+        const target = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+        const goBtn = document.getElementById("goBtn");
+        goBtn.href = target;
+
+        /* No delayed redirect here (prevents flash). The head script already tries immediately. */
+      })();
+    </script>
+
+    <script>
+      (function(){
+        window.NEXUS_back = function(){
+          try{
+            if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+              history.back();
+              return false;
+            }
+          }catch(e){}
+          const qs = new URLSearchParams(location.search);
+          const eq = qs.get("eq");
+          location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+          return false;
+        };
+      })();
+    </script>
+
+    <footer class="nx-footer">
+      © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+    </footer>
+
+    <script src="assets/js/nexus-core.js"></script>
+    <script src="assets/js/nexus-firebase-bridge.js"></script>
+
   </div>
 </body>
 </html>
