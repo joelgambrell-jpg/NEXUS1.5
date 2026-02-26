@@ -12,8 +12,10 @@
     :root{ --bg:#b60000; --panel:rgba(255,255,255,0.22); --line:rgba(255,255,255,0.20); }
     html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
 
-    /* ✅ NO FLASH: keep hidden unless redirect fails */
-    body{ opacity:0; }
+    /* IMPORTANT:
+       This file is the ACTUAL Meg landing (equipment_meg.html).
+       No auto-redirects here (prevents the flash + prevents skipping straight to meg_log.html).
+    */
 
     body{
       background-image:url("transformer.jpg");
@@ -22,9 +24,11 @@
       background-size:cover;
       background-attachment:fixed;
     }
+
     .nx-header-wrap{ background:rgba(0,0,0,0.35); border-bottom:1px solid rgba(255,255,255,0.18); backdrop-filter:blur(8px); }
     .nx-header{ max-width:1100px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; }
     .nx-header img{ height:54px; width:auto; object-fit:contain; }
+
     .wrap{ min-height:calc(100vh - 83px); display:flex; align-items:center; justify-content:center; padding:34px; }
     .card{
       width:100%; max-width:900px;
@@ -35,6 +39,13 @@
       backdrop-filter:blur(10px);
       text-align:center;
     }
+
+    .eqline{
+      font-weight:900;
+      margin:10px 0 14px;
+      opacity:.95;
+    }
+
     .btn{
       padding:12px 16px;
       font-weight:900;
@@ -48,13 +59,21 @@
       align-items:center;
       justify-content:center;
       margin:10px 6px 0;
+      user-select:none;
+      gap:10px;
     }
     .btn.secondary{ background:rgba(0,0,0,0.20); color:#fff; border:2px solid rgba(255,255,255,0.35); }
+
+    .btn.complete{
+      background:#00ff66 !important;
+      color:#002b14 !important;
+      border-color:#00ff66 !important;
+      box-shadow:0 0 14px rgba(0,255,102,.85);
+    }
+
     .hint{ margin-top:12px; opacity:0.9; }
     code{ background:rgba(0,0,0,0.35); padding:2px 6px; border-radius:6px; }
-  </style>
 
-  <style>
     .nx-footer{
       margin-top: 40px;
       padding: 18px 12px;
@@ -68,27 +87,6 @@
   </style>
 
   <link rel="stylesheet" href="assets/css/nexus-core.css">
-
-  <!-- ✅ Redirect ASAP to the CORRECT Meg page that has your SOP + step logic -->
-  <script>
-    (function(){
-      const qs = new URLSearchParams(location.search);
-      const eq = (qs.get("eq") || "").trim();
-
-      /* ✅ This is the standardized Meg landing you said was correct */
-      const target = `equipment_meg.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-      /* Immediate redirect (prevents seeing any intermediate buttons) */
-      try{
-        location.replace(target);
-      }catch(e){}
-
-      /* If we are still here (redirect blocked), show fallback UI */
-      setTimeout(() => {
-        try{ document.body.style.opacity = "1"; }catch(e){}
-      }, 700);
-    })();
-  </script>
 </head>
 
 <body>
@@ -132,20 +130,27 @@
       </div>
     </div>
 
-    <!-- Fallback UI only appears if redirect is blocked -->
     <div class="wrap">
       <div class="card">
         <h2 style="margin:0 0 8px;">Megohmmeter Testing</h2>
-        <div class="hint">Redirecting to the correct page…</div>
+        <div class="eqline" id="eqLine"></div>
 
-        <div style="margin-top:14px;">
-          <a class="btn secondary" id="backBtn" href="index.html">← Back</a>
-          <a class="btn" id="goBtn" href="#">Open Now</a>
+        <div class="hint" style="margin-bottom:10px;">
+          Use the buttons below. This page does not auto-redirect (prevents flashing/skipping).
+        </div>
+
+        <div style="margin-top:6px;">
+          <a class="btn" id="openLogBtn" href="#">Megohmmeter Test Log (Fillable)</a>
+          <a class="btn" id="openSopBtn" href="#">Open SOP</a>
+          <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
         </div>
 
         <div class="hint">
-          If redirect is blocked, click <span style="font-weight:900;">Open Now</span>.<br/>
-          (Equipment context preserved via <code>?eq=</code>)
+          Step completion is stored as <code>nexus_&lt;eq&gt;_step_meg</code> so it matches your equipment progress logic.
+        </div>
+
+        <div style="margin-top:14px;">
+          <a class="btn secondary" id="backBtn" href="equipment.html">← Back to Equipment</a>
         </div>
       </div>
     </div>
@@ -155,13 +160,60 @@
         const qs = new URLSearchParams(location.search);
         const eq = (qs.get("eq") || "").trim();
 
-        const backBtn = document.getElementById("backBtn");
-        backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
-        backBtn.textContent = eq ? "← Back to Equipment" : "← Back to Home";
+        // Labels
+        const eqLine = document.getElementById("eqLine");
+        if (eqLine) eqLine.textContent = eq ? ("Equipment: " + eq) : "Missing equipment ID";
 
-        const target = `equipment_meg.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-        const goBtn = document.getElementById("goBtn");
-        goBtn.href = target;
+        // Back button
+        const backBtn = document.getElementById("backBtn");
+        if (backBtn){
+          backBtn.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+        }
+
+        // Links (NO redirects)
+        const openLogBtn = document.getElementById("openLogBtn");
+        const openSopBtn = document.getElementById("openSopBtn");
+
+        const logHref = `meg_log.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+        const sopHref = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+        if (openLogBtn) openLogBtn.href = logHref;
+        if (openSopBtn) openSopBtn.href = sopHref;
+
+        // Step complete (matches equipment.html stepKey("meg"))
+        function stepKeyMeg(){
+          return `nexus_${eq || "NO_EQ"}_step_meg`;
+        }
+        function isComplete(){
+          return localStorage.getItem(stepKeyMeg()) === "1";
+        }
+        function setComplete(v){
+          if (v) localStorage.setItem(stepKeyMeg(), "1");
+          else localStorage.removeItem(stepKeyMeg());
+        }
+
+        const stepBtn = document.getElementById("stepCompleteBtn");
+        function paint(){
+          const ok = isComplete();
+          if (stepBtn){
+            stepBtn.classList.toggle("complete", ok);
+            stepBtn.textContent = ok ? "Step Complete ✓" : "Mark Step Complete";
+          }
+        }
+
+        if (stepBtn){
+          stepBtn.addEventListener("click", () => {
+            setComplete(!isComplete());
+            paint();
+          });
+        }
+
+        paint();
+
+        // Keep in sync if user completes in another tab/page
+        window.addEventListener("storage", paint);
+        window.addEventListener("focus", paint);
+        window.addEventListener("pageshow", paint);
       })();
     </script>
 
