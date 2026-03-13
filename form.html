@@ -665,6 +665,63 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     }
   }
 
+  function openImageInNewWindow(url){
+    if (!url) return;
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      alert("Pop-up blocked. Please allow pop-ups for this page.");
+      return;
+    }
+
+    const safeUrl = String(url)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    win.document.open();
+    win.document.write(`<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipment Image</title>
+<style>
+  html,body{
+    margin:0;
+    padding:0;
+    background:#111;
+    width:100%;
+    height:100%;
+    overflow:auto;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    box-sizing:border-box;
+  }
+  img{
+    max-width:100%;
+    height:auto;
+    box-shadow:0 12px 30px rgba(0,0,0,.45);
+    border-radius:12px;
+    background:#222;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <img src="${safeUrl}" alt="Equipment image">
+  </div>
+</body>
+</html>`);
+    win.document.close();
+  }
+
   function renderUploadedImage(url){
     if (!url) return;
 
@@ -682,12 +739,18 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
              alt="Equipment image"
              style="max-width:100%;border-radius:18px;cursor:zoom-in;">
         <div style="margin-top:12px;">
-          <a class="btn"
-             href="${url}"
-             target="_blank"
-             rel="noopener noreferrer">Open Image in New Tab</a>
+          <button class="btn"
+                  id="openImageNewTabBtn"
+                  type="button">Open Image in New Tab</button>
         </div>
       `;
+
+      const openBtn = document.getElementById("openImageNewTabBtn");
+      if (openBtn){
+        openBtn.addEventListener("click", function(){
+          openImageInNewWindow(url);
+        });
+      }
     }
   }
 
