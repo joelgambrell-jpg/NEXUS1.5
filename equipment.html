@@ -1085,12 +1085,12 @@
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
 
   // Reference buttons:
-  // Diagram Image -> direct to the diagram file (no 404)
+  // Diagram Image -> transformer form page so it uses uploaded image from equipment setup
   const transformerBtn = document.getElementById("transformerBtn");
   if (transformerBtn){
-    transformerBtn.href = "meg_diagram.png";
-    transformerBtn.target = "_blank";
-    transformerBtn.rel = "noopener";
+    transformerBtn.href = `form.html?id=transformer${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+    transformerBtn.removeAttribute("target");
+    transformerBtn.removeAttribute("rel");
   }
 
   // Supporting Documents -> use form.html fallback (exists) so it cannot 404
