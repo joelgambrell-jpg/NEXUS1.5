@@ -201,16 +201,16 @@ button.btn:empty{ display:none !important; }
   text-align:center;
 }
 
-/* ===== ADDED: Force same font even if external CSS overrides ===== */
+/* Force same font even if external CSS overrides */
 body{ font-family: Arial, sans-serif !important; }
 .btn{ font-family: inherit !important; }
 
-/* ===== ADDED: Torque Supporting Documents dropdown (closed by default) ===== */
+/* Torque Supporting Documents dropdown */
 .nx-supporting-docs{ width:100%; }
 .nx-supporting-docs-toggle{
   width:100%;
   position:relative;
-  padding-right:74px; /* room for arrow */
+  padding-right:74px;
   font-family: inherit !important;
 }
 .nx-supporting-docs-toggle::after{
@@ -231,11 +231,10 @@ body{ font-family: Arial, sans-serif !important; }
 .nx-supporting-docs-menu{
   width:100%;
   margin-top:10px;
-  display:none; /* CLOSED by default */
+  display:none;
 }
 .nx-supporting-docs.open .nx-supporting-docs-menu{ display:block; }
 
-/* ===== Font standardization override ===== */
 body{font-family:Arial,Helvetica,sans-serif !important;}
 .btn,.nx-supporting-docs-toggle,button,select,input,textarea{font-family:inherit !important;}
 </style>
@@ -299,24 +298,15 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
   <div id="buttonsWrap" class="button-panel">
     <div id="buttons"></div>
 
-    <!-- #3: Procore (RIF only) -->
     <a class="btn" id="rifNoProcoreBtn" href="rif_no_procore.html">RIF — No Procore</a>
-
-    <!-- SOP FALLBACK (Meg only, shown only if config.js didn't already add SOP) -->
     <a class="btn" id="openSopBtn" href="#">Megohmmeter SOP</a>
-
-    <!-- Snap-on ConnecTorq Import (Torque only, Optional) FALLBACK -->
     <a class="btn" id="snaponImportBtn" href="#">Snap-on ConnecTorq Import (Optional)</a>
-
-    <!-- #5: Leave alone -->
     <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
   </div>
 
-  <!-- RESTORED: generic media container for diagram / image / pdf section -->
   <div id="media" class="media" style="display:none;"></div>
 </div>
 
-<!-- ===== Zoom Modal Markup ===== -->
 <div id="nxImgModal" aria-hidden="true">
   <div id="nxImgModalBar">
     <button class="nxImgModalBtn" id="nxImgModalCloseBtn" type="button">Close</button>
@@ -358,6 +348,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     }
     return null;
   }
+
   function ensureBtn(text, href, insertAfterText){
     const existing = findBtnByText(text);
     if (existing) return existing;
@@ -369,7 +360,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     a.className = "btn";
     a.textContent = text;
     a.href = href;
-
     a.removeAttribute("target");
     a.removeAttribute("rel");
 
@@ -385,13 +375,11 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     return a;
   }
 
-  /* ===== Meg SOP: ONLY on Meg pages, and NEVER duplicate ===== */
   (function(){
     const sopFallback = document.getElementById("openSopBtn");
     if (!sopFallback) return;
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
-
     sopFallback.style.display = "none";
     sopFallback.onclick = null;
 
@@ -410,13 +398,11 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     sopFallback.removeAttribute("rel");
   })();
 
-  /* ===== Fluke Import: Meg ONLY, ensure present (auto-add if missing) ===== */
   (function(){
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
     if (!megIds.has(id)) return;
 
     const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
     const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
     if (existingFluke) return;
 
@@ -431,7 +417,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     );
   })();
 
-  /* ===== Snap-on ConnecTorq Import (Torque only) — FIX DUPLICATE + FORCE PATH ===== */
   (function(){
     const fallback = document.getElementById("snaponImportBtn");
     if (!fallback) return;
@@ -442,13 +427,12 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     if (id !== "torque") return;
 
     const desiredHref = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
     const existing = findBtnByText("Snap-on ConnecTorq Import (Optional)", fallback);
+
     if (existing){
       existing.setAttribute("href", desiredHref);
       existing.removeAttribute("target");
       existing.removeAttribute("rel");
-
       fallback.style.display = "none";
       return;
     }
@@ -459,7 +443,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     fallback.removeAttribute("rel");
   })();
 
-  /* ===== Torque Supporting Documents dropdown ===== */
   (function(){
     if (id !== "torque") return;
 
@@ -532,7 +515,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     });
   })();
 
-  /* ===== RIF fallback logic ===== */
   (function(){
     const btn = document.getElementById("rifNoProcoreBtn");
     if(!btn) return;
@@ -623,11 +605,22 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     btn.onclick = null;
   })();
 
+  function shouldPatchHref(href){
+    if (!href) return false;
+    if (href.startsWith("#")) return false;
+    if (/^https?:\/\//i.test(href)) return false;
+    if (/^mailto:/i.test(href)) return false;
+    if (/^tel:/i.test(href)) return false;
+
+    const clean = href.split("?")[0].split("#")[0].toLowerCase();
+    return clean.endsWith(".html") || clean.endsWith(".htm");
+  }
+
   function patchLinks(){
     document.querySelectorAll('a[href]').forEach(a => {
       try{
         const href = a.getAttribute("href");
-        if (!href) return;
+        if (!shouldPatchHref(href)) return;
 
         const url = new URL(href, location.href);
         if (url.origin !== location.origin) return;
@@ -646,7 +639,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 })();
 </script>
 
-<!-- Equipment image loader (ONLY show on id=transformer) + Zoom Modal behavior -->
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
