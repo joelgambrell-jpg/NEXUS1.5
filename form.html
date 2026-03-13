@@ -647,6 +647,9 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
   const container = document.getElementById("nexusEquipImageContainer");
   const img = document.getElementById("nexusEquipImageDisplay");
+  const media = document.getElementById("media");
+  const buttonsWrap = document.getElementById("buttonsWrap");
+
   if (!container || !img) return;
 
   if (id !== "transformer"){
@@ -655,23 +658,48 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
   }
 
   function readLocalRecord(){
-    try{ return JSON.parse(localStorage.getItem(`nexus_equipment_${eq}`) || "{}"); }
-    catch(e){ return {}; }
+    try{
+      return JSON.parse(localStorage.getItem(`nexus_equipment_${eq}`) || "{}");
+    }catch(e){
+      return {};
+    }
   }
 
-  function show(url){
-    if(!url) return;
-    img.src = url;
-    img.style.display = "block";
+  function renderUploadedImage(url){
+    if (!url) return;
+
+    container.style.display = "none";
+
+    if (buttonsWrap){
+      buttonsWrap.style.display = "none";
+    }
+
+    if (media){
+      media.style.display = "block";
+      media.innerHTML = `
+        <img id="mainImg"
+             src="${url}"
+             alt="Equipment image"
+             style="max-width:100%;border-radius:18px;cursor:zoom-in;">
+        <div style="margin-top:12px;">
+          <a class="btn"
+             href="${url}"
+             target="_blank"
+             rel="noopener noreferrer">Open Image in New Tab</a>
+        </div>
+      `;
+    }
   }
 
-  if(eq){
+  if (eq){
     const rec = readLocalRecord();
-    if(rec.imageDataUrl) show(rec.imageDataUrl);
+    if (rec && rec.imageDataUrl){
+      renderUploadedImage(rec.imageDataUrl);
+    }
   }
 
   window.NEXUS_setEquipmentImageUrl = function(url){
-    show(url);
+    renderUploadedImage(url);
   };
 
   const modal = document.getElementById("nxImgModal");
@@ -696,8 +724,10 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     applyTransform();
   }
   function openModal(){
-    if (!img.src) return;
-    modalImg.src = img.src;
+    const mainImg = document.getElementById("mainImg");
+    const src = mainImg && mainImg.src ? mainImg.src : (img && img.src ? img.src : "");
+    if (!src) return;
+    modalImg.src = src;
     modal.style.display = "block";
     modal.setAttribute("aria-hidden","false");
     resetTransform();
@@ -710,7 +740,16 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     document.body.style.overflow = "";
   }
 
-  img.addEventListener("click", openModal);
+  document.addEventListener("click", function(e){
+    const t = e.target;
+    if (t && t.id === "mainImg"){
+      openModal();
+    }
+  });
+
+  if (img){
+    img.addEventListener("click", openModal);
+  }
   closeBtn.addEventListener("click", closeModal);
   resetBtn.addEventListener("click", resetTransform);
 
