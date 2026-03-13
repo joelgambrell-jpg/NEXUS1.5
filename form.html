@@ -1,17 +1,3 @@
-<!-- form.html (FULL DROP-IN)
-CHANGES (ADDED/ADJUSTED — nothing intentionally removed):
-- Prevent duplicate "Megohmmeter SOP" (if config.js already provides it, we hide fallback)
-- Auto-add "Fluke Connect Import (Optional)" on Meg pages if config.js does NOT provide it
-- SOP shows ONLY on Meg pages (meg/megohmmeter_line/megohmmeter_load)
-- Snap-on Import is Torque-only, AND:
-  - If config.js already created it, hide fallback AND force its href to torque/snapon_import.html
-  - If config.js did NOT create it, show fallback with torque/snapon_import.html
-- Torque Supporting Documents dropdown (Torque only): wraps 4 supporting doc buttons under a closed-by-default dropdown with arrow indicator
-Everything else preserved.
-
-ADJUSTED (THIS CHANGE ONLY, PER AGREEMENT):
-- RIF fallback "RIF — Procore" no longer shows/alerts if config.js already provides the Procore link button.
--->
 <!doctype html>
 <html lang="en">
 <head>
@@ -95,9 +81,26 @@ h1{font-size:32px;font-weight:700;margin-top:0;}
 a.btn:empty{ display:none !important; }
 button.btn:empty{ display:none !important; }
 
-/* NOTE: left in place even though bottom media is removed (harmless) */
+/* Generic media/diagram section restored for app.js rendering */
 .media{margin-top:20px;}
 .embed{width:100%;height:75vh;border:none;border-radius:12px;background:#111;}
+
+/* Generic image/pdf embeds that app.js may inject */
+#media img{
+  max-width:100%;
+  height:auto;
+  border-radius:12px;
+  box-shadow:0 10px 22px rgba(0,0,0,.28);
+}
+#media iframe,
+#media embed,
+#media object{
+  width:100%;
+  height:75vh;
+  border:none;
+  border-radius:12px;
+  background:#111;
+}
 
 .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
 .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
@@ -232,7 +235,7 @@ body{ font-family: Arial, sans-serif !important; }
 }
 .nx-supporting-docs.open .nx-supporting-docs-menu{ display:block; }
 
-/* ===== Font standardization override (ADDED ONLY) ===== */
+/* ===== Font standardization override ===== */
 body{font-family:Arial,Helvetica,sans-serif !important;}
 .btn,.nx-supporting-docs-toggle,button,select,input,textarea{font-family:inherit !important;}
 </style>
@@ -309,8 +312,8 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
   </div>
 
-  <!-- Bottom/embedded media removed -->
-  <!-- <div id="media" class="media" style="display:none;"></div> -->
+  <!-- RESTORED: generic media container for diagram / image / pdf section -->
+  <div id="media" class="media" style="display:none;"></div>
 </div>
 
 <!-- ===== Zoom Modal Markup ===== -->
@@ -367,14 +370,12 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     a.textContent = text;
     a.href = href;
 
-    // keep same-tab for internal pages
     a.removeAttribute("target");
     a.removeAttribute("rel");
 
     if (insertAfterText){
       const after = findBtnByText(insertAfterText);
       if (after && after.parentElement){
-        // insert after "after"
         if (after.nextSibling) after.parentElement.insertBefore(a, after.nextSibling);
         else after.parentElement.appendChild(a);
         return a;
@@ -391,20 +392,17 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const megIds = new Set(["meg","megohmmeter_line","megohmmeter_load"]);
 
-    // default hidden
     sopFallback.style.display = "none";
     sopFallback.onclick = null;
 
     if (!megIds.has(id)) return;
 
-    // If config.js already created a Megohmmeter SOP button, do NOT show fallback.
     const existingSop = findBtnByText("Megohmmeter SOP", sopFallback);
     if (existingSop){
       sopFallback.style.display = "none";
       return;
     }
 
-    // Otherwise show fallback SOP
     const href = `megohmmeter_sop.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
     sopFallback.style.display = "block";
     sopFallback.setAttribute("href", href);
@@ -419,11 +417,9 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 
     const flukeHref = `meg/fluke_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-    // If config.js already provides it, do nothing.
     const existingFluke = findBtnByText("Fluke Connect Import (Optional)");
     if (existingFluke) return;
 
-    // Insert after SOP if possible, otherwise after Test Log button, otherwise append.
     ensureBtn(
       "Fluke Connect Import (Optional)",
       flukeHref,
@@ -440,19 +436,15 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     const fallback = document.getElementById("snaponImportBtn");
     if (!fallback) return;
 
-    // Default hidden
     fallback.style.display = "none";
     fallback.onclick = null;
 
     if (id !== "torque") return;
 
-    // Correct canonical path (matches your repo: /torque/snapon_import.html)
     const desiredHref = `torque/snapon_import.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
 
-    // If config.js already created a button with same text, use it and hide fallback.
     const existing = findBtnByText("Snap-on ConnecTorq Import (Optional)", fallback);
     if (existing){
-      // Force it to correct href (fixes old layered links like torque/torque/...)
       existing.setAttribute("href", desiredHref);
       existing.removeAttribute("target");
       existing.removeAttribute("rel");
@@ -461,14 +453,13 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
       return;
     }
 
-    // Otherwise show fallback with correct href
     fallback.style.display = "block";
     fallback.setAttribute("href", desiredHref);
     fallback.removeAttribute("target");
     fallback.removeAttribute("rel");
   })();
 
-  /* ===== ADDED: Torque Supporting Documents dropdown (Torque only; CLOSED by default) ===== */
+  /* ===== Torque Supporting Documents dropdown ===== */
   (function(){
     if (id !== "torque") return;
 
@@ -541,7 +532,7 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     });
   })();
 
-  // (3) RIF: ONLY use fallback button if config.js did NOT already provide the Procore link button
+  /* ===== RIF fallback logic ===== */
   (function(){
     const btn = document.getElementById("rifNoProcoreBtn");
     if(!btn) return;
@@ -551,7 +542,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
       return;
     }
 
-    // If config/app already rendered the Procore link button, DO NOT show fallback and DO NOT alert.
     const configProcoreBtn = findBtnByText("RIF Link to Procore (Live after updated by customer)");
     if (configProcoreBtn){
       btn.style.display = "none";
@@ -630,7 +620,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
     btn.href = procoreUrl;
     btn.target = "_blank";
     btn.rel = "noopener";
-    btnbtn_onclick_null = null;
     btn.onclick = null;
   })();
 
@@ -785,7 +774,6 @@ body{font-family:Arial,Helvetica,sans-serif !important;}
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script>
-/* Hide any blank pill/button that gets injected (covers whitespace, nbsp, etc.) */
 (function(){
   function isTrulyBlankButton(el){
     if (!el) return false;
