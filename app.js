@@ -17,6 +17,15 @@
     return null;
   }
 
+  function toAbsoluteUrl(href){
+    try{
+      if (!href) return href;
+      return new URL(href, location.href).href;
+    }catch(e){
+      return href;
+    }
+  }
+
   // Require FORMS + valid ID
   if (!id || !window.FORMS || !window.FORMS[id]) {
     document.body.innerHTML =
@@ -410,8 +419,9 @@
   if (cfg.embedUrl) {
     if (buttonsWrap) buttonsWrap.style.display = "none";
     if (mediaEl){
+      const embedSrc = toAbsoluteUrl(withEq(cfg.embedUrl));
       mediaEl.style.display = "block";
-      mediaEl.innerHTML = `<iframe class="embed" src="${withEq(cfg.embedUrl)}" title="${cfg.title || ""}"></iframe>`;
+      mediaEl.innerHTML = `<iframe class="embed" src="${embedSrc}" title="${cfg.title || ""}"></iframe>`;
     }
     return;
   }
@@ -420,11 +430,12 @@
   if (cfg.imageUrl) {
     if (buttonsWrap) buttonsWrap.style.display = "none";
     if (mediaEl){
+      const imageSrc = toAbsoluteUrl(cfg.imageUrl);
       mediaEl.style.display = "block";
       mediaEl.innerHTML = `
-        <img id="mainImg" src="${cfg.imageUrl}" alt="${cfg.title || "Image"}" style="max-width:100%;border-radius:18px;cursor:zoom-in;">
+        <img id="mainImg" src="${imageSrc}" alt="${cfg.title || "Image"}" style="max-width:100%;border-radius:18px;cursor:zoom-in;">
         <div style="margin-top:12px;">
-          <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
+          <a class="btn" href="${imageSrc}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
         </div>
       `;
     }
