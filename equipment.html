@@ -1052,6 +1052,25 @@
   <img id="obsImgLarge" src="" alt="Observation photo" />
 </div>
 
+
+<div id="diagramModal" class="diagram-modal" aria-hidden="true">
+  <div class="diagram-backdrop" id="diagramBackdrop"></div>
+
+  <div class="diagram-panel" role="dialog" aria-modal="true" aria-label="Diagram Image Viewer">
+    <div class="diagram-toolbar">
+      <button type="button" class="diagram-tool-btn" id="diagramZoomOutBtn">−</button>
+      <button type="button" class="diagram-tool-btn" id="diagramZoomResetBtn">100%</button>
+      <button type="button" class="diagram-tool-btn" id="diagramZoomInBtn">+</button>
+      <button type="button" class="diagram-tool-btn" id="diagramCloseBtn">✕</button>
+    </div>
+
+    <div class="diagram-stage" id="diagramStage">
+      <img id="diagramModalImg" src="meg_diagram.png" alt="Meg Diagram" draggable="false" />
+    </div>
+  </div>
+</div>
+
+
 <script>
 (function(){
   if (window.NX_I18N) return;
@@ -2627,23 +2646,6 @@
   © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
 </footer>
 
-
-<div id="diagramModal" class="diagram-modal" aria-hidden="true">
-  <div class="diagram-backdrop" id="diagramBackdrop"></div>
-
-  <div class="diagram-panel" role="dialog" aria-modal="true" aria-label="Diagram Image Viewer">
-    <div class="diagram-toolbar">
-      <button type="button" class="diagram-tool-btn" id="diagramZoomOutBtn">−</button>
-      <button type="button" class="diagram-tool-btn" id="diagramZoomResetBtn">100%</button>
-      <button type="button" class="diagram-tool-btn" id="diagramZoomInBtn">+</button>
-      <button type="button" class="diagram-tool-btn" id="diagramCloseBtn">✕</button>
-    </div>
-
-    <div class="diagram-stage" id="diagramStage">
-      <img id="diagramModalImg" src="meg_diagram.png" alt="Meg Diagram" draggable="false" />
-    </div>
-  </div>
-</div>
 
 
 <script src="assets/js/nexus-core.js"></script>
