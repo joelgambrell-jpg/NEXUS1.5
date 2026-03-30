@@ -1065,7 +1065,7 @@
     </div>
 
     <div class="diagram-stage" id="diagramStage">
-      <img id="diagramModalImg" src="meg_diagram.png" alt="Meg Diagram" draggable="false" />
+      <img id="diagramModalImg" src="" alt="Equipment Diagram Image" draggable="false" />
     </div>
   </div>
 </div>
@@ -1561,7 +1561,29 @@
   }
 
   function openDiagramModal(){
-    if (!diagramModal) return;
+    if (!diagramModal || !diagramModalImg) return;
+
+    const qsModal = new URLSearchParams(location.search);
+    const eqModal = (qsModal.get("eq") || "").trim();
+    if (!eqModal){
+      alert("No equipment ID found.");
+      return;
+    }
+
+    let rec = {};
+    try{
+      rec = JSON.parse(localStorage.getItem(`nexus_equipment_${eqModal}`) || "{}");
+    }catch(e){
+      rec = {};
+    }
+
+    const savedImage = (rec && rec.imageDataUrl) ? rec.imageDataUrl : "";
+    if (!savedImage){
+      alert("No diagram image has been uploaded on the setup page for this equipment.");
+      return;
+    }
+
+    diagramModalImg.src = savedImage;
     diagramModal.classList.add("show");
     diagramModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
@@ -2643,7 +2665,7 @@
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  © 2026 NEXUS Data Science — Built for Ace Electric — All Rights Reserved
 </footer>
 
 
