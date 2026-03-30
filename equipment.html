@@ -10,7 +10,7 @@
 
 <style>
   :root{
-    --bg:#b60000;
+    --bg:#b050505;
     --panel:rgba(255,255,255,0.20);
     --panel2:rgba(0,0,0,0.35);
     --line:rgba(255,255,255,0.22);
@@ -666,6 +666,75 @@
     color:#fff !important;
   }
 
+
+  /* ===== Diagram Image Modal ===== */
+  .diagram-modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    z-index:99999;
+  }
+  .diagram-modal.show{
+    display:block;
+  }
+  .diagram-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.86);
+    backdrop-filter:blur(4px);
+  }
+  .diagram-panel{
+    position:relative;
+    width:min(96vw, 1400px);
+    height:min(92vh, 900px);
+    margin:3vh auto;
+    background:rgba(10,15,36,0.98);
+    border:1px solid rgba(255,255,255,0.16);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,0.45);
+  }
+  .diagram-toolbar{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding:12px 14px;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.04);
+  }
+  .diagram-tool-btn{
+    min-width:52px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:900;
+  }
+  .diagram-stage{
+    width:100%;
+    height:calc(100% - 65px);
+    overflow:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    cursor:grab;
+    touch-action:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .diagram-stage:active{
+    cursor:grabbing;
+  }
+  #diagramModalImg{
+    max-width:none;
+    max-height:none;
+    transform-origin:center center;
+    user-select:none;
+    -webkit-user-drag:none;
+    touch-action:none;
+  }
+
 </style>
 
 <link rel="stylesheet" href="assets/css/nexus-core.css">
@@ -676,13 +745,20 @@
 
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
-    <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-    <span class="nx-pill" data-nx-status>Ready</span>
+    <span class="nx-pill"><span data-i18n="session.equipment">Equipment</span>: <span data-nx-eq>(none)</span></span>
+    <span class="nx-pill" data-nx-status data-i18n="session.ready">Ready</span>
   </div>
   <div class="nx-right">
+    <button
+      type="button"
+      id="nxLangToggle"
+      class="nx-lang-toggle"
+      onclick="return NEXUS_toggleLanguage();"
+      aria-label="Toggle Language"
+    >EN | ES</button>
+  </div>
 </div>
-</div>
-<a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back to Equipment</a>
+<a class="nx-back-btn" href="#" onclick="return NEXUS_back();" data-i18n="nav.backToEquipment">← Back to Equipment</a>
 
 <div class="nx-header-wrap">
   <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
@@ -696,7 +772,7 @@
     <!-- LEFT: main equipment card -->
     <div class="nx-left-col">
       <div class="card">
-        <h1>Equipment Page</h1>
+        <h1 data-i18n="equipment.pageTitle">Equipment Page</h1>
         <div class="eq" id="eqLabel"></div>
 
         <div class="progress-wrap">
@@ -721,7 +797,7 @@
         <div class="goal-card" id="goalCard">
           <div class="goal-top">
             <div style="min-width:260px;flex:1;">
-              <div class="goal-title">Energization Goal</div>
+              <div class="goal-title" data-i18n="goal.title">Energization Goal</div>
               <div class="countdown">
                 <div class="countdown-big" id="countdownBig">No goal set</div>
                 <div class="countdown-sub" id="countdownSub"></div>
@@ -729,28 +805,28 @@
             </div>
 
             <details class="goal-details" id="goalDetails">
-              <summary id="goalSummary">Edit Goal</summary>
+              <summary id="goalSummary" data-i18n="goal.edit">Edit Goal</summary>
 
               <div class="goal-row">
-                <label class="goal-label" for="goalDate">Goal Date &amp; Time</label>
+                <label class="goal-label" for="goalDate" data-i18n="goal.dateTime">Goal Date &amp; Time</label>
                 <input class="goal-input" id="goalDate" type="datetime-local" />
               </div>
 
               <div class="goal-row">
-                <label class="goal-label" for="notifyEmails">Notify Emails (comma-separated)</label>
-                <input class="goal-input" id="notifyEmails" type="text" placeholder="foreman@company.com, pm@company.com" />
+                <label class="goal-label" for="notifyEmails" data-i18n="goal.notifyEmails">Notify Emails (comma-separated)</label>
+                <input class="goal-input" id="notifyEmails" type="text" placeholder="foreman@company.com, pm@company.com" data-i18n-placeholder="goal.notifyEmailsPlaceholder" />
               </div>
 
               <div class="goal-actions">
-                <button class="goal-btn" id="saveGoalBtn" type="button">Save Goal</button>
-                <button class="goal-btn secondary" id="clearGoalBtn" type="button">Clear</button>
+                <button class="goal-btn" id="saveGoalBtn" type="button" data-i18n="btn.saveGoal">Save Goal</button>
+                <button class="goal-btn secondary" id="clearGoalBtn" type="button" data-i18n="btn.clear">Clear</button>
               </div>
             </details>
           </div>
         </div>
 
         <div id="energizationWrap">
-          <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">Energization</a>
+          <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true" data-i18n="step.energization">Energization</a>
           <div class="arcfx" aria-hidden="true">
             <span class="arc bolt1">
               <svg viewBox="0 0 40 80" class="bolt-svg" role="presentation" focusable="false">
@@ -788,37 +864,37 @@
 
         <div class="section-grid">
           <div class="procore-hidden" aria-hidden="true">
-            <a class="btn secondary locked" id="procoreConstructionBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Construction</a>
-            <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener">Procore - Energization</a>
+            <a class="btn secondary locked" id="procoreConstructionBtn" href="#" aria-disabled="true" target="_blank" rel="noopener" data-i18n="procore.construction">Procore - Construction</a>
+            <a class="btn secondary locked" id="procoreEnergizationBtn" href="#" aria-disabled="true" target="_blank" rel="noopener" data-i18n="procore.energization">Procore - Energization</a>
           </div>
         </div>
 
         <!-- Steps grid -->
         <div class="grid" id="stepsGrid">
-          <a class="btn" id="rifBtn">Receipt Inspection Form</a>
-          <a class="btn ref" id="phenolicBtn">Phenolic Display</a>
-          <a class="btn ref" id="constructionBtn">Construction Check Sheet</a>
-          <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
-          <a class="btn" id="torqueBtn">Torque Application</a>
-          <a class="btn" id="l2Btn">L2 Installation Verification Form</a>
-          <a class="btn" id="prefodBtn">Pre- Foreign Object and Debris</a>
-          <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
+          <a class="btn" id="rifBtn" data-i18n="step.rif">Receipt Inspection Form</a>
+          <a class="btn ref" id="phenolicBtn" data-i18n="step.phenolic">Phenolic Display</a>
+          <a class="btn ref" id="constructionBtn" data-i18n="step.ccs">Construction Check Sheet</a>
+          <a class="btn" id="lvtBtn" data-i18n="step.meg">Megohmmeter Testing</a>
+          <a class="btn" id="torqueBtn" data-i18n="step.torque">Torque Application</a>
+          <a class="btn" id="l2Btn" data-i18n="step.l2">L2 Installation Verification Form</a>
+          <a class="btn" id="prefodBtn" data-i18n="step.prefod">Pre- Foreign Object and Debris</a>
+          <a class="btn" id="finishedPhotoBtn" data-i18n="step.fpv">Finished Product Verification Photo</a>
         </div>
 
         <!-- Reference -->
         <div class="bubble" id="referencesBubble">
-          <div class="bubble-title">Reference &amp; Check Sheets</div>
+          <div class="bubble-title" data-i18n="section.references">Reference &amp; Check Sheets</div>
           <div class="bubble-grid">
-            <a class="btn ref" id="transformerBtn">Diagram Image</a>
-            <a class="btn ref" id="supportingBtn">Supporting Documents</a>
+            <a class="btn ref" id="transformerBtn" data-i18n="ref.diagram">Diagram Image</a>
+            <a class="btn ref" id="supportingBtn" data-i18n="ref.supporting">Supporting Documents</a>
           </div>
         </div>
 
         <!-- Exports moved BELOW references -->
         <div class="bubble exports-full" id="exportsBubble">
-          <div class="bubble-title">Exports</div>
+          <div class="bubble-title" data-i18n="section.exports">Exports</div>
           <div class="bubble-grid">
-            <a class="btn" id="packageExportBtn" href="#">Export Package (Print/PDF)</a>
+            <a class="btn" id="packageExportBtn" href="#" data-i18n="export.packagePdf">Export Package (Print/PDF)</a>
           </div>
         </div>
 
@@ -830,29 +906,29 @@
       <div class="obs-wrap" id="obsWrap">
         <div class="obs-top">
           <div class="obs-title">
-            <div class="obs-h">Intracompany Observations</div>
+            <div class="obs-h" data-i18n="obs.title">Intracompany Observations</div>
             <div class="obs-chips" aria-label="Observation counts">
               <span class="obs-chip" title="Open observations">
-                <b>Open</b> <span class="n" id="obsOpenCount">0</span>
+                <b data-i18n="obs.open">Open</b> <span class="n" id="obsOpenCount">0</span>
               </span>
               <span class="obs-chip" title="Closed observations">
-                <b>Closed</b> <span class="n" id="obsClosedCount">0</span>
+                <b data-i18n="obs.closed">Closed</b> <span class="n" id="obsClosedCount">0</span>
               </span>
             </div>
           </div>
           <div class="obs-actions">
-            <button class="obs-btn primary" id="obsCreateBtn" type="button">+ Create Observation</button>
+            <button class="obs-btn primary" id="obsCreateBtn" type="button" data-i18n="obs.create">+ Create Observation</button>
           </div>
         </div>
 
         <div class="obs-tabs" role="tablist" aria-label="Observation filters">
-          <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open">Open</button>
-          <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed">Closed</button>
-          <button class="obs-tab" id="obsTabAll" type="button" data-filter="all">All</button>
+          <button class="obs-tab active" id="obsTabOpen" type="button" data-filter="open" data-i18n="obs.open">Open</button>
+          <button class="obs-tab" id="obsTabClosed" type="button" data-filter="closed" data-i18n="obs.closed">Closed</button>
+          <button class="obs-tab" id="obsTabAll" type="button" data-filter="all" data-i18n="obs.all">All</button>
         </div>
 
         <div class="obs-search">
-          <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" />
+          <input id="obsSearch" type="text" placeholder="Search observations (title, description, type, priority, status)" data-i18n-placeholder="obs.searchPlaceholder" />
         </div>
 
         <div class="obs-list" id="obsList"></div>
@@ -872,100 +948,100 @@
       <div class="obs-dh-sub" id="obsDrawerSub">Equipment: <span id="obsDrawerEq">(none)</span> • Role: <span id="obsDrawerRole">Tech</span></div>
     </div>
     <div class="obs-dh-actions">
-      <button class="obs-x" id="obsCancelBtn" type="button">Cancel</button>
-      <button class="obs-x primary" id="obsSaveBtn" type="button">Save</button>
-      <button class="obs-x danger" id="obsDeleteBtn" type="button" style="display:none;">Delete</button>
+      <button class="obs-x" id="obsCancelBtn" type="button" data-i18n="btn.cancel">Cancel</button>
+      <button class="obs-x primary" id="obsSaveBtn" type="button" data-i18n="btn.save">Save</button>
+      <button class="obs-x danger" id="obsDeleteBtn" type="button" style="display:none;" data-i18n="btn.delete">Delete</button>
     </div>
   </div>
 
   <div class="obs-db">
     <div class="obs-form-row">
-      <label for="obsTitle">Title (required)</label>
-      <input class="obs-in" id="obsTitle" type="text" placeholder="Example: Lug hardware mismatch on Phase B" />
+      <label for="obsTitle" data-i18n="obs.form.title">Title (required)</label>
+      <input class="obs-in" id="obsTitle" type="text" placeholder="Example: Lug hardware mismatch on Phase B" data-i18n-placeholder="obs.form.titlePlaceholder" />
     </div>
 
     <div class="obs-form-grid">
       <div class="obs-form-row">
-        <label for="obsType">Type</label>
+        <label for="obsType" data-i18n="obs.form.type">Type</label>
         <select class="obs-sel" id="obsType">
-          <option value="Mechanical">Mechanical</option>
-          <option value="Electrical">Electrical</option>
-          <option value="Documentation">Documentation</option>
-          <option value="Safety">Safety</option>
-          <option value="Other">Other</option>
+          <option value="Mechanical" data-i18n="obs.type.mechanical">Mechanical</option>
+          <option value="Electrical" data-i18n="obs.type.electrical">Electrical</option>
+          <option value="Documentation" data-i18n="obs.type.documentation">Documentation</option>
+          <option value="Safety" data-i18n="obs.type.safety">Safety</option>
+          <option value="Other" data-i18n="obs.type.other">Other</option>
         </select>
       </div>
 
       <div class="obs-form-row">
-        <label for="obsPriority">Priority</label>
+        <label for="obsPriority" data-i18n="obs.form.priority">Priority</label>
         <select class="obs-sel" id="obsPriority">
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-          <option value="Critical">Critical</option>
+          <option value="Low" data-i18n="obs.priority.low">Low</option>
+          <option value="Medium" data-i18n="obs.priority.medium">Medium</option>
+          <option value="High" data-i18n="obs.priority.high">High</option>
+          <option value="Critical" data-i18n="obs.priority.critical">Critical</option>
         </select>
       </div>
     </div>
 
     <div class="obs-form-grid">
       <div class="obs-form-row">
-        <label for="obsStatus">Status</label>
+        <label for="obsStatus" data-i18n="obs.form.status">Status</label>
         <select class="obs-sel" id="obsStatus">
-          <option value="Open">Open</option>
-          <option value="Under Review">Under Review</option>
-          <option value="Closed">Closed</option>
-          <option value="Accepted As-Is">Accepted As-Is</option>
+          <option value="Open" data-i18n="obs.open">Open</option>
+          <option value="Under Review" data-i18n="obs.status.review">Under Review</option>
+          <option value="Closed" data-i18n="obs.closed">Closed</option>
+          <option value="Accepted As-Is" data-i18n="obs.status.accepted">Accepted As-Is</option>
         </select>
       </div>
 
       <div class="obs-form-row">
-        <label for="obsRelatedStep">Related Step (optional)</label>
+        <label for="obsRelatedStep" data-i18n="obs.form.relatedStep">Related Step (optional)</label>
         <select class="obs-sel" id="obsRelatedStep">
-          <option value="">(None)</option>
+          <option value="" data-i18n="obs.none">(None)</option>
           <option value="RIF">RIF</option>
-          <option value="Phenolic">Phenolic</option>
-          <option value="CCS">Construction Check Sheet</option>
-          <option value="Meg">Megohmmeter</option>
-          <option value="Torque">Torque</option>
+          <option value="Phenolic" data-i18n="step.phenolic">Phenolic</option>
+          <option value="CCS" data-i18n="step.ccsShort">Construction Check Sheet</option>
+          <option value="Meg" data-i18n="step.megShort">Megohmmeter</option>
+          <option value="Torque" data-i18n="step.torqueShort">Torque</option>
           <option value="L2">L2</option>
-          <option value="Pre-FOD">Pre-FOD</option>
-          <option value="FPV Photo">FPV Photo</option>
-          <option value="Energization">Energization</option>
+          <option value="Pre-FOD" data-i18n="step.prefodShort">Pre-FOD</option>
+          <option value="FPV Photo" data-i18n="step.fpvShort">FPV Photo</option>
+          <option value="Energization" data-i18n="step.energization">Energization</option>
         </select>
       </div>
     </div>
 
     <div class="obs-form-grid">
       <div class="obs-form-row">
-        <label for="obsAssignee">Assigned To (optional)</label>
-        <input class="obs-in" id="obsAssignee" type="text" placeholder="Foreman / Tech name" />
+        <label for="obsAssignee" data-i18n="obs.form.assignedTo">Assigned To (optional)</label>
+        <input class="obs-in" id="obsAssignee" type="text" placeholder="Foreman / Tech name" data-i18n-placeholder="obs.form.assignedPlaceholder" />
       </div>
 
       <div class="obs-form-row">
-        <label for="obsDue">Due Date (optional)</label>
+        <label for="obsDue" data-i18n="obs.form.dueDate">Due Date (optional)</label>
         <input class="obs-in" id="obsDue" type="date" />
       </div>
     </div>
 
     <div class="obs-form-row">
-      <label for="obsDescription">Description (required)</label>
-      <textarea class="obs-ta" id="obsDescription" placeholder="Write the observation details. Include where, what, and why it matters."></textarea>
+      <label for="obsDescription" data-i18n="obs.form.description">Description (required)</label>
+      <textarea class="obs-ta" id="obsDescription" placeholder="Write the observation details. Include where, what, and why it matters." data-i18n-placeholder="obs.form.descriptionPlaceholder"></textarea>
     </div>
 
     <div class="obs-form-row">
-      <label>Photos (optional)</label>
+      <label data-i18n="obs.form.photos">Photos (optional)</label>
       <div class="obs-attach">
         <input id="obsPhotoInput" type="file" accept="image/*" multiple />
-        <span style="font-weight:900; opacity:.92; font-size:12px;">(Photos are stored per equipment in local storage for now.)</span>
+        <span style="font-weight:900; opacity:.92; font-size:12px;" data-i18n="obs.form.photoNote">(Photos are stored per equipment in local storage for now.)</span>
       </div>
       <div class="obs-thumbrow" id="obsThumbRow"></div>
     </div>
 
     <div class="obs-help" id="obsHelp">
-      Notes:
+      <span data-i18n="obs.notes">Notes:</span>
       <ul style="margin:8px 0 0 18px; padding:0;">
-        <li>Tech can create observations. Foreman+ can close/accept and delete.</li>
-        <li>Open/Closed counts update instantly and are tied to this Equipment ID.</li>
+        <li data-i18n="obs.note.tech">Tech can create observations. Foreman+ can close/accept and delete.</li>
+        <li data-i18n="obs.note.counts">Open/Closed counts update instantly and are tied to this Equipment ID.</li>
       </ul>
     </div>
   </div>
@@ -977,9 +1053,362 @@
 </div>
 
 <script>
+(function(){
+  if (window.NX_I18N) return;
+
+  const DICT = {
+    en: {
+      "session.equipment":"Equipment",
+      "session.ready":"Ready",
+      "nav.backToEquipment":"← Back to Equipment",
+      "equipment.pageTitle":"Equipment Page",
+
+      "goal.title":"Energization Goal",
+      "goal.edit":"Edit Goal",
+      "goal.dateTime":"Goal Date & Time",
+      "goal.notifyEmails":"Notify Emails (comma-separated)",
+      "goal.notifyEmailsPlaceholder":"foreman@company.com, pm@company.com",
+      "btn.saveGoal":"Save Goal",
+      "btn.clear":"Clear",
+
+      "step.energization":"Energization",
+      "procore.construction":"Procore - Construction",
+      "procore.energization":"Procore - Energization",
+
+      "step.rif":"Receipt Inspection Form",
+      "step.phenolic":"Phenolic Display",
+      "step.ccs":"Construction Check Sheet",
+      "step.meg":"Megohmmeter Testing",
+      "step.torque":"Torque Application",
+      "step.l2":"L2 Installation Verification Form",
+      "step.prefod":"Pre- Foreign Object and Debris",
+      "step.fpv":"Finished Product Verification Photo",
+
+      "section.references":"Reference & Check Sheets",
+      "ref.diagram":"Diagram Image",
+      "ref.supporting":"Supporting Documents",
+      "section.exports":"Exports",
+      "export.packagePdf":"Export Package (Print/PDF)",
+
+      "obs.title":"Intracompany Observations",
+      "obs.open":"Open",
+      "obs.closed":"Closed",
+      "obs.all":"All",
+      "obs.create":"+ Create Observation",
+      "obs.searchPlaceholder":"Search observations (title, description, type, priority, status)",
+
+      "btn.cancel":"Cancel",
+      "btn.save":"Save",
+      "btn.delete":"Delete",
+
+      "obs.form.title":"Title (required)",
+      "obs.form.titlePlaceholder":"Example: Lug hardware mismatch on Phase B",
+      "obs.form.type":"Type",
+      "obs.type.mechanical":"Mechanical",
+      "obs.type.electrical":"Electrical",
+      "obs.type.documentation":"Documentation",
+      "obs.type.safety":"Safety",
+      "obs.type.other":"Other",
+
+      "obs.form.priority":"Priority",
+      "obs.priority.low":"Low",
+      "obs.priority.medium":"Medium",
+      "obs.priority.high":"High",
+      "obs.priority.critical":"Critical",
+
+      "obs.form.status":"Status",
+      "obs.status.review":"Under Review",
+      "obs.status.accepted":"Accepted As-Is",
+
+      "obs.form.relatedStep":"Related Step (optional)",
+      "obs.none":"(None)",
+      "step.ccsShort":"Construction Check Sheet",
+      "step.megShort":"Megohmmeter",
+      "step.torqueShort":"Torque",
+      "step.prefodShort":"Pre-FOD",
+      "step.fpvShort":"FPV Photo",
+
+      "obs.form.assignedTo":"Assigned To (optional)",
+      "obs.form.assignedPlaceholder":"Foreman / Tech name",
+      "obs.form.dueDate":"Due Date (optional)",
+      "obs.form.description":"Description (required)",
+      "obs.form.descriptionPlaceholder":"Write the observation details. Include where, what, and why it matters.",
+      "obs.form.photos":"Photos (optional)",
+      "obs.form.photoNote":"(Photos are stored per equipment in local storage for now.)",
+      "obs.notes":"Notes:",
+      "obs.note.tech":"Tech can create observations. Foreman+ can close/accept and delete.",
+      "obs.note.counts":"Open/Closed counts update instantly and are tied to this Equipment ID.",
+
+      "progress.progress":"Progress",
+      "progress.completed":"Completed",
+      "progress.remaining":"Remaining Work Items",
+      "goal.none":"No goal set",
+      "goal.remaining":"Time remaining:",
+      "goal.pastDue":"Past due by:",
+      "goal.goalPrefix":"Goal:",
+      "obs.drawer.create":"Create Observation",
+      "obs.drawer.edit":"Edit Observation",
+      "obs.drawer.view":"View Observation",
+      "obs.drawer.eqPrefix":"Equipment:",
+      "obs.drawer.rolePrefix":"Role:",
+      "obs.drawer.tech":"Tech",
+      "obs.drawer.foremanPlus":"Foreman+",
+      "obs.createdBy":"Created by",
+      "obs.step":"Step:",
+      "obs.openEdit":"Open / Edit",
+      "obs.openBtn":"Open",
+      "obs.empty.closed":"No closed observations for this equipment.",
+      "obs.empty.all":"No observations for this equipment yet.",
+      "obs.empty.open":"No open observations for this equipment.",
+      "obs.deleteConfirm":"Delete this observation? This cannot be undone.",
+      "obs.err.save":"Unable to save.",
+      "obs.err.delete":"Unable to delete.",
+      "obs.err.noPermissionEdit":"You do not have permission to edit this observation.",
+      "obs.err.noPermissionDelete":"You do not have permission to delete this observation.",
+      "obs.err.titleRequired":"Title is required.",
+      "obs.err.descriptionRequired":"Description is required.",
+      "obs.err.nothingSelected":"Nothing selected.",
+      "obs.err.notFound":"Not found.",
+      "obs.thumb.remove":"Remove photo"
+    },
+    es: {
+      "session.equipment":"Equipo",
+      "session.ready":"Listo",
+      "nav.backToEquipment":"← Volver al equipo",
+      "equipment.pageTitle":"Página de Equipo",
+
+      "goal.title":"Meta de Energización",
+      "goal.edit":"Editar Meta",
+      "goal.dateTime":"Fecha y Hora Objetivo",
+      "goal.notifyEmails":"Correos para Notificar (separados por comas)",
+      "goal.notifyEmailsPlaceholder":"capataz@company.com, pm@company.com",
+      "btn.saveGoal":"Guardar Meta",
+      "btn.clear":"Limpiar",
+
+      "step.energization":"Energización",
+      "procore.construction":"Procore - Construcción",
+      "procore.energization":"Procore - Energización",
+
+      "step.rif":"Formulario de Inspección de Recepción",
+      "step.phenolic":"Pantalla Fenólica",
+      "step.ccs":"Hoja de Verificación de Construcción",
+      "step.meg":"Pruebas de Megóhmetro",
+      "step.torque":"Aplicación de Torque",
+      "step.l2":"Formulario de Verificación de Instalación L2",
+      "step.prefod":"Pre-Objetos Extraños y Escombros",
+      "step.fpv":"Foto de Verificación del Producto Final",
+
+      "section.references":"Referencias y Hojas de Verificación",
+      "ref.diagram":"Imagen de Diagrama",
+      "ref.supporting":"Documentos de Soporte",
+      "section.exports":"Exportaciones",
+      "export.packagePdf":"Exportar Paquete (Imprimir/PDF)",
+
+      "obs.title":"Observaciones Internas",
+      "obs.open":"Abiertas",
+      "obs.closed":"Cerradas",
+      "obs.all":"Todas",
+      "obs.create":"+ Crear Observación",
+      "obs.searchPlaceholder":"Buscar observaciones (título, descripción, tipo, prioridad, estado)",
+
+      "btn.cancel":"Cancelar",
+      "btn.save":"Guardar",
+      "btn.delete":"Eliminar",
+
+      "obs.form.title":"Título (requerido)",
+      "obs.form.titlePlaceholder":"Ejemplo: Incompatibilidad de herrajes de zapata en Fase B",
+      "obs.form.type":"Tipo",
+      "obs.type.mechanical":"Mecánico",
+      "obs.type.electrical":"Eléctrico",
+      "obs.type.documentation":"Documentación",
+      "obs.type.safety":"Seguridad",
+      "obs.type.other":"Otro",
+
+      "obs.form.priority":"Prioridad",
+      "obs.priority.low":"Baja",
+      "obs.priority.medium":"Media",
+      "obs.priority.high":"Alta",
+      "obs.priority.critical":"Crítica",
+
+      "obs.form.status":"Estado",
+      "obs.status.review":"En Revisión",
+      "obs.status.accepted":"Aceptado Tal Como Está",
+
+      "obs.form.relatedStep":"Paso Relacionado (opcional)",
+      "obs.none":"(Ninguno)",
+      "step.ccsShort":"Hoja de Verificación de Construcción",
+      "step.megShort":"Megóhmetro",
+      "step.torqueShort":"Torque",
+      "step.prefodShort":"Pre-FOD",
+      "step.fpvShort":"Foto FPV",
+
+      "obs.form.assignedTo":"Asignado A (opcional)",
+      "obs.form.assignedPlaceholder":"Nombre del capataz / técnico",
+      "obs.form.dueDate":"Fecha de Vencimiento (opcional)",
+      "obs.form.description":"Descripción (requerida)",
+      "obs.form.descriptionPlaceholder":"Escriba los detalles de la observación. Incluya dónde, qué y por qué importa.",
+      "obs.form.photos":"Fotos (opcional)",
+      "obs.form.photoNote":"(Las fotos se almacenan por equipo en el almacenamiento local por ahora.)",
+      "obs.notes":"Notas:",
+      "obs.note.tech":"Los técnicos pueden crear observaciones. Capataz+ puede cerrar/aceptar y eliminar.",
+      "obs.note.counts":"Los conteos de abiertas/cerradas se actualizan al instante y están vinculados a este ID de equipo.",
+
+      "progress.progress":"Progreso",
+      "progress.completed":"Completado",
+      "progress.remaining":"Trabajos Pendientes",
+      "goal.none":"No hay meta establecida",
+      "goal.remaining":"Tiempo restante:",
+      "goal.pastDue":"Atrasado por:",
+      "goal.goalPrefix":"Meta:",
+      "obs.drawer.create":"Crear Observación",
+      "obs.drawer.edit":"Editar Observación",
+      "obs.drawer.view":"Ver Observación",
+      "obs.drawer.eqPrefix":"Equipo:",
+      "obs.drawer.rolePrefix":"Rol:",
+      "obs.drawer.tech":"Técnico",
+      "obs.drawer.foremanPlus":"Capataz+",
+      "obs.createdBy":"Creado por",
+      "obs.step":"Paso:",
+      "obs.openEdit":"Abrir / Editar",
+      "obs.openBtn":"Abrir",
+      "obs.empty.closed":"No hay observaciones cerradas para este equipo.",
+      "obs.empty.all":"Aún no hay observaciones para este equipo.",
+      "obs.empty.open":"No hay observaciones abiertas para este equipo.",
+      "obs.deleteConfirm":"¿Eliminar esta observación? Esta acción no se puede deshacer.",
+      "obs.err.save":"No se pudo guardar.",
+      "obs.err.delete":"No se pudo eliminar.",
+      "obs.err.noPermissionEdit":"No tiene permiso para editar esta observación.",
+      "obs.err.noPermissionDelete":"No tiene permiso para eliminar esta observación.",
+      "obs.err.titleRequired":"El título es obligatorio.",
+      "obs.err.descriptionRequired":"La descripción es obligatoria.",
+      "obs.err.nothingSelected":"No hay nada seleccionado.",
+      "obs.err.notFound":"No encontrado.",
+      "obs.thumb.remove":"Eliminar foto"
+    }
+  };
+
+  function getLang(){
+    try{ return localStorage.getItem("nexus_lang") || "en"; }
+    catch(e){ return "en"; }
+  }
+
+  function t(key){
+    var lang = getLang();
+    return (DICT[lang] && DICT[lang][key]) || (DICT.en && DICT.en[key]) || key;
+  }
+
+  function setLang(lang){
+    try{ localStorage.setItem("nexus_lang", lang === "es" ? "es" : "en"); }catch(e){}
+    apply(document);
+  }
+
+  function apply(root){
+    var scope = root || document;
+    try{
+      scope.querySelectorAll("[data-i18n]").forEach(function(el){
+        var key = el.getAttribute("data-i18n");
+        if (!key) return;
+        el.textContent = t(key);
+      });
+      scope.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){
+        var key = el.getAttribute("data-i18n-placeholder");
+        if (!key) return;
+        el.setAttribute("placeholder", t(key));
+      });
+      document.documentElement.lang = getLang();
+    }catch(e){}
+  }
+
+  window.NX_I18N = { getLang:getLang, setLang:setLang, t:t, apply:apply };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", function(){ apply(document); });
+  }else{
+    apply(document);
+  }
+})();
+</script>
+
+<script>
+(function(){
+  function updateLangToggleLabel(){
+    try{
+      var btn = document.getElementById("nxLangToggle");
+      if(!btn) return;
+      var lang = (window.NX_I18N && typeof window.NX_I18N.getLang === "function")
+        ? window.NX_I18N.getLang()
+        : (localStorage.getItem("nexus_lang") || "en");
+      btn.textContent = (lang === "es") ? "ES | EN" : "EN | ES";
+    }catch(e){}
+  }
+
+  window.NEXUS_toggleLanguage = function(){
+    try{
+      var current = (window.NX_I18N && typeof window.NX_I18N.getLang === "function")
+        ? window.NX_I18N.getLang()
+        : (localStorage.getItem("nexus_lang") || "en");
+      var next = current === "es" ? "en" : "es";
+
+      if(window.NX_I18N && typeof window.NX_I18N.setLang === "function"){
+        window.NX_I18N.setLang(next);
+      }else{
+        localStorage.setItem("nexus_lang", next);
+      }
+
+      updateLangToggleLabel();
+      window.dispatchEvent(new Event("nexus-language-changed"));
+    }catch(e){}
+    return false;
+  };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", updateLangToggleLabel);
+  }else{
+    updateLangToggleLabel();
+  }
+})();
+</script>
+
+<script>
 (function () {
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
+
+  function nxT(key, fallback){
+    try{
+      if (window.NX_I18N && typeof window.NX_I18N.t === "function") return window.NX_I18N.t(key);
+    }catch(e){}
+    return fallback || key;
+  }
+
+  function applyDynamicTranslations(){
+    try{
+      const eqLabel = document.getElementById("eqLabel");
+      if (eqLabel) eqLabel.textContent = eq ? `${nxT("session.equipment","Equipment")}: ${eq}` : "Missing equipment ID";
+
+      const progressTextEl = document.getElementById("progressText");
+      if (progressTextEl){
+        const raw = (progressTextEl.textContent || "").match(/(\d+)%/);
+        const pct = raw ? raw[1] : "0";
+        progressTextEl.textContent = `${nxT("progress.progress","Progress")}: ${pct}%`;
+      }
+
+      const progressHintEl = document.getElementById("progressHint");
+      if (progressHintEl){
+        const lines = progressHintEl.querySelectorAll("div");
+        const completedVal = lines[0] ? ((lines[0].textContent.match(/(\d+)/) || [,"0"])[1]) : "0";
+        const remainingVal = lines[1] ? ((lines[1].textContent.match(/(\d+)/) || [,"0"])[1]) : "0";
+        progressHintEl.innerHTML =
+          "<div>" + nxT("progress.completed","Completed") + ": " + completedVal + "</div>" +
+          "<div>" + nxT("progress.remaining","Remaining Work Items") + ": " + remainingVal + "</div>";
+      }
+
+      const goalSummaryEl = document.getElementById("goalSummary");
+      if (goalSummaryEl && !goalSummaryEl.hasAttribute("open")) {
+        goalSummaryEl.textContent = nxT("goal.edit","Edit Goal");
+      }
+    }catch(e){}
+  }
 
   function metaKey(){ return `nexus_meta_${eq || "NO_EQ"}`; }
   function loadMeta(){
@@ -1009,7 +1438,7 @@
   }
 
   const eqLabel = document.getElementById("eqLabel");
-  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID";
+  if (eqLabel) eqLabel.textContent = eq ? `${nxT("session.equipment","Equipment")}: ${eq}` : "Missing equipment ID";
 
   const meta = loadMeta();
   setLinkButton(document.getElementById("procoreConstructionBtn"), meta.procoreEquipUrl);
@@ -1065,7 +1494,7 @@
       const label =
         (meta.phenolicLabel || meta.phenolicName || meta.phenolicTitle || "").toString().trim();
       if (label) el.textContent = `Phenolic: ${label}`;
-      else el.textContent = "Phenolic Display";
+      else el.textContent = nxT("step.phenolic","Phenolic Display");
       return;
     }
 
@@ -1085,12 +1514,148 @@
   if (constructionBtn) constructionBtn.href = directPage("construction_check_sheet.html");
 
   // Reference buttons:
-  // Diagram Image -> transformer form page so it uses uploaded image from equipment setup
+  // Diagram Image -> direct to the diagram file (no 404)
   const transformerBtn = document.getElementById("transformerBtn");
+
+  const diagramModal = document.getElementById("diagramModal");
+  const diagramBackdrop = document.getElementById("diagramBackdrop");
+  const diagramCloseBtn = document.getElementById("diagramCloseBtn");
+  const diagramZoomInBtn = document.getElementById("diagramZoomInBtn");
+  const diagramZoomOutBtn = document.getElementById("diagramZoomOutBtn");
+  const diagramZoomResetBtn = document.getElementById("diagramZoomResetBtn");
+  const diagramStage = document.getElementById("diagramStage");
+  const diagramModalImg = document.getElementById("diagramModalImg");
+  let diagramScale = 1;
+  let diagramTouchStartDistance = null;
+  let diagramTouchStartScale = 1;
+
+  function applyDiagramZoom(){
+    if (!diagramModalImg || !diagramZoomResetBtn) return;
+    diagramModalImg.style.transform = `scale(${diagramScale})`;
+    diagramZoomResetBtn.textContent = `${Math.round(diagramScale * 100)}%`;
+  }
+
+  function getTouchDistance(t1, t2){
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function openDiagramModal(){
+    if (!diagramModal) return;
+    diagramModal.classList.add("show");
+    diagramModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    diagramScale = 1;
+    diagramTouchStartDistance = null;
+    diagramTouchStartScale = 1;
+    applyDiagramZoom();
+    if (diagramStage){
+      diagramStage.scrollTop = 0;
+      diagramStage.scrollLeft = 0;
+    }
+  }
+
+  function closeDiagramModal(){
+    if (!diagramModal) return;
+    diagramModal.classList.remove("show");
+    diagramModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    diagramTouchStartDistance = null;
+    diagramTouchStartScale = diagramScale;
+  }
+
   if (transformerBtn){
-    transformerBtn.href = `form.html?id=transformer${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+    transformerBtn.href = "#";
     transformerBtn.removeAttribute("target");
     transformerBtn.removeAttribute("rel");
+    transformerBtn.addEventListener("click", function(e){
+      e.preventDefault();
+      openDiagramModal();
+    });
+  }
+
+  if (diagramCloseBtn) diagramCloseBtn.addEventListener("click", closeDiagramModal);
+  if (diagramBackdrop) diagramBackdrop.addEventListener("click", closeDiagramModal);
+
+  if (diagramZoomInBtn){
+    diagramZoomInBtn.addEventListener("click", function(){
+      diagramScale = Math.min(diagramScale + 0.2, 5);
+      applyDiagramZoom();
+    });
+  }
+
+  if (diagramZoomOutBtn){
+    diagramZoomOutBtn.addEventListener("click", function(){
+      diagramScale = Math.max(diagramScale - 0.2, 0.4);
+      applyDiagramZoom();
+    });
+  }
+
+  if (diagramZoomResetBtn){
+    diagramZoomResetBtn.addEventListener("click", function(){
+      diagramScale = 1;
+      applyDiagramZoom();
+    });
+  }
+
+  document.addEventListener("keydown", function(e){
+    if (!diagramModal || !diagramModal.classList.contains("show")) return;
+
+    if (e.key === "Escape") closeDiagramModal();
+    if (e.key === "+" || e.key === "="){
+      diagramScale = Math.min(diagramScale + 0.2, 5);
+      applyDiagramZoom();
+    }
+    if (e.key === "-"){
+      diagramScale = Math.max(diagramScale - 0.2, 0.4);
+      applyDiagramZoom();
+    }
+  });
+
+  if (diagramStage){
+    diagramStage.addEventListener("wheel", function(e){
+      if (!diagramModal || !diagramModal.classList.contains("show")) return;
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+
+      if (e.deltaY < 0) diagramScale = Math.min(diagramScale + 0.15, 5);
+      else diagramScale = Math.max(diagramScale - 0.15, 0.4);
+
+      applyDiagramZoom();
+    }, { passive:false });
+
+    diagramStage.addEventListener("touchstart", function(e){
+      if (!diagramModal || !diagramModal.classList.contains("show")) return;
+      if (e.touches.length === 2){
+        e.preventDefault();
+        diagramTouchStartDistance = getTouchDistance(e.touches[0], e.touches[1]);
+        diagramTouchStartScale = diagramScale;
+      }
+    }, { passive:false });
+
+    diagramStage.addEventListener("touchmove", function(e){
+      if (!diagramModal || !diagramModal.classList.contains("show")) return;
+      if (e.touches.length === 2 && diagramTouchStartDistance){
+        e.preventDefault();
+        const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+        const ratio = currentDistance / diagramTouchStartDistance;
+        diagramScale = Math.max(0.4, Math.min(diagramTouchStartScale * ratio, 5));
+        applyDiagramZoom();
+      }
+    }, { passive:false });
+
+    diagramStage.addEventListener("touchend", function(e){
+      if (!e.touches || e.touches.length < 2){
+        diagramTouchStartDistance = null;
+        diagramTouchStartScale = diagramScale;
+      }
+    }, { passive:false });
+
+    diagramStage.addEventListener("touchcancel", function(){
+      diagramTouchStartDistance = null;
+      diagramTouchStartScale = diagramScale;
+    }, { passive:false });
   }
 
   // Supporting Documents -> use form.html fallback (exists) so it cannot 404
@@ -1156,7 +1721,7 @@
     const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
 
     if (fill) fill.style.width = `${pct}%`;
-    if (txt)  txt.textContent = `Progress: ${pct}%`;
+    if (txt)  txt.textContent = `${nxT("progress.progress","Progress")}: ${pct}%`;
     if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
 
     /* ===========================================================
@@ -1167,8 +1732,8 @@
       const completed = done;
       const remainingCount = Math.max(0, taskSteps.length - done);
       progressHint.innerHTML =
-        "<div>Completed: " + completed + "</div>" +
-        "<div>Remaining Work Items: " + remainingCount + "</div>";
+        "<div>" + nxT("progress.completed","Completed") + ": " + completed + "</div>" +
+        "<div>" + nxT("progress.remaining","Remaining Work Items") + ": " + remainingCount + "</div>";
     }
 
     if (eBtn){
@@ -1191,6 +1756,8 @@
     if (pE){
       pE.style.display = (pct >= 100) ? "inline-flex" : "none";
     }
+
+    applyDynamicTranslations();
   }
 
   // ===== Goal + Countdown (unchanged) =====
@@ -1253,7 +1820,7 @@
 
     const iso = localStorage.getItem(goalKey());
     if (!iso){
-      countdownBig.textContent = "No goal set";
+      countdownBig.textContent = nxT("goal.none","No goal set");
       countdownSub.textContent = "";
       countdownBig.classList.remove("cd-green","cd-yellow","cd-red");
       return;
@@ -1279,10 +1846,10 @@
     else countdownBig.classList.add("cd-red");
 
     countdownBig.textContent =
-      (past ? "Past due by: " : "Time remaining: ") +
-      `${days}d ${pad2(hrs)}h ${pad2(mins)}m ${pad2(secs)}s`;
+      (past ? nxT("goal.pastDue","Past due by:") : nxT("goal.remaining","Time remaining:")) +
+      ` ${days}d ${pad2(hrs)}h ${pad2(mins)}m ${pad2(secs)}s`;
 
-    countdownSub.textContent = `Goal: ${new Date(iso).toLocaleString()}`;
+    countdownSub.textContent = `${nxT("goal.goalPrefix","Goal:")} ${new Date(iso).toLocaleString()}`;
   }
 
   let countdownTimer = null;
@@ -1473,8 +2040,8 @@
     const by = it.createdBy || "Unknown";
     const when = fmtWhen(it.createdAt);
     const step = (it.relatedStep || "").trim();
-    const extra = step ? ` • Step: ${step}` : "";
-    return `Created by ${by}${when ? " • " + when : ""}${extra}`;
+    const extra = step ? ` • ${nxT("obs.step","Step:")} ${step}` : "";
+    return `${nxT("obs.createdBy","Created by")} ${by}${when ? " • " + when : ""}${extra}`;
   }
 
   function matchesSearch(it, q){
@@ -1508,10 +2075,10 @@
 
     obsEditingId = it ? it.id : null;
     obsDrawerEq.textContent = eq || "(none)";
-    obsDrawerRole.textContent = isForemanPlus(role) ? "Foreman+" : "Tech";
+    obsDrawerRole.textContent = isForemanPlus(role) ? nxT("obs.drawer.foremanPlus","Foreman+") : nxT("obs.drawer.tech","Tech");
 
     if (mode === "create"){
-      document.getElementById("obsDrawerTitle").textContent = "Create Observation";
+      document.getElementById("obsDrawerTitle").textContent = nxT("obs.drawer.create","Create Observation");
       obsDeleteBtn.style.display = "none";
       obsTitleIn.value = "";
       obsTypeSel.value = "Mechanical";
@@ -1524,7 +2091,7 @@
       obsPhotosDraft = [];
       renderThumbs();
     } else {
-      document.getElementById("obsDrawerTitle").textContent = canEdit(it, role, userTag) ? "Edit Observation" : "View Observation";
+      document.getElementById("obsDrawerTitle").textContent = canEdit(it, role, userTag) ? nxT("obs.drawer.edit","Edit Observation") : nxT("obs.drawer.view","View Observation");
       obsDeleteBtn.style.display = canDelete(it, role, userTag) ? "inline-flex" : "none";
       obsTitleIn.value = (it.title || "");
       obsTypeSel.value = (it.type || "Other");
@@ -1591,7 +2158,7 @@
       const del = document.createElement("button");
       del.type = "button";
       del.textContent = "×";
-      del.title = "Remove photo";
+      del.title = nxT("obs.thumb.remove","Remove photo");
       del.style.display = editable ? "inline-flex" : "none";
       del.addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -1647,8 +2214,8 @@
       const d = document.createElement("div");
       d.className = "obs-empty";
       d.textContent = obsFilter === "closed"
-        ? "No closed observations for this equipment."
-        : (obsFilter === "all" ? "No observations for this equipment yet." : "No open observations for this equipment.");
+        ? nxT("obs.empty.closed","No closed observations for this equipment.")
+        : (obsFilter === "all" ? nxT("obs.empty.all","No observations for this equipment yet.") : nxT("obs.empty.open","No open observations for this equipment."));
       obsListEl.appendChild(d);
       return;
     }
@@ -1703,7 +2270,7 @@
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "obs-mini primary";
-      viewBtn.textContent = canEdit(it, role, userTag) ? "Open / Edit" : "Open";
+      viewBtn.textContent = canEdit(it, role, userTag) ? nxT("obs.openEdit","Open / Edit") : nxT("obs.openBtn","Open");
       viewBtn.addEventListener("click", (ev) => {
         ev.stopPropagation();
         openDrawer("edit", it);
@@ -1751,8 +2318,8 @@
   function validateRequired(){
     const title = (obsTitleIn?.value || "").trim();
     const desc = (obsDescTa?.value || "").trim();
-    if (!title) return { ok:false, msg:"Title is required." };
-    if (!desc) return { ok:false, msg:"Description is required." };
+    if (!title) return { ok:false, msg:nxT("obs.err.titleRequired","Title is required.") };
+    if (!desc) return { ok:false, msg:nxT("obs.err.descriptionRequired","Description is required.") };
     return { ok:true };
   }
 
@@ -1773,7 +2340,7 @@
       const statusEditable = canChangeStatus(role);
 
       if (!editable && !statusEditable){
-        return { ok:false, msg:"You do not have permission to edit this observation." };
+        return { ok:false, msg:nxT("obs.err.noPermissionEdit","You do not have permission to edit this observation.") };
       }
 
       if (editable){
@@ -1838,15 +2405,15 @@
   function deleteCurrentObservation(){
     const role = getRole();
     const userTag = getUserTag();
-    if (!obsEditingId) return { ok:false, msg:"Nothing selected." };
+    if (!obsEditingId) return { ok:false, msg:nxT("obs.err.nothingSelected","Nothing selected.") };
 
     const data = loadObservations();
     const items = Array.isArray(data.items) ? data.items : [];
     const it = items.find(x => x.id === obsEditingId);
-    if (!it) return { ok:false, msg:"Not found." };
+    if (!it) return { ok:false, msg:nxT("obs.err.notFound","Not found.") };
 
     if (!canDelete(it, role, userTag)){
-      return { ok:false, msg:"You do not have permission to delete this observation." };
+      return { ok:false, msg:nxT("obs.err.noPermissionDelete","You do not have permission to delete this observation.") };
     }
 
     const next = items.filter(x => x.id !== obsEditingId);
@@ -1882,7 +2449,7 @@
     obsSaveBtn.addEventListener("click", () => {
       const res = saveCurrentObservation();
       if (!res.ok){
-        toast(res.msg || "Unable to save.");
+        toast(res.msg || nxT("obs.err.save","Unable to save."));
         return;
       }
       closeDrawer();
@@ -1892,10 +2459,10 @@
 
   if (obsDeleteBtn){
     obsDeleteBtn.addEventListener("click", () => {
-      if (!confirm("Delete this observation? This cannot be undone.")) return;
+      if (!confirm(nxT("obs.deleteConfirm","Delete this observation? This cannot be undone."))) return;
       const res = deleteCurrentObservation();
       if (!res.ok){
-        toast(res.msg || "Unable to delete.");
+        toast(res.msg || nxT("obs.err.delete","Unable to delete."));
         return;
       }
       closeDrawer();
@@ -1954,10 +2521,12 @@
   refresh();
   loadGoalFromLocal();
   startCountdown();
+  applyDynamicTranslations();
 
   window.addEventListener("focus", () => { refresh(); renderCountdown(); renderObservations(); });
   window.addEventListener("pageshow", () => { refresh(); renderCountdown(); renderObservations(); });
   window.addEventListener("storage", () => { refresh(); renderCountdown(); renderObservations(); });
+  window.addEventListener("nexus-language-changed", () => { refresh(); renderCountdown(); renderObservations(); applyDynamicTranslations(); });
 
   // Firestore listeners
   let fbStepsUnsub = null;
@@ -2055,8 +2624,27 @@
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for ACE Electric — All Rights Reserved
+  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
 </footer>
+
+
+<div id="diagramModal" class="diagram-modal" aria-hidden="true">
+  <div class="diagram-backdrop" id="diagramBackdrop"></div>
+
+  <div class="diagram-panel" role="dialog" aria-modal="true" aria-label="Diagram Image Viewer">
+    <div class="diagram-toolbar">
+      <button type="button" class="diagram-tool-btn" id="diagramZoomOutBtn">−</button>
+      <button type="button" class="diagram-tool-btn" id="diagramZoomResetBtn">100%</button>
+      <button type="button" class="diagram-tool-btn" id="diagramZoomInBtn">+</button>
+      <button type="button" class="diagram-tool-btn" id="diagramCloseBtn">✕</button>
+    </div>
+
+    <div class="diagram-stage" id="diagramStage">
+      <img id="diagramModalImg" src="meg_diagram.png" alt="Meg Diagram" draggable="false" />
+    </div>
+  </div>
+</div>
+
 
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
