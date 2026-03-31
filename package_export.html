@@ -869,8 +869,8 @@
     const ccsLink = eq ? `construction_check_sheet.html?eq=${encodeURIComponent(eq)}` : 'construction_check_sheet.html';
 
     /* ===== CORRECT PATHS (YOUR CURRENT REPO): Snap-on Import/Embed live in /torque ===== */
-    const snaponImportLink = nexusUrl(eq ? `torque/snapon_import.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_import.html`);
-    const snaponEmbedLink  = nexusUrl(eq ? `torque/snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `torque/snapon_export_embed.html`);
+    const snaponImportLink = nexusUrl(eq ? `snapon_import.html?eq=${encodeURIComponent(eq)}` : `snapon_import.html`);
+    const snaponEmbedLink  = nexusUrl(eq ? `snapon_export_embed.html?eq=${encodeURIComponent(eq)}` : `snapon_export_embed.html`);
     const snaponSessions = (function(){
       try{
         const raw = localStorage.getItem("nexus.torque.sessions.v1") || "[]";
